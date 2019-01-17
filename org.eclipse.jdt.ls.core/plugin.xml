@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension-point id="org.eclipse.jdt.ls.core.delegateCommandHandler" name="delegateCommandHandler" schema="schema/org.eclipse.jdt.ls.core.delegateCommandHandler.exsd"/>
+   <extension-point id="org.eclipse.jdt.ls.core.importers" name="JDT LS Project Importer" schema="schema/org.eclipse.jdt.ls.core.importers.exsd"/>
+   <extension-point id="org.eclipse.jdt.ls.core.contentProvider" name="contentProvider" schema="schema/org.eclipse.jdt.ls.core.contentProvider.exsd"/>
+   <extension
+         id="id1"
+         point="org.eclipse.core.runtime.applications">
+      <application
+            cardinality="singleton-global"
+            thread="main"
+            visible="true">
+         <run
+               class="org.eclipse.jdt.ls.core.internal.LanguageServer">
+         </run>
+      </application>
+   </extension>
+   <extension
+         id="product"
+         point="org.eclipse.core.runtime.products">
+      <product
+            application="org.eclipse.jdt.ls.core.id1"
+            name="Java Language Server">
+         <property
+               name="appName"
+               value="Java Language Server">
+         </property>
+      </product>
+   </extension>
+   <extension
+         point="org.eclipse.m2e.core.lifecycleMappingMetadataSource">
+   </extension>
+   <extension
+         point="org.eclipse.jdt.ls.core.contentProvider">
+      <contentProvider
+            class="org.eclipse.jdt.ls.core.internal.SourceContentProvider"
+            id="sourceContentProvider"
+            priority="0">
+      </contentProvider>
+   </extension>
+   <extension
+         point="org.eclipse.jdt.ls.core.contentProvider">
+      <contentProvider
+            class="org.eclipse.jdt.ls.core.internal.DisassemblerContentProvider"
+            id="disassemblerContentProvider"
+            priority="2147483647"
+            uriPattern=".+\.class.*">
+      </contentProvider>
+   </extension>
+   <extension
+         point="org.eclipse.jdt.ls.core.delegateCommandHandler">
+      <delegateCommandHandler class="org.eclipse.jdt.ls.core.internal.JDTDelegateCommandHandler">
+            <command
+                  id="java.edit.organizeImports">
+            </command>
+            <command
+                  id="java.project.updateSourceAttachment">
+            </command>
+            <command
+                  id="java.project.resolveSourceAttachment">
+            </command>
+            <command
+                  id="java.project.addToSourcePath">
+            </command>
+            <command
+                  id="java.project.removeFromSourcePath">
+            </command>
+            <command
+                  id="java.project.listSourcePaths">
+            </command>
+      </delegateCommandHandler>
+   </extension>
+   <extension
+         id="importers"
+         point="org.eclipse.jdt.ls.core.importers">
+         <importer
+            id = "gradleProjectImporter"
+            order ="300"
+            class = "org.eclipse.jdt.ls.core.internal.managers.GradleProjectImporter"/> 
+         <importer
+            id = "mavenProjectImporter"
+            order = "400"
+            class = "org.eclipse.jdt.ls.core.internal.managers.MavenProjectImporter"/>
+         <importer
+            id = "eclipseProjectImporter"
+            order = "1000"
+            class = "org.eclipse.jdt.ls.core.internal.managers.EclipseProjectImporter"/>
+         <importer
+            id="invisibleProjectImporter"
+            order="1500"
+            class="org.eclipse.jdt.ls.core.internal.managers.InvisibleProjectImporter" />
+   </extension>
+</plugin>
