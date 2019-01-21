@@ -1,5 +1,5 @@
 {
-	"java.configuration.updateBuildConfiguration": "interactive",
+	"java.configuration.updateBuildConfiguration": "automatic",
 	"java.import.exclusions": [
 		"**/org.eclipse.jdt.ls.tests/projects"
 	]
