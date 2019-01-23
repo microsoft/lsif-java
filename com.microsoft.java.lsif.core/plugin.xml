@@ -18,10 +18,10 @@
          point="org.eclipse.core.runtime.products">
       <product
             application="com.microsoft.java.lsif.core.id1"
-            name="Java Language Server Indexer">
+            name="Java Language Server">
          <property
                name="appName"
-               value="Java Language Server Indexer">
+               value="Java Language Server">
          </property>
       </product>
    </extension>
