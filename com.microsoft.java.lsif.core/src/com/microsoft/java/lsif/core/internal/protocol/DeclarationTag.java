@@ -5,25 +5,15 @@
 
 package com.microsoft.java.lsif.core.internal.protocol;
 
-public class JavaLsif {
+import org.eclipse.lsp4j.SymbolKind;
 
-	private IdGenerator generator;
+public class DeclarationTag extends Tag {
 
-	private VertexBuilder vBuilder;
+	private SymbolKind kind;
 
-	private EdgeBuilder eBuilder;
+	private org.eclipse.lsp4j.Range fullRange;
 
-	public JavaLsif() {
-		this.generator = new IdGenerator();
-		this.vBuilder = new VertexBuilder(generator);
-		this.eBuilder = new EdgeBuilder(generator);
-	}
-
-	public VertexBuilder getVertexBuilder() {
-		return this.vBuilder;
-	}
-
-	public EdgeBuilder getEdgeBuilder() {
-		return this.eBuilder;
+	public DeclarationTag(String text) {
+		super(Tag.DECLARATION, text);
 	}
 }

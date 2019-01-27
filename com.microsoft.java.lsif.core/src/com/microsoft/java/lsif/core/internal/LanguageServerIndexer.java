@@ -21,7 +21,5 @@ public class LanguageServerIndexer implements IApplication {
 
 	@Override
 	public void stop() {
-
 	}
-
 }

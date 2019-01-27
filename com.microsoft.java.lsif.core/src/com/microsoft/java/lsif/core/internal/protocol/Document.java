@@ -5,25 +5,25 @@
 
 package com.microsoft.java.lsif.core.internal.protocol;
 
-public class JavaLsif {
+import com.microsoft.java.lsif.core.internal.IConstant;
 
-	private IdGenerator generator;
+public class Document extends Vertex {
 
-	private VertexBuilder vBuilder;
+	private String uri;
 
-	private EdgeBuilder eBuilder;
+	private String languageId;
 
-	public JavaLsif() {
-		this.generator = new IdGenerator();
-		this.vBuilder = new VertexBuilder(generator);
-		this.eBuilder = new EdgeBuilder(generator);
+	public Document(String id, String uri) {
+		super(id, Vertex.DOCUMENT);
+		this.uri = uri;
+		this.languageId = IConstant.JAVA_ID;
 	}
 
-	public VertexBuilder getVertexBuilder() {
-		return this.vBuilder;
+	public String getUri() {
+		return this.uri;
 	}
 
-	public EdgeBuilder getEdgeBuilder() {
-		return this.eBuilder;
+	public String getLanguageId() {
+		return this.languageId;
 	}
 }

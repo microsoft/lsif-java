@@ -5,33 +5,30 @@
 
 package com.microsoft.java.lsif.core.internal.protocol;
 
-public abstract class Element {
+public abstract class Tag {
 
-	public final static String VERTEX = "vertex";
+	public static final String DECLARATION = "declaration";
 
-	public final static String EDGE = "edge";
+	public static final String DEFINITION = "definition";
 
-	private String id;
+	public static final String REFERENCE = "reference";
+
+	public static final String UNKNOWN = "unknown";
 
 	private String type;
 
-	private String label;
+	private String text;
 
-	public Element(String id, String type, String label) {
-		this.id = id;
+	public Tag(String type, String text) {
 		this.type = type;
-		this.label = label;
-	}
-
-	public String getId() {
-		return this.id;
+		this.text = text;
 	}
 
 	public String getType() {
 		return this.type;
 	}
 
-	public String getLabel() {
-		return this.label;
+	public String getText() {
+		return this.text;
 	}
 }

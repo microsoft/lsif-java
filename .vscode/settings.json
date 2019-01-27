@@ -2,5 +2,14 @@
 	"java.configuration.updateBuildConfiguration": "automatic",
 	"java.import.exclusions": [
 		"**/org.eclipse.jdt.ls.tests/projects"
-	]
+	], 
+	"files.exclude": {
+		"**/.git": true,
+		"**/.svn": true,
+		"**/.hg": true,
+		"**/CVS": true,
+		"**/.DS_Store": true,
+		"**/.classpath" : true,
+		"**/.project": true
+	}
 }

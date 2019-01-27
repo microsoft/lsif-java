@@ -5,25 +5,32 @@
 
 package com.microsoft.java.lsif.core.internal.protocol;
 
-public class JavaLsif {
+import java.util.UUID;
 
-	private IdGenerator generator;
+public class IdGenerator {
 
-	private VertexBuilder vBuilder;
-
-	private EdgeBuilder eBuilder;
-
-	public JavaLsif() {
-		this.generator = new IdGenerator();
-		this.vBuilder = new VertexBuilder(generator);
-		this.eBuilder = new EdgeBuilder(generator);
+	public static enum IdType {
+		UUID, COUNTER
 	}
 
-	public VertexBuilder getVertexBuilder() {
-		return this.vBuilder;
+	private int counter = 0;
+
+	public IdGenerator() {
+		this.idtype = IdType.COUNTER;
 	}
 
-	public EdgeBuilder getEdgeBuilder() {
-		return this.eBuilder;
+	private IdType idtype;
+
+	public String next() {
+		switch (idtype) {
+			case COUNTER:
+				counter++;
+				return String.valueOf(counter);
+			case UUID:
+				return UUID.randomUUID().toString();
+			default:
+				break;
+		}
+		return null;
 	}
 }

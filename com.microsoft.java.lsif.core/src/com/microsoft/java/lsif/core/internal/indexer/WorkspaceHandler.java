@@ -32,7 +32,6 @@ import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.managers.GradleBuildSupport;
 
 import com.microsoft.java.lsif.core.internal.LanguageServerIndexerPlugin;
-import com.microsoft.java.lsif.core.internal.protocol.JavaLsif;
 
 public class WorkspaceHandler {
 
@@ -43,7 +42,6 @@ public class WorkspaceHandler {
 	}
 
 	public List<IPath> initialize() {
-
 		NullProgressMonitor monitor = new NullProgressMonitor();
 		List<IPath> projectRoots = new ArrayList<>();
 		LanguageServerIndexerPlugin.logInfo("Collecting repo information");
@@ -154,10 +152,4 @@ public class WorkspaceHandler {
 			e.printStackTrace();
 		}
 	}
-
-	private JavaLsif indexProject(IPath project, IProgressMonitor monitor) {
-		// TODO: Add index operations
-		return null;
-	}
-
 }

@@ -5,25 +5,16 @@
 
 package com.microsoft.java.lsif.core.internal.protocol;
 
-public class JavaLsif {
+public class Project extends Vertex {
 
-	private IdGenerator generator;
+	private String kind;
 
-	private VertexBuilder vBuilder;
-
-	private EdgeBuilder eBuilder;
-
-	public JavaLsif() {
-		this.generator = new IdGenerator();
-		this.vBuilder = new VertexBuilder(generator);
-		this.eBuilder = new EdgeBuilder(generator);
+	public Project(String id) {
+		super(id, Vertex.PROJECT);
+		this.kind = "java";
 	}
 
-	public VertexBuilder getVertexBuilder() {
-		return this.vBuilder;
-	}
-
-	public EdgeBuilder getEdgeBuilder() {
-		return this.eBuilder;
+	public String getKind() {
+		return this.kind;
 	}
 }
