@@ -31,7 +31,27 @@ public class DefinitionTag extends Tag {
 	 */
 	private String detail;
 
-	public DefinitionTag(String text) {
+	public DefinitionTag(String text, SymbolKind kind, Boolean deprecated, org.eclipse.lsp4j.Range fullRange, String detail) {
 		super(Tag.DEFINITION, text);
+		this.kind = kind;
+		this.deprecated = deprecated;
+		this.fullRange = fullRange;
+		this.detail = detail;
+	}
+
+	public SymbolKind getKind() {
+		return this.kind;
+	}
+
+	public Boolean getDeprecated() {
+		return this.deprecated;
+	}
+
+	public org.eclipse.lsp4j.Range getFullRange() {
+		return this.fullRange;
+	}
+
+	public String getDetail() {
+		return this.detail;
 	}
 }

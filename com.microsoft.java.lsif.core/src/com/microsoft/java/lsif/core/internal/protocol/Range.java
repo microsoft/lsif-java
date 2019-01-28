@@ -13,14 +13,25 @@ public class Range extends Vertex {
 
 	private Position end;
 
+	private Tag tag;
+
 	public Range(String id, Position start, Position end) {
 		super(id, Vertex.RANGE);
 		this.start = start;
 		this.end = end;
 	}
 
+	public Range(String id, Position start, Position end, Tag tag) {
+		this(id, start, end);
+		this.tag = tag;
+	}
+
 	public static Range fromLspRange(String id, org.eclipse.lsp4j.Range lspRange) {
 		return new Range(id, lspRange.getStart(), lspRange.getEnd());
+	}
+
+	public static Range fromLspRange(String id, org.eclipse.lsp4j.Range lspRange, Tag tag) {
+		return new Range(id, lspRange.getStart(), lspRange.getEnd(), tag);
 	}
 
 	public Position getStart() {
@@ -29,6 +40,10 @@ public class Range extends Vertex {
 
 	public Position getEnd() {
 		return this.end;
+	}
+
+	public Tag getTag() {
+		return this.tag;
 	}
 
 	@Override

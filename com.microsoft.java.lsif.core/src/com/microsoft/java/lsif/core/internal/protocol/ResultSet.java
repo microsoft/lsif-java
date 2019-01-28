@@ -5,17 +5,9 @@
 
 package com.microsoft.java.lsif.core.internal.protocol;
 
-public class DefinitionResult extends Vertex {
+public class ResultSet extends Vertex {
 
-	// TODO: Support bag result.
-	private String result;
-
-	public DefinitionResult(String id, String result) {
-		super(id, Vertex.DEFINITIONRESULT);
-		this.result = result;
-	}
-
-	public String getResult() {
-		return this.result;
+	public ResultSet(String id) {
+		super(id, Vertex.RESULTSET);
 	}
 }

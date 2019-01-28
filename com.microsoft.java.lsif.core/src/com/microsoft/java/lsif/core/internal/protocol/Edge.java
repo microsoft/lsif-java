@@ -41,6 +41,8 @@ public class Edge extends Element {
 
 	public Edge(String id, String label, String outV, String inV) {
 		super(id, Element.EDGE, label);
+		this.outV = outV;
+		this.inV = inV;
 	}
 
 	public String getOutV() {

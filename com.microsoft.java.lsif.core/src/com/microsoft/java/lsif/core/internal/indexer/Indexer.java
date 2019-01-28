@@ -22,6 +22,7 @@ import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.lsp4j.ClientCapabilities;
 
 import com.google.gson.Gson;
@@ -63,8 +64,7 @@ public class Indexer {
 				// Output model
 				try {
 					Path projectPath = Paths.get(path.toFile().toURI());
-					FileUtils.writeStringToFile(projectPath.resolve("lsif.json").toFile(),
-							new Gson().toJson(emitter.getElements()));
+					FileUtils.writeStringToFile(projectPath.resolve("lsif.json").toFile(), new Gson().toJson(emitter.getElements()));
 				} catch (IOException e) {
 				}
 			}
@@ -101,10 +101,10 @@ public class Indexer {
 									for (IJavaElement sourceFile : fragment.getChildren()) {
 										CompilationUnit cu = ASTUtil.createAST((ITypeRoot) sourceFile, monitor);
 										Document docVertex = lsif.getVertexBuilder()
-												.document(sourceFile.getResource().getRawLocationURI().toString());
+												.document(ResourceUtils.fixURI(sourceFile.getResource().getRawLocationURI()));
 										emitter.emit(docVertex);
 										emitter.emit(lsif.getEdgeBuilder().contains(projVertex, docVertex));
-										cu.accept(new LsifVisitor((ITypeRoot) sourceFile, emitter, docVertex, lsif));
+										cu.accept(new LsifVisitor((new IndexerContext(emitter, lsif, docVertex, (ITypeRoot) sourceFile))));
 									}
 								}
 							}
