@@ -12,14 +12,9 @@ import com.microsoft.java.lsif.core.internal.protocol.Element;
 
 public class JsonEmitter implements Emitter {
 
-
 	private List<Element> elements;
 
-
-	private int counter = 0;
-
 	public JsonEmitter() {
-		elements = new ArrayList<>();
 	}
 
 	/*
@@ -29,8 +24,7 @@ public class JsonEmitter implements Emitter {
 	 */
 	@Override
 	public void start() {
-		// TODO Auto-generated method stub
-
+		this.elements = new ArrayList<>();
 	}
 
 	/*
@@ -52,14 +46,9 @@ public class JsonEmitter implements Emitter {
 	 */
 	@Override
 	public void end() {
-		// TODO Auto-generated method stub
-
 	}
 
 	public List<Element> getElements() {
 		return this.elements;
 	}
-
-
-
 }

@@ -13,7 +13,11 @@ import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.QualifiedName;
+import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
+import org.eclipse.jdt.core.dom.TypeDeclaration;
+
+import com.microsoft.java.lsif.core.internal.indexer.handlers.DefinitionHandler;
 
 public class LsifVisitor extends ASTVisitor {
 
@@ -45,6 +49,21 @@ public class LsifVisitor extends ASTVisitor {
 	public boolean visit(SingleVariableDeclaration node) {
 		DefinitionHandler.handler(node, context);
 		return false;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.eclipse.jdt.core.dom.ASTVisitor#visit(org.eclipse.jdt.core.dom.
+	 * SimpleType)
+	 */
+	@Override
+	public boolean visit(SimpleType node) {
+		if (node.getParent() instanceof TypeDeclaration) {
+			DefinitionHandler.handler(node, context);
+			return false;
+		}
+		return super.visit(node);
 	}
 
 	@Override

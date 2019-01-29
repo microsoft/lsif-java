@@ -42,6 +42,9 @@ public final class JdtlsUtils {
 		return location;
 	}
 
+	/**
+	 * Normalize the URI to the same format at the client.
+	 */
 	public final static String normalizeUri(String uri) {
 		if (Platform.OS_WIN32.equals(Platform.getOS())) {
 			if (uri.startsWith("file:///") && uri.length() > 10 && Character.isUpperCase(uri.charAt(8)) && uri.charAt(9) == ':') {

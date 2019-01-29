@@ -6,8 +6,11 @@
 package com.microsoft.java.lsif.core.internal.protocol;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.eclipse.lsp4j.DocumentSymbol;
 
 import com.microsoft.java.lsif.core.internal.JdtlsUtils;
 
@@ -60,6 +63,10 @@ public final class VertexBuilder {
 
 	public DefinitionResult definitionResult(String resultId) {
 		return new DefinitionResult(generator.next(), resultId);
+	}
+
+	public DocumentSymbolResult documentSymbolResult(List<DocumentSymbol> symbols) {
+		return new DocumentSymbolResult(generator.next(), symbols);
 	}
 
 	public Document getDocument(String uri) {

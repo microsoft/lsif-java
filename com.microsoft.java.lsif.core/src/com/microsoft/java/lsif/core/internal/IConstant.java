@@ -10,4 +10,6 @@ public final class IConstant {
 	public final static String PLUGIN_ID = "com.microsoft.java.lsif.core";
 
 	public final static String JAVA_ID = "java";
+
+	public final static String DEFAULT_LSIF_FILE_NAME = "lsif.json";
 }
