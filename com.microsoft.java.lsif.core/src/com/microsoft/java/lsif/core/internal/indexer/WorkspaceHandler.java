@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-package com.microsoft.java.lsif.core.internal.indexer.handlers;
+package com.microsoft.java.lsif.core.internal.indexer;
 
 import java.io.File;
 import java.util.ArrayList;

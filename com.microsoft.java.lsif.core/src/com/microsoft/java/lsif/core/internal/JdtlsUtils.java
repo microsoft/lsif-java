@@ -6,16 +6,38 @@
 package com.microsoft.java.lsif.core.internal;
 
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jdt.core.IClassFile;
+import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.lsp4j.Location;
 
 public final class JdtlsUtils {
+
+	private JdtlsUtils() {
+	}
+
+	public final static Location getElementLocation(IJavaElement element) {
+		Location targetLocation = null;
+		try {
+			ICompilationUnit compilationUnit = (ICompilationUnit) element.getAncestor(IJavaElement.COMPILATION_UNIT);
+			IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
+			if (compilationUnit != null || (cf != null && cf.getSourceRange() != null)) {
+				targetLocation = JdtlsUtils.fixLocation(element, JDTUtils.toLocation(element), element.getJavaProject());
+			}
+			if (element instanceof IMember && ((IMember) element).getClassFile() != null) {
+				targetLocation = JdtlsUtils.fixLocation(element, JDTUtils.toLocation(((IMember) element).getClassFile()), element.getJavaProject());
+			}
+		} catch (CoreException ex) {
+		}
+		return targetLocation;
+	}
 
 	public final static Location fixLocation(IJavaElement element, Location location, IJavaProject javaProject) {
 		if (!javaProject.equals(element.getJavaProject()) && element.getJavaProject().getProject().getName().equals(ProjectsManager.DEFAULT_PROJECT_NAME)) {

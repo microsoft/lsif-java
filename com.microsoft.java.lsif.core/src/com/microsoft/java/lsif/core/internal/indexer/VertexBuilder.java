@@ -1,0 +1,72 @@
+/* --------------------------------------------------------------------------------------------
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License. See License.txt in the project root for license information.
+ * ------------------------------------------------------------------------------------------ */
+
+package com.microsoft.java.lsif.core.internal.indexer;
+
+import java.util.List;
+
+import org.eclipse.lsp4j.DocumentSymbol;
+
+import com.microsoft.java.lsif.core.internal.JdtlsUtils;
+import com.microsoft.java.lsif.core.internal.protocol.DefinitionResult;
+import com.microsoft.java.lsif.core.internal.protocol.Document;
+import com.microsoft.java.lsif.core.internal.protocol.DocumentSymbolResult;
+import com.microsoft.java.lsif.core.internal.protocol.MetaData;
+import com.microsoft.java.lsif.core.internal.protocol.Project;
+import com.microsoft.java.lsif.core.internal.protocol.Range;
+import com.microsoft.java.lsif.core.internal.protocol.ReferenceResult;
+import com.microsoft.java.lsif.core.internal.protocol.ResultSet;
+import com.microsoft.java.lsif.core.internal.protocol.TypeDefinitionResult;
+
+public final class VertexBuilder {
+
+	private IdGenerator generator;
+
+	public VertexBuilder(IdGenerator generator) {
+		this.generator = generator;
+	}
+
+	public MetaData metaData(String version) {
+		return new MetaData(generator.next(), version);
+	}
+
+	public Project project() {
+		return new Project(generator.next());
+	}
+
+	public Document document(String uri) {
+		uri = JdtlsUtils.normalizeUri(uri);
+		Document res = new Document(generator.next(), uri);
+		return res;
+	}
+
+	public Range range(org.eclipse.lsp4j.Range lspRange) {
+		return new Range(generator.next(), lspRange.getStart(), lspRange.getEnd());
+	}
+
+	public ResultSet resultSet() {
+		return new ResultSet(generator.next());
+	}
+
+	public DefinitionResult definitionResult(String resultId) {
+		return new DefinitionResult(generator.next(), resultId);
+	}
+
+	public TypeDefinitionResult typeDefinitionResult(String resultId) {
+		return new TypeDefinitionResult(generator.next(), resultId);
+	}
+
+	public ReferenceResult referenceResult() {
+		return new ReferenceResult(generator.next());
+	}
+
+	public ReferenceResult referenceResult(List<String> declarations, List<String> definitions, List<String> references, List<String> referenceResults) {
+		return new ReferenceResult(generator.next(), declarations, definitions, references, referenceResults);
+	}
+
+	public DocumentSymbolResult documentSymbolResult(List<DocumentSymbol> symbols) {
+		return new DocumentSymbolResult(generator.next(), symbols);
+	}
+}

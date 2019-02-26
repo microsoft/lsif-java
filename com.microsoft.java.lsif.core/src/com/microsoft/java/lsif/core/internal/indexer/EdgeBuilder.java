@@ -3,7 +3,14 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-package com.microsoft.java.lsif.core.internal.protocol;
+package com.microsoft.java.lsif.core.internal.indexer;
+
+import com.microsoft.java.lsif.core.internal.protocol.Document;
+import com.microsoft.java.lsif.core.internal.protocol.Edge;
+import com.microsoft.java.lsif.core.internal.protocol.Project;
+import com.microsoft.java.lsif.core.internal.protocol.Range;
+import com.microsoft.java.lsif.core.internal.protocol.ReferenceItem;
+import com.microsoft.java.lsif.core.internal.protocol.Vertex;
 
 public class EdgeBuilder {
 
@@ -25,8 +32,20 @@ public class EdgeBuilder {
 		return new Edge(generator.next(), Edge.CONTAINS, from.getId(), to.getId());
 	}
 
+	public Edge referenceItem(Vertex from, Vertex to, String property) {
+		return new ReferenceItem(generator.next(), Edge.ITEM, from.getId(), to.getId(), property);
+	}
+
 	public Edge definition(Vertex from, Vertex to) {
 		return new Edge(generator.next(), Edge.T_DEFINITION, from.getId(), to.getId());
+	}
+
+	public Edge typeDefinition(Vertex from, Vertex to) {
+		return new Edge(generator.next(), Edge.T_TYPEDEFINITION, from.getId(), to.getId());
+	}
+
+	public Edge references(Vertex from, Vertex to) {
+		return new Edge(generator.next(), Edge.T_REFERENCES, from.getId(), to.getId());
 	}
 
 	public Edge documentSymbols(Vertex from, Vertex to) {

@@ -3,16 +3,11 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-package com.microsoft.java.lsif.core.internal;
+package com.microsoft.java.lsif.core.internal.visitors;
 
-public final class IConstant {
+public class HoverVisitor {
 
-	private IConstant() {
+	public HoverVisitor() {
+		// TODO
 	}
-
-	public final static String PLUGIN_ID = "com.microsoft.java.lsif.core";
-
-	public final static String JAVA_ID = "java";
-
-	public final static String DEFAULT_LSIF_FILE_NAME = "lsif.json";
 }

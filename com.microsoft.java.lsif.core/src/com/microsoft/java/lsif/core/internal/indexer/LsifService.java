@@ -3,9 +3,9 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-package com.microsoft.java.lsif.core.internal.protocol;
+package com.microsoft.java.lsif.core.internal.indexer;
 
-public class JavaLsif {
+public class LsifService {
 
 	private IdGenerator generator;
 
@@ -13,7 +13,7 @@ public class JavaLsif {
 
 	private EdgeBuilder eBuilder;
 
-	public JavaLsif() {
+	public LsifService() {
 		this.generator = new IdGenerator();
 		this.vBuilder = new VertexBuilder(generator);
 		this.eBuilder = new EdgeBuilder(generator);

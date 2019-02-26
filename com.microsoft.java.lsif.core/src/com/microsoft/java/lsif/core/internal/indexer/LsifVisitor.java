@@ -11,59 +11,51 @@ import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 
-import com.microsoft.java.lsif.core.internal.indexer.handlers.DefinitionHandler;
+import com.microsoft.java.lsif.core.internal.visitors.DefinitionVisitor;
+import com.microsoft.java.lsif.core.internal.visitors.ReferencesVisitor;
 
 public class LsifVisitor extends ASTVisitor {
 
-	private IndexerContext context;
+	private DefinitionVisitor defVisitor;
+
+	private ReferencesVisitor refVisitor;
 
 	public LsifVisitor(IndexerContext context) {
-		this.context = context;
+		this.defVisitor = new DefinitionVisitor(context);
+		this.refVisitor = new ReferencesVisitor(context);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.jdt.core.dom.ASTVisitor#visit(org.eclipse.jdt.core.dom.
-	 * FieldDeclaration)
-	 */
 	@Override
 	public boolean visit(FieldDeclaration node) {
-		// TODO Auto-generated method stub
 		return super.visit(node);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.jdt.core.dom.ASTVisitor#visit(org.eclipse.jdt.core.dom.
-	 * SingleVariableDeclaration)
-	 */
 	@Override
 	public boolean visit(SingleVariableDeclaration node) {
-		DefinitionHandler.handler(node, context);
+		defVisitor.handle(node);
 		return false;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.jdt.core.dom.ASTVisitor#visit(org.eclipse.jdt.core.dom.
-	 * SimpleType)
-	 */
 	@Override
 	public boolean visit(SimpleType node) {
 		if (node.getParent() instanceof TypeDeclaration) {
-			DefinitionHandler.handler(node, context);
+			defVisitor.handle(node);
 			return false;
 		}
 		return super.visit(node);
+	}
+
+	@Override
+	public boolean visit(MethodDeclaration node) {
+		refVisitor.handle(node);
+		return true;
 	}
 
 	@Override

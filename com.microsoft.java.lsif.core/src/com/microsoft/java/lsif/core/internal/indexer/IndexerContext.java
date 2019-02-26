@@ -6,27 +6,30 @@
 package com.microsoft.java.lsif.core.internal.indexer;
 
 import org.eclipse.jdt.core.ITypeRoot;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 
 import com.microsoft.java.lsif.core.internal.emitter.Emitter;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
-import com.microsoft.java.lsif.core.internal.protocol.JavaLsif;
 
 public class IndexerContext {
 
 	private Emitter emitter;
 
-	private JavaLsif lsif;
+	private LsifService lsif;
 
 	private Document docVertex;
 
 	private ITypeRoot typeRoot;
 
-	public IndexerContext(Emitter emitter, JavaLsif lsif, Document docVertex, ITypeRoot typeRoot) {
+	private PreferenceManager preferenceManger;
+
+
+	public IndexerContext(Emitter emitter, LsifService lsif, Document docVertex, ITypeRoot typeRoot, PreferenceManager preferenceManager) {
 		this.setEmitter(emitter);
 		this.setLsif(lsif);
 		this.setDocVertex(docVertex);
 		this.setTypeRoot(typeRoot);
-
+		this.setPreferenceManger(preferenceManager);
 	}
 
 	public Emitter getEmitter() {
@@ -36,7 +39,7 @@ public class IndexerContext {
 	/**
 	 * @return the lsif
 	 */
-	public JavaLsif getLsif() {
+	public LsifService getLsif() {
 		return lsif;
 	}
 
@@ -70,7 +73,7 @@ public class IndexerContext {
 	/**
 	 * @param lsif the lsif to set
 	 */
-	public void setLsif(JavaLsif lsif) {
+	public void setLsif(LsifService lsif) {
 		this.lsif = lsif;
 	}
 
@@ -79,5 +82,19 @@ public class IndexerContext {
 	 */
 	public void setDocVertex(Document docVertex) {
 		this.docVertex = docVertex;
+	}
+
+	/**
+	 * @return the preferenceManger
+	 */
+	public PreferenceManager getPreferenceManger() {
+		return preferenceManger;
+	}
+
+	/**
+	 * @param preferenceManger the preferenceManger to set
+	 */
+	public void setPreferenceManger(PreferenceManager preferenceManger) {
+		this.preferenceManger = preferenceManger;
 	}
 }

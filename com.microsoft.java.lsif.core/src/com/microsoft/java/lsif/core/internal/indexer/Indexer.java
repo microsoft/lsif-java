@@ -22,9 +22,7 @@ import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.lsp4j.ClientCapabilities;
-import org.eclipse.lsp4j.DocumentSymbol;
 import org.eclipse.lsp4j.jsonrpc.json.adapters.CollectionTypeAdapterFactory;
 import org.eclipse.lsp4j.jsonrpc.json.adapters.EnumTypeAdapterFactory;
 
@@ -34,12 +32,9 @@ import com.microsoft.java.lsif.core.internal.IConstant;
 import com.microsoft.java.lsif.core.internal.LanguageServerIndexerPlugin;
 import com.microsoft.java.lsif.core.internal.emitter.Emitter;
 import com.microsoft.java.lsif.core.internal.emitter.JsonEmitter;
-import com.microsoft.java.lsif.core.internal.indexer.handlers.DocumentSymbolHandler;
-import com.microsoft.java.lsif.core.internal.indexer.handlers.WorkspaceHandler;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
-import com.microsoft.java.lsif.core.internal.protocol.DocumentSymbolResult;
-import com.microsoft.java.lsif.core.internal.protocol.JavaLsif;
 import com.microsoft.java.lsif.core.internal.protocol.Project;
+import com.microsoft.java.lsif.core.internal.visitors.DocumentVisitor;
 
 public class Indexer {
 
@@ -53,7 +48,6 @@ public class Indexer {
 	}
 
 	public void buildModel() {
-
 		NullProgressMonitor monitor = new NullProgressMonitor();
 
 		List<IPath> projectRoots = this.handler.initialize();
@@ -68,7 +62,7 @@ public class Indexer {
 				handler.buildProject(monitor);
 				buildIndex(path, monitor, emitter);
 				handler.removeProject(path, monitor);
-				JavaLanguageServerPlugin.logInfo("End index project: " + path.toPortableString());
+				LanguageServerIndexerPlugin.logInfo("End index project: " + path.toPortableString());
 			} catch (Exception ex) {
 				// ignore it
 			} finally {
@@ -83,8 +77,8 @@ public class Indexer {
 	}
 
 	private void buildIndex(IPath path, IProgressMonitor monitor, Emitter emitter) {
-
-		JavaLsif lsif = new JavaLsif();
+		LsifService lsif = new LsifService();
+		emitter.start();
 		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
 		LanguageServerIndexerPlugin.logInfo(String.format("collectModel, projects # = %d", projects.length));
 
@@ -109,18 +103,15 @@ public class Indexer {
 								if (fragment.hasChildren()) {
 									for (IJavaElement sourceFile : fragment.getChildren()) {
 										CompilationUnit cu = ASTUtil.createAST((ITypeRoot) sourceFile, monitor);
-										Document docVertex = lsif.getVertexBuilder()
-												.document(ResourceUtils.fixURI(sourceFile.getResource().getRawLocationURI()));
-										emitter.emit(docVertex);
-										emitter.emit(lsif.getEdgeBuilder().contains(projVertex, docVertex));
 
-										// Document symbols
-										List<DocumentSymbol> symbols = DocumentSymbolHandler.handle(docVertex.getUri());
-										DocumentSymbolResult documentSymbolResult = lsif.getVertexBuilder().documentSymbolResult(symbols);
-										emitter.emit(documentSymbolResult);
-										emitter.emit(lsif.getEdgeBuilder().documentSymbols(docVertex, documentSymbolResult));
+										IndexerContext currentContext = new IndexerContext(emitter, lsif, null, (ITypeRoot) sourceFile,
+												JavaLanguageServerPlugin.getPreferencesManager());
 
-										cu.accept(new LsifVisitor((new IndexerContext(emitter, lsif, docVertex, (ITypeRoot) sourceFile))));
+										Document docVertex = (new DocumentVisitor(currentContext, projVertex)).enlist(sourceFile);
+										currentContext.setDocVertex(docVertex);
+
+										cu.accept(new LsifVisitor((new IndexerContext(emitter, lsif, docVertex, (ITypeRoot) sourceFile,
+												JavaLanguageServerPlugin.getPreferencesManager()))));
 									}
 								}
 							}
@@ -130,6 +121,7 @@ public class Indexer {
 			} catch (Exception e) {
 			}
 		}
+		emitter.end();
 	}
 
 	private void initializeJdtls() {

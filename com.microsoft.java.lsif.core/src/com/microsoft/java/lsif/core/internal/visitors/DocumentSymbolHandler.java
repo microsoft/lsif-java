@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-package com.microsoft.java.lsif.core.internal.indexer.handlers;
+package com.microsoft.java.lsif.core.internal.visitors;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -15,7 +15,10 @@ import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
-public class DocumentSymbolHandler {
+public final class DocumentSymbolHandler {
+
+	private DocumentSymbolHandler() {
+	}
 
 	public static List<DocumentSymbol> handle(String uri) {
 		DocumentSymbolParams documentSymbolParams = new DocumentSymbolParams(new TextDocumentIdentifier(uri));
