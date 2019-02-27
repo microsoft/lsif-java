@@ -23,8 +23,10 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.lsp4j.ClientCapabilities;
-import org.eclipse.lsp4j.jsonrpc.json.adapters.CollectionTypeAdapterFactory;
-import org.eclipse.lsp4j.jsonrpc.json.adapters.EnumTypeAdapterFactory;
+import org.eclipse.lsp4j.adapters.HoverTypeAdapter;
+import org.eclipse.lsp4j.jsonrpc.json.adapters.CollectionTypeAdapter;
+import org.eclipse.lsp4j.jsonrpc.json.adapters.EitherTypeAdapter;
+import org.eclipse.lsp4j.jsonrpc.json.adapters.EnumTypeAdapter;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -38,8 +40,12 @@ import com.microsoft.java.lsif.core.internal.visitors.DocumentVisitor;
 
 public class Indexer {
 
-	private static final Gson gson = new GsonBuilder().registerTypeAdapterFactory(new CollectionTypeAdapterFactory())
-			.registerTypeAdapterFactory(new EnumTypeAdapterFactory()).create();
+	private static final Gson gson = new GsonBuilder()
+			.registerTypeAdapterFactory(new CollectionTypeAdapter.Factory())
+			.registerTypeAdapterFactory(new EnumTypeAdapter.Factory())
+			.registerTypeAdapterFactory(new HoverTypeAdapter.Factory())
+			.registerTypeAdapterFactory(new EitherTypeAdapter.Factory())
+			.create();
 
 	private WorkspaceHandler handler;
 

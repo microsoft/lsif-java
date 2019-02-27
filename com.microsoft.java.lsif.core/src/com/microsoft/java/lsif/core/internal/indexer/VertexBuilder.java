@@ -8,11 +8,13 @@ package com.microsoft.java.lsif.core.internal.indexer;
 import java.util.List;
 
 import org.eclipse.lsp4j.DocumentSymbol;
+import org.eclipse.lsp4j.Hover;
 
 import com.microsoft.java.lsif.core.internal.JdtlsUtils;
 import com.microsoft.java.lsif.core.internal.protocol.DefinitionResult;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.DocumentSymbolResult;
+import com.microsoft.java.lsif.core.internal.protocol.HoverResult;
 import com.microsoft.java.lsif.core.internal.protocol.MetaData;
 import com.microsoft.java.lsif.core.internal.protocol.Project;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
@@ -52,6 +54,10 @@ public final class VertexBuilder {
 
 	public DefinitionResult definitionResult(String resultId) {
 		return new DefinitionResult(generator.next(), resultId);
+	}
+
+	public HoverResult hoverResult(Hover hover) {
+		return new HoverResult(generator.next(), hover);
 	}
 
 	public TypeDefinitionResult typeDefinitionResult(String resultId) {

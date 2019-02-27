@@ -19,17 +19,22 @@ import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 
 import com.microsoft.java.lsif.core.internal.visitors.DefinitionVisitor;
+import com.microsoft.java.lsif.core.internal.visitors.HoverVisitor;
 import com.microsoft.java.lsif.core.internal.visitors.ReferencesVisitor;
+import com.microsoft.java.lsif.core.internal.visitors.TypeDefinitionVisitor;
 
 public class LsifVisitor extends ASTVisitor {
 
 	private DefinitionVisitor defVisitor;
-
 	private ReferencesVisitor refVisitor;
+	private TypeDefinitionVisitor typeDefVisitor;
+	private HoverVisitor hoverVisitor;
 
 	public LsifVisitor(IndexerContext context) {
 		this.defVisitor = new DefinitionVisitor(context);
 		this.refVisitor = new ReferencesVisitor(context);
+		this.typeDefVisitor = new TypeDefinitionVisitor(context);
+		this.hoverVisitor = new HoverVisitor(context);
 	}
 
 	@Override
@@ -47,6 +52,7 @@ public class LsifVisitor extends ASTVisitor {
 	public boolean visit(SimpleType node) {
 		if (node.getParent() instanceof TypeDeclaration) {
 			defVisitor.handle(node);
+			hoverVisitor.handle(node);
 			return false;
 		}
 		return super.visit(node);

@@ -32,6 +32,10 @@ public class EdgeBuilder {
 		return new Edge(generator.next(), Edge.CONTAINS, from.getId(), to.getId());
 	}
 
+	public Edge hover(Vertex from, Vertex to) {
+		return new Edge(generator.next(), Edge.T_HOVER, from.getId(), to.getId());
+	}
+
 	public Edge referenceItem(Vertex from, Vertex to, String property) {
 		return new ReferenceItem(generator.next(), Edge.ITEM, from.getId(), to.getId(), property);
 	}
