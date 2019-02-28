@@ -9,12 +9,15 @@ import java.util.List;
 
 import org.eclipse.lsp4j.DocumentSymbol;
 import org.eclipse.lsp4j.Hover;
+import org.eclipse.lsp4j.Location;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 import com.microsoft.java.lsif.core.internal.JdtlsUtils;
 import com.microsoft.java.lsif.core.internal.protocol.DefinitionResult;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.DocumentSymbolResult;
 import com.microsoft.java.lsif.core.internal.protocol.HoverResult;
+import com.microsoft.java.lsif.core.internal.protocol.ImplementationResult;
 import com.microsoft.java.lsif.core.internal.protocol.MetaData;
 import com.microsoft.java.lsif.core.internal.protocol.Project;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
@@ -70,6 +73,10 @@ public final class VertexBuilder {
 
 	public ReferenceResult referenceResult(List<String> declarations, List<String> definitions, List<String> references, List<String> referenceResults) {
 		return new ReferenceResult(generator.next(), declarations, definitions, references, referenceResults);
+	}
+
+	public ImplementationResult implementationResult(List<Either<String, Location>> result) {
+		return new ImplementationResult(generator.next(), result);
 	}
 
 	public DocumentSymbolResult documentSymbolResult(List<DocumentSymbol> symbols) {

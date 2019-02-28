@@ -47,6 +47,11 @@ public class ReferencesVisitor extends ProtocolVisitor {
 		Emitter emitter = this.getContext().getEmitter();
 		LsifService lsif = this.getContext().getLsif();
 
+		List<Range> ranges = getReferenceRanges(fromRange.getStart().getLine(), fromRange.getStart().getCharacter());
+		if (ranges == null || ranges.size() == 0) {
+			return;
+		}
+
 		// Source range:
 		Range sourceRange = this.enlistRange(this.getContext().getDocVertex(), fromRange);
 
@@ -61,22 +66,19 @@ public class ReferencesVisitor extends ProtocolVisitor {
 		emitter.emit(refResult);
 		emitter.emit(lsif.getEdgeBuilder().references(resultSet, refResult));
 
-		List<Range> referenceRangeIds = getReferenceRanges(this.getContext().getDocVertex().getUri(), fromRange.getStart().getLine(),
-				fromRange.getStart().getCharacter());
-
-		for (Range r : referenceRangeIds) {
+		for (Range r : ranges) {
 			emitter.emit(lsif.getEdgeBuilder().referenceItem(refResult, r, ReferenceItem.REFERENCE));
 		}
 	}
 
-	private List<Range> getReferenceRanges(String uri, int line, int character) {
-		List<Location> locations = handle(uri, line, character);
+	private List<Range> getReferenceRanges(int line, int character) {
+		List<Location> locations = getReferenceLocations(line, character);
 		return locations.stream().map(loc -> this.enlistRange(loc.getUri(), loc.getRange())).filter(r -> r != null).collect(Collectors.toList());
 	}
 
-	private List<Location> handle(String uri, int line, int character) {
+	private List<Location> getReferenceLocations(int line, int character) {
 		ReferenceParams params = new ReferenceParams(new ReferenceContext(true));
-		params.setTextDocument(new TextDocumentIdentifier(uri));
+		params.setTextDocument(new TextDocumentIdentifier(this.getContext().getDocVertex().getUri()));
 		params.setPosition(new Position(line, character));
 
 		org.eclipse.jdt.ls.core.internal.handlers.ReferencesHandler proxy = new org.eclipse.jdt.ls.core.internal.handlers.ReferencesHandler(

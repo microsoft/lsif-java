@@ -8,9 +8,11 @@ package com.microsoft.java.lsif.core.internal.visitors;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.Type;
+import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.Location;
@@ -31,16 +33,24 @@ public class DefinitionVisitor extends ProtocolVisitor {
 		super(context);
 	}
 
-	public void handle(SingleVariableDeclaration node) {
+	public void visit(SimpleName node) {
+		handleDefinition(node.getStartPosition(), node.getLength());
+	}
+
+	public void visit(SingleVariableDeclaration node) {
 		Type declarationType = node.getType();
-		handleTypeDeclaration(declarationType.getStartPosition(), declarationType.getLength());
+		handleDefinition(declarationType.getStartPosition(), declarationType.getLength());
 	}
 
-	public void handle(SimpleType node) {
-		handleTypeDeclaration(node.getStartPosition(), node.getLength());
+	public void visit(TypeDeclaration node) {
+		handleDefinition(node.getStartPosition(), node.getLength());
 	}
 
-	private void handleTypeDeclaration(int startPosition, int length) {
+	public void visit(SimpleType node) {
+		handleDefinition(node.getStartPosition(), node.getLength());
+	}
+
+	private void handleDefinition(int startPosition, int length) {
 		Emitter emitter = this.getContext().getEmitter();
 		LsifService lsif = this.getContext().getLsif();
 		Document docVertex = this.getContext().getDocVertex();

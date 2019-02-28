@@ -14,27 +14,28 @@ import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.QualifiedName;
+import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 
 import com.microsoft.java.lsif.core.internal.visitors.DefinitionVisitor;
 import com.microsoft.java.lsif.core.internal.visitors.HoverVisitor;
+import com.microsoft.java.lsif.core.internal.visitors.ImplementationsVisitor;
 import com.microsoft.java.lsif.core.internal.visitors.ReferencesVisitor;
-import com.microsoft.java.lsif.core.internal.visitors.TypeDefinitionVisitor;
 
 public class LsifVisitor extends ASTVisitor {
 
 	private DefinitionVisitor defVisitor;
 	private ReferencesVisitor refVisitor;
-	private TypeDefinitionVisitor typeDefVisitor;
 	private HoverVisitor hoverVisitor;
+	private ImplementationsVisitor implVistor;
 
 	public LsifVisitor(IndexerContext context) {
 		this.defVisitor = new DefinitionVisitor(context);
 		this.refVisitor = new ReferencesVisitor(context);
-		this.typeDefVisitor = new TypeDefinitionVisitor(context);
 		this.hoverVisitor = new HoverVisitor(context);
+		this.implVistor = new ImplementationsVisitor(context);
 	}
 
 	@Override
@@ -44,17 +45,24 @@ public class LsifVisitor extends ASTVisitor {
 
 	@Override
 	public boolean visit(SingleVariableDeclaration node) {
-		defVisitor.handle(node);
+		defVisitor.visit(node);
 		return false;
 	}
 
 	@Override
 	public boolean visit(SimpleType node) {
 		if (node.getParent() instanceof TypeDeclaration) {
-			defVisitor.handle(node);
-			hoverVisitor.handle(node);
+			defVisitor.visit(node);
+			hoverVisitor.visit(node);
 			return false;
 		}
+		return super.visit(node);
+	}
+
+	@Override
+	public boolean visit(TypeDeclaration node) {
+		defVisitor.visit(node);
+		hoverVisitor.visit(node);
 		return super.visit(node);
 	}
 
@@ -92,5 +100,15 @@ public class LsifVisitor extends ASTVisitor {
 		}
 
 		return true;
+	}
+
+	@Override
+	public boolean visit(SimpleName node) {
+		if (node.getParent() instanceof TypeDeclaration) {
+			defVisitor.visit(node);
+			implVistor.visit(node);
+			return false;
+		}
+		return super.visit(node);
 	}
 }

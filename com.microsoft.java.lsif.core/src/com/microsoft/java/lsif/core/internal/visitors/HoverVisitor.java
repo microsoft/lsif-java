@@ -8,6 +8,7 @@ package com.microsoft.java.lsif.core.internal.visitors;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.dom.SimpleType;
+import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.handlers.HoverHandler;
 import org.eclipse.lsp4j.Hover;
@@ -30,8 +31,12 @@ public class HoverVisitor extends ProtocolVisitor {
 		super(context);
 	}
 
-	public void handle(SimpleType type) {
+	public void visit(SimpleType type) {
 		handleHover(type.getStartPosition(), type.getLength());
+	}
+
+	public void visit(TypeDeclaration node) {
+		handleHover(node.getStartPosition(), node.getLength());
 	}
 
 	private void handleHover(int startPosition, int length) {
