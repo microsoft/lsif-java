@@ -69,7 +69,8 @@ public final class ASTUtil {
 
 			@Override
 			public void handleException(Throwable ex) {
-				IStatus status = new Status(IStatus.ERROR, IConstant.PLUGIN_ID, IStatus.OK, "Error in JDT Core during AST creation", ex); //$NON-NLS-1$
+				IStatus status = new Status(IStatus.ERROR, IConstant.PLUGIN_ID, IStatus.OK,
+						"Error in JDT Core during AST creation", ex); //$NON-NLS-1$
 				JavaLanguageServerPlugin.log(status);
 			}
 		});

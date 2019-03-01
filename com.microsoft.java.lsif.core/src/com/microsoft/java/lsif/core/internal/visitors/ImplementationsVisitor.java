@@ -20,7 +20,6 @@ import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 import com.microsoft.java.lsif.core.internal.emitter.Emitter;
-import com.microsoft.java.lsif.core.internal.indexer.IndexerContext;
 import com.microsoft.java.lsif.core.internal.indexer.LsifService;
 import com.microsoft.java.lsif.core.internal.protocol.ImplementationResult;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
@@ -28,11 +27,11 @@ import com.microsoft.java.lsif.core.internal.protocol.ResultSet;
 
 public class ImplementationsVisitor extends ProtocolVisitor {
 
-	public ImplementationsVisitor(IndexerContext context) {
-		super(context);
+	public ImplementationsVisitor() {
 	}
 
-	public void visit(SimpleName node) {
+	@Override
+	public boolean visit(SimpleName node) {
 		int startPosition = node.getStartPosition();
 		int length = node.getLength();
 
@@ -40,15 +39,16 @@ public class ImplementationsVisitor extends ProtocolVisitor {
 		try {
 			fromRange = JDTUtils.toRange(this.getContext().getTypeRoot(), startPosition, length);
 		} catch (CoreException e) {
-			return;
+			return super.visit(node);
 		}
 
 		Emitter emitter = this.getContext().getEmitter();
 		LsifService lsif = this.getContext().getLsif();
 
-		List<Range> ranges = getImplementationRanges(fromRange.getStart().getLine(), fromRange.getStart().getCharacter());
+		List<Range> ranges = getImplementationRanges(fromRange.getStart().getLine(),
+				fromRange.getStart().getCharacter());
 		if (ranges == null || ranges.size() == 0) {
-			return;
+			return super.visit(node);
 		}
 
 		// Source range:
@@ -61,22 +61,24 @@ public class ImplementationsVisitor extends ProtocolVisitor {
 		emitter.emit(lsif.getEdgeBuilder().refersTo(sourceRange, resultSet));
 
 		// ImplementationResult
-		List<Either<String, Location>> result = ranges.stream().map(r -> Either.<String, Location>forLeft(r.getId())).collect(Collectors.toList());
+		List<Either<String, Location>> result = ranges.stream().map(r -> Either.<String, Location>forLeft(r.getId()))
+				.collect(Collectors.toList());
 		ImplementationResult implResult = lsif.getVertexBuilder().implementationResult(result);
 
 		emitter.emit(implResult);
 		emitter.emit(lsif.getEdgeBuilder().references(resultSet, implResult));
-
+		return false;
 	}
 
 	private List<Range> getImplementationRanges(int line, int character) {
 		List<? extends Location> locations = getImplementations(line, character);
-		return locations.stream().map(loc -> this.enlistRange(loc.getUri(), loc.getRange())).filter(r -> r != null).collect(Collectors.toList());
+		return locations.stream().map(loc -> this.enlistRange(loc.getUri(), loc.getRange())).filter(r -> r != null)
+				.collect(Collectors.toList());
 	}
 
 	public List<? extends Location> getImplementations(int line, int character) {
-		TextDocumentPositionParams params = new TextDocumentPositionParams(new TextDocumentIdentifier(this.getContext().getDocVertex().getUri()),
-				new Position(line, character));
+		TextDocumentPositionParams params = new TextDocumentPositionParams(
+				new TextDocumentIdentifier(this.getContext().getDocVertex().getUri()), new Position(line, character));
 
 		ImplementationsHandler proxy = new ImplementationsHandler(this.getContext().getPreferenceManger());
 		return proxy.findImplementations(params, new NullProgressMonitor());

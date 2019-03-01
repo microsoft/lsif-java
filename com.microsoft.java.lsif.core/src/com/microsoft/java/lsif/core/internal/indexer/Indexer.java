@@ -3,6 +3,7 @@ package com.microsoft.java.lsif.core.internal.indexer;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,18 +37,31 @@ import com.microsoft.java.lsif.core.internal.emitter.Emitter;
 import com.microsoft.java.lsif.core.internal.emitter.JsonEmitter;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.Project;
+import com.microsoft.java.lsif.core.internal.visitors.DefinitionVisitor;
 import com.microsoft.java.lsif.core.internal.visitors.DocumentVisitor;
+import com.microsoft.java.lsif.core.internal.visitors.HoverVisitor;
+import com.microsoft.java.lsif.core.internal.visitors.ImplementationsVisitor;
+import com.microsoft.java.lsif.core.internal.visitors.ProtocolVisitor;
+import com.microsoft.java.lsif.core.internal.visitors.ReferencesVisitor;
+import com.microsoft.java.lsif.core.internal.visitors.TypeDefinitionVisitor;
 
 public class Indexer {
 
-	private static final Gson gson = new GsonBuilder()
-			.registerTypeAdapterFactory(new CollectionTypeAdapter.Factory())
+	private static final Gson gson = new GsonBuilder().registerTypeAdapterFactory(new CollectionTypeAdapter.Factory())
 			.registerTypeAdapterFactory(new EnumTypeAdapter.Factory())
 			.registerTypeAdapterFactory(new HoverTypeAdapter.Factory())
-			.registerTypeAdapterFactory(new EitherTypeAdapter.Factory())
-			.create();
+			.registerTypeAdapterFactory(new EitherTypeAdapter.Factory()).create();
 
 	private WorkspaceHandler handler;
+
+	//@formatter:off
+	private List<ProtocolVisitor> visitors = Arrays.asList(
+			new DefinitionVisitor(),
+			new TypeDefinitionVisitor(),
+			new ImplementationsVisitor(),
+			new ReferencesVisitor(),
+			new HoverVisitor());
+	//@formatter:on
 
 	public Indexer() {
 		this.handler = new WorkspaceHandler(System.getProperty("intellinav.repo.path"));
@@ -70,25 +84,19 @@ public class Indexer {
 				handler.removeProject(path, monitor);
 				LanguageServerIndexerPlugin.logInfo("End index project: " + path.toPortableString());
 			} catch (Exception ex) {
-				// ignore it
-			} finally {
-				// Output model
-				try {
-					Path projectPath = Paths.get(path.toFile().toURI());
-					FileUtils.writeStringToFile(projectPath.resolve(IConstant.DEFAULT_LSIF_FILE_NAME).toFile(), gson.toJson(emitter.getElements()));
-				} catch (IOException e) {
-				}
+				LanguageServerIndexerPlugin.logException("Exception when indexing ", ex);
 			}
 		}
 	}
 
 	private void buildIndex(IPath path, IProgressMonitor monitor, Emitter emitter) {
 		LsifService lsif = new LsifService();
-		emitter.start();
+
 		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
 		LanguageServerIndexerPlugin.logInfo(String.format("collectModel, projects # = %d", projects.length));
 
 		for (IProject proj : projects) {
+			emitter.start();
 			if (proj == null) {
 				return;
 			}
@@ -110,14 +118,18 @@ public class Indexer {
 									for (IJavaElement sourceFile : fragment.getChildren()) {
 										CompilationUnit cu = ASTUtil.createAST((ITypeRoot) sourceFile, monitor);
 
-										IndexerContext currentContext = new IndexerContext(emitter, lsif, null, (ITypeRoot) sourceFile,
+										IndexerContext currentContext = new IndexerContext(emitter, lsif, null,
+												(ITypeRoot) sourceFile,
 												JavaLanguageServerPlugin.getPreferencesManager());
 
-										Document docVertex = (new DocumentVisitor(currentContext, projVertex)).enlist(sourceFile);
+										Document docVertex = (new DocumentVisitor(currentContext, projVertex))
+												.enlist(sourceFile);
 										currentContext.setDocVertex(docVertex);
 
-										cu.accept(new LsifVisitor((new IndexerContext(emitter, lsif, docVertex, (ITypeRoot) sourceFile,
-												JavaLanguageServerPlugin.getPreferencesManager()))));
+										for (ProtocolVisitor vis : this.visitors) {
+											vis.setContext(currentContext);
+											cu.accept(vis);
+										}
 									}
 								}
 							}
@@ -125,14 +137,24 @@ public class Indexer {
 					}
 				}
 			} catch (Exception e) {
+			} finally {
+				// Output model
+				try {
+					Path projectPath = Paths.get(path.toFile().toURI());
+					FileUtils.writeStringToFile(projectPath.resolve(IConstant.DEFAULT_LSIF_FILE_NAME).toFile(),
+							gson.toJson(emitter.getElements()));
+				} catch (IOException e) {
+				}
 			}
+			emitter.end();
 		}
-		emitter.end();
+
 	}
 
 	private void initializeJdtls() {
 		Map<String, Object> extendedClientCapabilities = new HashMap<>();
 		extendedClientCapabilities.put("classFileContentsSupport", false);
-		JavaLanguageServerPlugin.getPreferencesManager().updateClientPrefences(new ClientCapabilities(), extendedClientCapabilities);
+		JavaLanguageServerPlugin.getPreferencesManager().updateClientPrefences(new ClientCapabilities(),
+				extendedClientCapabilities);
 	}
 }

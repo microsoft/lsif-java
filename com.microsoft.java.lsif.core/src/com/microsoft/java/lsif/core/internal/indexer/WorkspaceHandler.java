@@ -92,7 +92,8 @@ public class WorkspaceHandler {
 		}
 	}
 
-	public IProjectImporter getImporter(File rootFolder, IProgressMonitor monitor) throws OperationCanceledException, CoreException {
+	public IProjectImporter getImporter(File rootFolder, IProgressMonitor monitor)
+			throws OperationCanceledException, CoreException {
 		Collection<IProjectImporter> importers = importers();
 		SubMonitor subMonitor = SubMonitor.convert(monitor, importers.size());
 		for (IProjectImporter importer : importers) {
@@ -106,7 +107,8 @@ public class WorkspaceHandler {
 
 	private Collection<IProjectImporter> importers() {
 		Map<Integer, IProjectImporter> importers = new TreeMap<>();
-		IExtensionPoint extensionPoint = Platform.getExtensionRegistry().getExtensionPoint(JavaLanguageServerPlugin.PLUGIN_ID, "importers");
+		IExtensionPoint extensionPoint = Platform.getExtensionRegistry()
+				.getExtensionPoint(JavaLanguageServerPlugin.PLUGIN_ID, "importers");
 		IConfigurationElement[] configs = extensionPoint.getConfigurationElements();
 		for (int i = 0; i < configs.length; i++) {
 			try {
@@ -134,7 +136,8 @@ public class WorkspaceHandler {
 	}
 
 	private void collectionProjects(File f, List<IPath> result) {
-		if (f.isDirectory() && ((new File(f.getAbsolutePath(), "pom.xml")).exists() || (new File(f.getAbsolutePath(), "build.gradle")).exists())) {
+		if (f.isDirectory() && ((new File(f.getAbsolutePath(), "pom.xml")).exists()
+				|| (new File(f.getAbsolutePath(), "build.gradle")).exists())) {
 			result.add(ResourceUtils.filePathFromURI(f.toURI().toString()));
 		}
 	}

@@ -71,7 +71,8 @@ public final class VertexBuilder {
 		return new ReferenceResult(generator.next());
 	}
 
-	public ReferenceResult referenceResult(List<String> declarations, List<String> definitions, List<String> references, List<String> referenceResults) {
+	public ReferenceResult referenceResult(List<String> declarations, List<String> definitions, List<String> references,
+			List<String> referenceResults) {
 		return new ReferenceResult(generator.next(), declarations, definitions, references, referenceResults);
 	}
 

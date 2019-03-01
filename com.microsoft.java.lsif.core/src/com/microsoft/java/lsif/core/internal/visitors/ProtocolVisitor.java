@@ -5,25 +5,30 @@
 
 package com.microsoft.java.lsif.core.internal.visitors;
 
+import org.eclipse.jdt.core.dom.ASTVisitor;
+
 import com.microsoft.java.lsif.core.internal.JdtlsUtils;
 import com.microsoft.java.lsif.core.internal.indexer.IndexerContext;
 import com.microsoft.java.lsif.core.internal.indexer.Repository;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
 
-public abstract class ProtocolVisitor {
+public abstract class ProtocolVisitor extends ASTVisitor {
 
 	private IndexerContext context;
 
 	/**
 	 * Constructor
 	 */
-	public ProtocolVisitor(IndexerContext context) {
-		this.context = context;
+	public ProtocolVisitor() {
 	}
 
-	protected IndexerContext getContext() {
+	public IndexerContext getContext() {
 		return this.context;
+	}
+
+	public void setContext(IndexerContext context) {
+		this.context = context;
 	}
 
 	public Document enlistDocument(String uri) {

@@ -20,7 +20,6 @@ import org.eclipse.lsp4j.Location;
 import com.microsoft.java.lsif.core.internal.JdtlsUtils;
 import com.microsoft.java.lsif.core.internal.LanguageServerIndexerPlugin;
 import com.microsoft.java.lsif.core.internal.emitter.Emitter;
-import com.microsoft.java.lsif.core.internal.indexer.IndexerContext;
 import com.microsoft.java.lsif.core.internal.indexer.LsifService;
 import com.microsoft.java.lsif.core.internal.protocol.DefinitionResult;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
@@ -29,36 +28,43 @@ import com.microsoft.java.lsif.core.internal.protocol.ResultSet;
 
 public class DefinitionVisitor extends ProtocolVisitor {
 
-	public DefinitionVisitor(IndexerContext context) {
-		super(context);
+	public DefinitionVisitor() {
 	}
 
-	public void visit(SimpleName node) {
-		handleDefinition(node.getStartPosition(), node.getLength());
+	@Override
+	public boolean visit(SimpleName node) {
+		emitDefinition(node.getStartPosition(), node.getLength());
+		return super.visit(node);
 	}
 
-	public void visit(SingleVariableDeclaration node) {
+	@Override
+	public boolean visit(SingleVariableDeclaration node) {
 		Type declarationType = node.getType();
-		handleDefinition(declarationType.getStartPosition(), declarationType.getLength());
+		emitDefinition(declarationType.getStartPosition(), declarationType.getLength());
+		return false;
 	}
 
-	public void visit(TypeDeclaration node) {
-		handleDefinition(node.getStartPosition(), node.getLength());
+	@Override
+	public boolean visit(TypeDeclaration node) {
+		emitDefinition(node.getStartPosition(), node.getLength());
+		return true;
 	}
 
-	public void visit(SimpleType node) {
-		handleDefinition(node.getStartPosition(), node.getLength());
+	@Override
+	public boolean visit(SimpleType node) {
+		emitDefinition(node.getStartPosition(), node.getLength());
+		return false;
 	}
 
-	private void handleDefinition(int startPosition, int length) {
-		Emitter emitter = this.getContext().getEmitter();
-		LsifService lsif = this.getContext().getLsif();
-		Document docVertex = this.getContext().getDocVertex();
+	private void emitDefinition(int startPosition, int length) {
+
 		try {
-			org.eclipse.lsp4j.Range fromRange = JDTUtils.toRange(this.getContext().getTypeRoot(), startPosition, length);
+			org.eclipse.lsp4j.Range fromRange = JDTUtils.toRange(this.getContext().getTypeRoot(), startPosition,
+					length);
 
-			IJavaElement element = JDTUtils.findElementAtSelection(this.getContext().getTypeRoot(), fromRange.getStart().getLine(),
-					fromRange.getStart().getCharacter(), new PreferenceManager(), new NullProgressMonitor());
+			IJavaElement element = JDTUtils.findElementAtSelection(this.getContext().getTypeRoot(),
+					fromRange.getStart().getLine(), fromRange.getStart().getCharacter(), new PreferenceManager(),
+					new NullProgressMonitor());
 			if (element == null) {
 				return;
 			}
@@ -67,6 +73,10 @@ public class DefinitionVisitor extends ProtocolVisitor {
 			if (targetLocation == null) {
 				return;
 			}
+
+			Emitter emitter = this.getContext().getEmitter();
+			LsifService lsif = this.getContext().getLsif();
+			Document docVertex = this.getContext().getDocVertex();
 
 			// Source range:
 			Range sourceRange = this.enlistRange(docVertex, fromRange);
@@ -88,8 +98,9 @@ public class DefinitionVisitor extends ProtocolVisitor {
 			emitter.emit(defResult);
 			emitter.emit(lsif.getEdgeBuilder().definition(resultSet, defResult));
 
-		} catch (CoreException e) {
-			LanguageServerIndexerPlugin.log(e);
+		} catch (CoreException ex) {
+			LanguageServerIndexerPlugin.logException("Exception in definition visitor: ", ex);
 		}
 	}
+
 }

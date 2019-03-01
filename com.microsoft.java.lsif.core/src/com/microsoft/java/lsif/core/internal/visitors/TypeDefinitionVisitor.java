@@ -20,7 +20,6 @@ import org.eclipse.lsp4j.TextDocumentPositionParams;
 
 import com.microsoft.java.lsif.core.internal.LanguageServerIndexerPlugin;
 import com.microsoft.java.lsif.core.internal.emitter.Emitter;
-import com.microsoft.java.lsif.core.internal.indexer.IndexerContext;
 import com.microsoft.java.lsif.core.internal.indexer.LsifService;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
@@ -29,8 +28,7 @@ import com.microsoft.java.lsif.core.internal.protocol.TypeDefinitionResult;
 
 public class TypeDefinitionVisitor extends ProtocolVisitor {
 
-	public TypeDefinitionVisitor(IndexerContext context) {
-		super(context);
+	public TypeDefinitionVisitor() {
 	}
 
 	public void handle(SingleVariableDeclaration node) {
@@ -47,9 +45,11 @@ public class TypeDefinitionVisitor extends ProtocolVisitor {
 		LsifService lsif = this.getContext().getLsif();
 		Document docVertex = this.getContext().getDocVertex();
 		try {
-			org.eclipse.lsp4j.Range fromRange = JDTUtils.toRange(this.getContext().getTypeRoot(), startPosition, length);
+			org.eclipse.lsp4j.Range fromRange = JDTUtils.toRange(this.getContext().getTypeRoot(), startPosition,
+					length);
 
-			Location targetLocation = computeTypeDefinitionNavigation(docVertex.getUri(), fromRange.getStart().getLine(), fromRange.getStart().getCharacter());
+			Location targetLocation = computeTypeDefinitionNavigation(docVertex.getUri(),
+					fromRange.getStart().getLine(), fromRange.getStart().getCharacter());
 
 			if (targetLocation == null) {
 				return;
@@ -81,7 +81,8 @@ public class TypeDefinitionVisitor extends ProtocolVisitor {
 	}
 
 	private static Location computeTypeDefinitionNavigation(String uri, int line, int column) {
-		TextDocumentPositionParams documentSymbolParams = new TextDocumentPositionParams(new TextDocumentIdentifier(uri), new Position(line, column));
+		TextDocumentPositionParams documentSymbolParams = new TextDocumentPositionParams(
+				new TextDocumentIdentifier(uri), new Position(line, column));
 		org.eclipse.jdt.ls.core.internal.handlers.NavigateToTypeDefinitionHandler proxy = new org.eclipse.jdt.ls.core.internal.handlers.NavigateToTypeDefinitionHandler();
 		List<? extends Location> typeDefinition = proxy.typeDefinition(documentSymbolParams, new NullProgressMonitor());
 		return typeDefinition.size() > 0 ? typeDefinition.get(0) : null;

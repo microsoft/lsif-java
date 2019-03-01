@@ -18,7 +18,6 @@ import org.eclipse.lsp4j.TextDocumentPositionParams;
 
 import com.microsoft.java.lsif.core.internal.LanguageServerIndexerPlugin;
 import com.microsoft.java.lsif.core.internal.emitter.Emitter;
-import com.microsoft.java.lsif.core.internal.indexer.IndexerContext;
 import com.microsoft.java.lsif.core.internal.indexer.LsifService;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.HoverResult;
@@ -27,16 +26,19 @@ import com.microsoft.java.lsif.core.internal.protocol.ResultSet;
 
 public class HoverVisitor extends ProtocolVisitor {
 
-	public HoverVisitor(IndexerContext context) {
-		super(context);
+	public HoverVisitor() {
 	}
 
-	public void visit(SimpleType type) {
+	@Override
+	public boolean visit(SimpleType type) {
 		handleHover(type.getStartPosition(), type.getLength());
+		return super.visit(type);
 	}
 
-	public void visit(TypeDeclaration node) {
+	@Override
+	public boolean visit(TypeDeclaration node) {
 		handleHover(node.getStartPosition(), node.getLength());
+		return super.visit(node);
 	}
 
 	private void handleHover(int startPosition, int length) {
@@ -45,7 +47,8 @@ public class HoverVisitor extends ProtocolVisitor {
 		LsifService lsif = this.getContext().getLsif();
 		Document docVertex = this.getContext().getDocVertex();
 		try {
-			org.eclipse.lsp4j.Range fromRange = JDTUtils.toRange(this.getContext().getTypeRoot(), startPosition, length);
+			org.eclipse.lsp4j.Range fromRange = JDTUtils.toRange(this.getContext().getTypeRoot(), startPosition,
+					length);
 
 			// Source range:
 			Range sourceRange = this.enlistRange(docVertex, fromRange);
@@ -70,8 +73,8 @@ public class HoverVisitor extends ProtocolVisitor {
 	}
 
 	private Hover hover(int line, int character) {
-		TextDocumentPositionParams params = new TextDocumentPositionParams(new TextDocumentIdentifier(this.getContext().getDocVertex().getUri()),
-				new Position(line, character));
+		TextDocumentPositionParams params = new TextDocumentPositionParams(
+				new TextDocumentIdentifier(this.getContext().getDocVertex().getUri()), new Position(line, character));
 
 		HoverHandler proxy = new HoverHandler(this.getContext().getPreferenceManger());
 		return proxy.hover(params, new NullProgressMonitor());

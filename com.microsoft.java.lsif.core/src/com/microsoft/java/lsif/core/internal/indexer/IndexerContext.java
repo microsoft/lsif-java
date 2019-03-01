@@ -23,8 +23,8 @@ public class IndexerContext {
 
 	private PreferenceManager preferenceManger;
 
-
-	public IndexerContext(Emitter emitter, LsifService lsif, Document docVertex, ITypeRoot typeRoot, PreferenceManager preferenceManager) {
+	public IndexerContext(Emitter emitter, LsifService lsif, Document docVertex, ITypeRoot typeRoot,
+			PreferenceManager preferenceManager) {
 		this.setEmitter(emitter);
 		this.setLsif(lsif);
 		this.setDocVertex(docVertex);
@@ -42,7 +42,6 @@ public class IndexerContext {
 	public LsifService getLsif() {
 		return lsif;
 	}
-
 
 	public Document getDocVertex() {
 		return this.docVertex;
@@ -68,7 +67,6 @@ public class IndexerContext {
 	public void setEmitter(Emitter emitter) {
 		this.emitter = emitter;
 	}
-
 
 	/**
 	 * @param lsif the lsif to set

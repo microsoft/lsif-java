@@ -6,10 +6,17 @@
 package com.microsoft.java.lsif.core.internal.visitors;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
+import org.eclipse.jdt.ls.core.internal.handlers.DocumentSymbolHandler;
 import org.eclipse.lsp4j.DocumentSymbol;
+import org.eclipse.lsp4j.DocumentSymbolParams;
+import org.eclipse.lsp4j.SymbolInformation;
+import org.eclipse.lsp4j.TextDocumentIdentifier;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 import com.microsoft.java.lsif.core.internal.indexer.IndexerContext;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
@@ -21,14 +28,15 @@ public class DocumentVisitor extends ProtocolVisitor {
 	private Project projVertex;
 
 	public DocumentVisitor(IndexerContext context, Project projVertex) {
-		super(context);
+		this.setContext(context);
 		this.projVertex = projVertex;
 	}
 
 	public Document enlist(IJavaElement sourceFile) {
 		String uri = ResourceUtils.fixURI(sourceFile.getResource().getRawLocationURI());
 		Document docVertex = this.enlistDocument(uri);
-		this.getContext().getEmitter().emit(this.getContext().getLsif().getEdgeBuilder().contains(projVertex, docVertex));
+		this.getContext().getEmitter()
+				.emit(this.getContext().getLsif().getEdgeBuilder().contains(projVertex, docVertex));
 
 		handleDocumentSymbol(docVertex);
 		return docVertex;
@@ -36,9 +44,20 @@ public class DocumentVisitor extends ProtocolVisitor {
 
 	// TODO: Refine the symbol to range-based
 	private void handleDocumentSymbol(Document docVertex) {
-		List<DocumentSymbol> symbols = DocumentSymbolHandler.handle(docVertex.getUri());
-		DocumentSymbolResult documentSymbolResult = this.getContext().getLsif().getVertexBuilder().documentSymbolResult(symbols);
+		List<DocumentSymbol> symbols = this.handle(docVertex.getUri());
+		DocumentSymbolResult documentSymbolResult = this.getContext().getLsif().getVertexBuilder()
+				.documentSymbolResult(symbols);
 		this.getContext().getEmitter().emit(documentSymbolResult);
-		this.getContext().getEmitter().emit(this.getContext().getLsif().getEdgeBuilder().documentSymbols(docVertex, documentSymbolResult));
+		this.getContext().getEmitter()
+				.emit(this.getContext().getLsif().getEdgeBuilder().documentSymbols(docVertex, documentSymbolResult));
+	}
+
+	private List<DocumentSymbol> handle(String uri) {
+		DocumentSymbolParams documentSymbolParams = new DocumentSymbolParams(new TextDocumentIdentifier(uri));
+		DocumentSymbolHandler proxy = new DocumentSymbolHandler(true);
+		List<Either<SymbolInformation, DocumentSymbol>> result = proxy.documentSymbol(documentSymbolParams,
+				new NullProgressMonitor());
+
+		return result.stream().map(either -> either.getRight()).collect(Collectors.toList());
 	}
 }

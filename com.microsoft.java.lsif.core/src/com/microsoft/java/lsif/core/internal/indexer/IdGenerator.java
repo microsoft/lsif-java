@@ -23,13 +23,13 @@ public class IdGenerator {
 
 	public String next() {
 		switch (idtype) {
-			case COUNTER:
-				counter++;
-				return String.valueOf(counter);
-			case UUID:
-				return UUID.randomUUID().toString();
-			default:
-				break;
+		case COUNTER:
+			counter++;
+			return String.valueOf(counter);
+		case UUID:
+			return UUID.randomUUID().toString();
+		default:
+			break;
 		}
 		return null;
 	}

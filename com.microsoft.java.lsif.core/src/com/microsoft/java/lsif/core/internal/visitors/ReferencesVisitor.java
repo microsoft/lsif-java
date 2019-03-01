@@ -19,7 +19,6 @@ import org.eclipse.lsp4j.ReferenceParams;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 
 import com.microsoft.java.lsif.core.internal.emitter.Emitter;
-import com.microsoft.java.lsif.core.internal.indexer.IndexerContext;
 import com.microsoft.java.lsif.core.internal.indexer.LsifService;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
 import com.microsoft.java.lsif.core.internal.protocol.ReferenceItem;
@@ -28,8 +27,7 @@ import com.microsoft.java.lsif.core.internal.protocol.ResultSet;
 
 public class ReferencesVisitor extends ProtocolVisitor {
 
-	public ReferencesVisitor(IndexerContext context) {
-		super(context);
+	public ReferencesVisitor() {
 	}
 
 	public void handle(MethodDeclaration declaration) {
@@ -73,7 +71,8 @@ public class ReferencesVisitor extends ProtocolVisitor {
 
 	private List<Range> getReferenceRanges(int line, int character) {
 		List<Location> locations = getReferenceLocations(line, character);
-		return locations.stream().map(loc -> this.enlistRange(loc.getUri(), loc.getRange())).filter(r -> r != null).collect(Collectors.toList());
+		return locations.stream().map(loc -> this.enlistRange(loc.getUri(), loc.getRange())).filter(r -> r != null)
+				.collect(Collectors.toList());
 	}
 
 	private List<Location> getReferenceLocations(int line, int character) {
