@@ -9,10 +9,13 @@ import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.Type;
+import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
+import org.eclipse.jdt.ls.core.internal.handlers.NavigateToTypeDefinitionHandler;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
@@ -31,29 +34,51 @@ public class TypeDefinitionVisitor extends ProtocolVisitor {
 	public TypeDefinitionVisitor() {
 	}
 
-	public void handle(SingleVariableDeclaration node) {
+	@Override
+	public boolean visit(SimpleName node) {
+		emitTypeDefinition(node.getStartPosition(), node.getLength());
+		return false;
+	}
+
+	@Override
+	public boolean visit(SingleVariableDeclaration node) {
 		Type declarationType = node.getType();
-		handleTypeDefinition(declarationType.getStartPosition(), declarationType.getLength());
+		emitTypeDefinition(declarationType.getStartPosition(), declarationType.getLength());
+		return false;
 	}
 
-	public void handle(SimpleType node) {
-		handleTypeDefinition(node.getStartPosition(), node.getLength());
+	@Override
+	public boolean visit(TypeDeclaration node) {
+		emitTypeDefinition(node.getStartPosition(), node.getLength());
+		return true;
 	}
 
-	private void handleTypeDefinition(int startPosition, int length) {
-		Emitter emitter = this.getContext().getEmitter();
-		LsifService lsif = this.getContext().getLsif();
-		Document docVertex = this.getContext().getDocVertex();
+	@Override
+	public boolean visit(SimpleType node) {
+		emitTypeDefinition(node.getStartPosition(), node.getLength());
+		return false;
+	}
+
+	private void emitTypeDefinition(int startPosition, int length) {
+
 		try {
 			org.eclipse.lsp4j.Range fromRange = JDTUtils.toRange(this.getContext().getTypeRoot(), startPosition,
 					length);
 
-			Location targetLocation = computeTypeDefinitionNavigation(docVertex.getUri(),
-					fromRange.getStart().getLine(), fromRange.getStart().getCharacter());
+			if (fromRange == null) {
+				return;
+			}
+
+			Location targetLocation = computeTypeDefinitionNavigation(fromRange.getStart().getLine(),
+					fromRange.getStart().getCharacter());
 
 			if (targetLocation == null) {
 				return;
 			}
+
+			Emitter emitter = this.getContext().getEmitter();
+			LsifService lsif = this.getContext().getLsif();
+			Document docVertex = this.getContext().getDocVertex();
 
 			// Definition start position
 			// Source range:
@@ -65,11 +90,7 @@ public class TypeDefinitionVisitor extends ProtocolVisitor {
 			Range targetRange = this.enlistRange(targetDocument, toRange);
 
 			// Result set
-			ResultSet resultSet = lsif.getVertexBuilder().resultSet();
-			emitter.emit(resultSet);
-
-			// From source range to ResultSet
-			emitter.emit(lsif.getEdgeBuilder().refersTo(sourceRange, resultSet));
+			ResultSet resultSet = this.enlistResultSet(sourceRange);
 
 			// Link resultSet & typeDefinitionResult
 			TypeDefinitionResult defResult = lsif.getVertexBuilder().typeDefinitionResult(targetRange.getId());
@@ -80,11 +101,11 @@ public class TypeDefinitionVisitor extends ProtocolVisitor {
 		}
 	}
 
-	private static Location computeTypeDefinitionNavigation(String uri, int line, int column) {
+	private Location computeTypeDefinitionNavigation(int line, int column) {
 		TextDocumentPositionParams documentSymbolParams = new TextDocumentPositionParams(
-				new TextDocumentIdentifier(uri), new Position(line, column));
-		org.eclipse.jdt.ls.core.internal.handlers.NavigateToTypeDefinitionHandler proxy = new org.eclipse.jdt.ls.core.internal.handlers.NavigateToTypeDefinitionHandler();
+				new TextDocumentIdentifier(this.getContext().getDocVertex().getUri()), new Position(line, column));
+		NavigateToTypeDefinitionHandler proxy = new NavigateToTypeDefinitionHandler();
 		List<? extends Location> typeDefinition = proxy.typeDefinition(documentSymbolParams, new NullProgressMonitor());
-		return typeDefinition.size() > 0 ? typeDefinition.get(0) : null;
+		return typeDefinition != null && typeDefinition.size() > 0 ? typeDefinition.get(0) : null;
 	}
 }

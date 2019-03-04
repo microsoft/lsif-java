@@ -52,6 +52,10 @@ public class EdgeBuilder {
 		return new Edge(generator.next(), Edge.T_REFERENCES, from.getId(), to.getId());
 	}
 
+	public Edge implementation(Vertex from, Vertex to) {
+		return new Edge(generator.next(), Edge.T_IMPLEMENTATION, from.getId(), to.getId());
+	}
+
 	public Edge documentSymbols(Vertex from, Vertex to) {
 		return new Edge(generator.next(), Edge.T_DOCUMENTSYMBOL, from.getId(), to.getId());
 	}

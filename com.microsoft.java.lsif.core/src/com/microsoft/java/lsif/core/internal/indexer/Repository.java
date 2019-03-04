@@ -10,6 +10,7 @@ import java.util.Map;
 
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
+import com.microsoft.java.lsif.core.internal.protocol.ResultSet;
 
 public class Repository {
 
@@ -22,6 +23,10 @@ public class Repository {
 	// Key: LSP range
 	// LSIF: range
 	private Map<String, Map<org.eclipse.lsp4j.Range, Range>> rangeMap = new HashMap<>();
+
+	// Key: Range
+	// Value: ResultSet that range refers to
+	private Map<Range, ResultSet> resultSetMap = new HashMap<>();
 
 	private static Repository instance = new Repository();
 
@@ -37,8 +42,13 @@ public class Repository {
 	}
 
 	public void addRange(Document owner, org.eclipse.lsp4j.Range lspRange, Range range) {
-		Map<org.eclipse.lsp4j.Range, Range> ranges = this.rangeMap.computeIfAbsent(owner.getUri(), s -> new HashMap<>());
+		Map<org.eclipse.lsp4j.Range, Range> ranges = this.rangeMap.computeIfAbsent(owner.getUri(),
+				s -> new HashMap<>());
 		ranges.putIfAbsent(lspRange, range);
+	}
+
+	public void addResultSet(Range range, ResultSet resultSet) {
+		this.resultSetMap.put(range, resultSet);
 	}
 
 	public Document findDocumentByUri(String uri) {
@@ -55,5 +65,9 @@ public class Repository {
 			return ranges.get(lspRange);
 		}
 		return null;
+	}
+
+	public ResultSet findResultSetByRange(Range range) {
+		return this.resultSetMap.getOrDefault(range, null);
 	}
 }

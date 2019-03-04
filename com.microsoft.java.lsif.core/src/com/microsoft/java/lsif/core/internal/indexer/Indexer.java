@@ -136,7 +136,8 @@ public class Indexer {
 						}
 					}
 				}
-			} catch (Exception e) {
+			} catch (Exception ex) {
+				LanguageServerIndexerPlugin.logException("Exception when indexing ", ex);
 			} finally {
 				// Output model
 				try {

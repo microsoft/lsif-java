@@ -35,6 +35,8 @@ public class Edge extends Element {
 
 	public final static String T_REFERENCES = "textDocument/references";
 
+	public final static String T_IMPLEMENTATION = "textDocument/implementation";
+
 	private String outV;
 
 	private String inV;

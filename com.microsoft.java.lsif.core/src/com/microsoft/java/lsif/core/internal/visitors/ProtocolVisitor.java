@@ -12,6 +12,7 @@ import com.microsoft.java.lsif.core.internal.indexer.IndexerContext;
 import com.microsoft.java.lsif.core.internal.indexer.Repository;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
+import com.microsoft.java.lsif.core.internal.protocol.ResultSet;
 
 public abstract class ProtocolVisitor extends ASTVisitor {
 
@@ -42,6 +43,19 @@ public abstract class ProtocolVisitor extends ASTVisitor {
 		}
 
 		return targetDocument;
+	}
+
+	public ResultSet enlistResultSet(Range range) {
+		Repository repo = Repository.getInstance();
+		ResultSet resultSet = repo.findResultSetByRange(range);
+		if (resultSet == null) {
+			resultSet = this.context.getLsif().getVertexBuilder().resultSet();
+			repo.addResultSet(range, resultSet);
+			this.context.getEmitter().emit(resultSet);
+			this.context.getEmitter().emit(this.context.getLsif().getEdgeBuilder().refersTo(range, resultSet));
+		}
+
+		return resultSet;
 	}
 
 	public Range enlistRange(Document docVertex, org.eclipse.lsp4j.Range lspRange) {

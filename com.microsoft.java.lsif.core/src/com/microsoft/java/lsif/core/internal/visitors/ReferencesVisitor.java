@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
@@ -18,6 +19,7 @@ import org.eclipse.lsp4j.ReferenceContext;
 import org.eclipse.lsp4j.ReferenceParams;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 
+import com.microsoft.java.lsif.core.internal.LanguageServerIndexerPlugin;
 import com.microsoft.java.lsif.core.internal.emitter.Emitter;
 import com.microsoft.java.lsif.core.internal.indexer.LsifService;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
@@ -30,42 +32,55 @@ public class ReferencesVisitor extends ProtocolVisitor {
 	public ReferencesVisitor() {
 	}
 
-	public void handle(MethodDeclaration declaration) {
+	@Override
+	public boolean visit(MethodDeclaration node) {
+		emitReferences(node.getName().getStartPosition(), node.getName().getLength());
+		return false;
+	}
 
-		int startPosition = declaration.getStartPosition();
-		int length = declaration.getLength();
+	@Override
+	public boolean visit(TypeDeclaration node) {
+		emitReferences(node.getName().getStartPosition(), node.getName().getLength());
+		return super.visit(node);
+	}
 
-		org.eclipse.lsp4j.Range fromRange;
+	public void emitReferences(int startPosition, int length) {
+
 		try {
-			fromRange = JDTUtils.toRange(this.getContext().getTypeRoot(), startPosition, length);
-		} catch (CoreException e) {
-			return;
-		}
+			org.eclipse.lsp4j.Range fromRange = JDTUtils.toRange(this.getContext().getTypeRoot(), startPosition,
+					length);
 
-		Emitter emitter = this.getContext().getEmitter();
-		LsifService lsif = this.getContext().getLsif();
+			if (fromRange == null) {
+				return;
+			}
 
-		List<Range> ranges = getReferenceRanges(fromRange.getStart().getLine(), fromRange.getStart().getCharacter());
-		if (ranges == null || ranges.size() == 0) {
-			return;
-		}
+			Emitter emitter = this.getContext().getEmitter();
+			LsifService lsif = this.getContext().getLsif();
 
-		// Source range:
-		Range sourceRange = this.enlistRange(this.getContext().getDocVertex(), fromRange);
+			List<Range> ranges = getReferenceRanges(fromRange.getStart().getLine(),
+					fromRange.getStart().getCharacter());
+			if (ranges == null || ranges.size() == 0) {
+				return;
+			}
 
-		// Result set
-		ResultSet resultSet = lsif.getVertexBuilder().resultSet();
-		emitter.emit(resultSet);
-		// From source range to ResultSet
-		emitter.emit(lsif.getEdgeBuilder().refersTo(sourceRange, resultSet));
+			// Source range:
+			Range sourceRange = this.enlistRange(this.getContext().getDocVertex(), fromRange);
 
-		// ReferenceResult
-		ReferenceResult refResult = lsif.getVertexBuilder().referenceResult();
-		emitter.emit(refResult);
-		emitter.emit(lsif.getEdgeBuilder().references(resultSet, refResult));
+			// Result set
+			ResultSet resultSet = this.enlistResultSet(sourceRange);
 
-		for (Range r : ranges) {
-			emitter.emit(lsif.getEdgeBuilder().referenceItem(refResult, r, ReferenceItem.REFERENCE));
+			// ReferenceResult
+			ReferenceResult refResult = lsif.getVertexBuilder().referenceResult();
+			emitter.emit(refResult);
+			emitter.emit(lsif.getEdgeBuilder().references(resultSet, refResult));
+
+			for (Range r : ranges) {
+				emitter.emit(lsif.getEdgeBuilder().referenceItem(refResult, r, ReferenceItem.REFERENCE));
+			}
+		} catch (
+
+		CoreException ex) {
+			LanguageServerIndexerPlugin.logException("Exception in visit references ", ex);
 		}
 	}
 

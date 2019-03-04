@@ -87,11 +87,7 @@ public class DefinitionVisitor extends ProtocolVisitor {
 			Range targetRange = this.enlistRange(targetDocument, toRange);
 
 			// Result set
-			ResultSet resultSet = lsif.getVertexBuilder().resultSet();
-			emitter.emit(resultSet);
-
-			// From source range to ResultSet
-			emitter.emit(lsif.getEdgeBuilder().refersTo(sourceRange, resultSet));
+			ResultSet resultSet = this.enlistResultSet(sourceRange);
 
 			// Link resultSet & definitionResult
 			DefinitionResult defResult = lsif.getVertexBuilder().definitionResult(targetRange.getId());
