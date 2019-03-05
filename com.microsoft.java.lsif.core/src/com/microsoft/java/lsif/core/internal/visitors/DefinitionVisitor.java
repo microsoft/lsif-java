@@ -57,7 +57,6 @@ public class DefinitionVisitor extends ProtocolVisitor {
 	}
 
 	private void emitDefinition(int startPosition, int length) {
-
 		try {
 			org.eclipse.lsp4j.Range fromRange = JDTUtils.toRange(this.getContext().getTypeRoot(), startPosition,
 					length);

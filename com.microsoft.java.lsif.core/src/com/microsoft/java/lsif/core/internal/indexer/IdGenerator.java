@@ -15,21 +15,21 @@ public class IdGenerator {
 
 	private int counter = 0;
 
-	public IdGenerator() {
-		this.idtype = IdType.COUNTER;
+	public IdGenerator(IdType type) {
+		this.idtype = type;
 	}
 
 	private IdType idtype;
 
 	public String next() {
 		switch (idtype) {
-		case COUNTER:
-			counter++;
-			return String.valueOf(counter);
-		case UUID:
-			return UUID.randomUUID().toString();
-		default:
-			break;
+			case COUNTER:
+				counter++;
+				return String.valueOf(counter);
+			case UUID:
+				return UUID.randomUUID().toString();
+			default:
+				break;
 		}
 		return null;
 	}

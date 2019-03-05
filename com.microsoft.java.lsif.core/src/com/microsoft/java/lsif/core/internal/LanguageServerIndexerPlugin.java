@@ -5,7 +5,10 @@
 
 package com.microsoft.java.lsif.core.internal;
 
+import java.io.PrintStream;
+
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.ILogListener;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
@@ -16,9 +19,26 @@ public class LanguageServerIndexerPlugin implements BundleActivator {
 
 	private static BundleContext context;
 
+	// Language server will redirect the out when starting, save this value for
+	// indexer usage.
+	private static PrintStream out;
+
 	@Override
 	public void start(BundleContext context) throws Exception {
 		LanguageServerIndexerPlugin.context = context;
+
+		LanguageServerIndexerPlugin.out = System.out;
+		if (context != null) {
+			Platform.getLog(LanguageServerIndexerPlugin.context.getBundle()).addLogListener(new ILogListener() {
+				@Override
+				public void logging(IStatus status, String plugin) {
+					LanguageServerIndexerPlugin.out.println(status.getMessage());
+					if (status.getException() != null) {
+						status.getException().printStackTrace(LanguageServerIndexerPlugin.out);
+					}
+				}
+			});
+		}
 	}
 
 	@Override

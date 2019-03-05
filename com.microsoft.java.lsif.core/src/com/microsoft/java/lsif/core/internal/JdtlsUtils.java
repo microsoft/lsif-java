@@ -29,10 +29,12 @@ public final class JdtlsUtils {
 			ICompilationUnit compilationUnit = (ICompilationUnit) element.getAncestor(IJavaElement.COMPILATION_UNIT);
 			IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
 			if (compilationUnit != null || (cf != null && cf.getSourceRange() != null)) {
-				targetLocation = JdtlsUtils.fixLocation(element, JDTUtils.toLocation(element), element.getJavaProject());
+				targetLocation = JdtlsUtils.fixLocation(element, JDTUtils.toLocation(element),
+						element.getJavaProject());
 			}
 			if (element instanceof IMember && ((IMember) element).getClassFile() != null) {
-				targetLocation = JdtlsUtils.fixLocation(element, JDTUtils.toLocation(((IMember) element).getClassFile()), element.getJavaProject());
+				targetLocation = JdtlsUtils.fixLocation(element,
+						JDTUtils.toLocation(((IMember) element).getClassFile()), element.getJavaProject());
 			}
 		} catch (CoreException ex) {
 		}
@@ -40,7 +42,8 @@ public final class JdtlsUtils {
 	}
 
 	public final static Location fixLocation(IJavaElement element, Location location, IJavaProject javaProject) {
-		if (!javaProject.equals(element.getJavaProject()) && element.getJavaProject().getProject().getName().equals(ProjectsManager.DEFAULT_PROJECT_NAME)) {
+		if (!javaProject.equals(element.getJavaProject())
+				&& element.getJavaProject().getProject().getName().equals(ProjectsManager.DEFAULT_PROJECT_NAME)) {
 			// see issue at: https://github.com/eclipse/eclipse.jdt.ls/issues/842 and
 			// https://bugs.eclipse.org/bugs/show_bug.cgi?id=541573
 			// for jdk classes, jdt will reuse the java model by altering project to share
@@ -50,7 +53,8 @@ public final class JdtlsUtils {
 			// this fix is to replace the project name with non-default ones since default
 			// project should be transparent to users.
 			if (location.getUri().contains(ProjectsManager.DEFAULT_PROJECT_NAME)) {
-				String patched = StringUtils.replaceOnce(location.getUri(), ProjectsManager.DEFAULT_PROJECT_NAME, javaProject.getProject().getName());
+				String patched = StringUtils.replaceOnce(location.getUri(), ProjectsManager.DEFAULT_PROJECT_NAME,
+						javaProject.getProject().getName());
 				try {
 					IClassFile cf = (IClassFile) JavaCore.create(JDTUtils.toURI(patched).getQuery());
 					if (cf != null && cf.exists()) {
@@ -65,11 +69,12 @@ public final class JdtlsUtils {
 	}
 
 	/**
-	 * Normalize the URI to the same format at the client.
+	 * Normalize the URI to the same format as the client.
 	 */
 	public final static String normalizeUri(String uri) {
 		if (Platform.OS_WIN32.equals(Platform.getOS())) {
-			if (uri.startsWith("file:///") && uri.length() > 10 && Character.isUpperCase(uri.charAt(8)) && uri.charAt(9) == ':') {
+			if (uri.startsWith("file:///") && uri.length() > 10 && Character.isUpperCase(uri.charAt(8))
+					&& uri.charAt(9) == ':') {
 				return "file:///" + Character.toLowerCase(uri.charAt(8)) + uri.substring(9);
 			}
 		}

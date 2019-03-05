@@ -67,9 +67,8 @@ public class Indexer {
 		this.handler = new WorkspaceHandler(System.getProperty("intellinav.repo.path"));
 	}
 
-	public void buildModel() {
+	public void generateLsif() {
 		NullProgressMonitor monitor = new NullProgressMonitor();
-
 		List<IPath> projectRoots = this.handler.initialize();
 		initializeJdtls();
 
@@ -93,7 +92,6 @@ public class Indexer {
 		LsifService lsif = new LsifService();
 
 		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
-		LanguageServerIndexerPlugin.logInfo(String.format("collectModel, projects # = %d", projects.length));
 
 		for (IProject proj : projects) {
 			emitter.start();
@@ -104,6 +102,9 @@ public class Indexer {
 			emitter.emit(lsif.getVertexBuilder().metaData("0.1.0"));
 
 			IJavaProject javaProject = JavaCore.create(proj);
+			if (!javaProject.exists()) {
+				continue;
+			}
 			try {
 				Project projVertex = lsif.getVertexBuilder().project();
 				emitter.emit(projVertex);
@@ -116,6 +117,11 @@ public class Indexer {
 								IPackageFragment fragment = (IPackageFragment) child;
 								if (fragment.hasChildren()) {
 									for (IJavaElement sourceFile : fragment.getChildren()) {
+										if (!sourceFile.exists()) {
+											continue;
+										}
+										LanguageServerIndexerPlugin
+												.logInfo("Indexing file " + sourceFile.getResource());
 										CompilationUnit cu = ASTUtil.createAST((ITypeRoot) sourceFile, monitor);
 
 										IndexerContext currentContext = new IndexerContext(emitter, lsif, null,
@@ -149,7 +155,6 @@ public class Indexer {
 			}
 			emitter.end();
 		}
-
 	}
 
 	private void initializeJdtls() {

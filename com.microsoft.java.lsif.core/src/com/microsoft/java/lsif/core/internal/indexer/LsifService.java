@@ -5,6 +5,8 @@
 
 package com.microsoft.java.lsif.core.internal.indexer;
 
+import com.microsoft.java.lsif.core.internal.indexer.IdGenerator.IdType;
+
 public class LsifService {
 
 	private IdGenerator generator;
@@ -14,7 +16,7 @@ public class LsifService {
 	private EdgeBuilder eBuilder;
 
 	public LsifService() {
-		this.generator = new IdGenerator();
+		this.generator = new IdGenerator(IdType.COUNTER);
 		this.vBuilder = new VertexBuilder(generator);
 		this.eBuilder = new EdgeBuilder(generator);
 	}

@@ -15,7 +15,7 @@ public class LanguageServerIndexer implements IApplication {
 	@Override
 	public Object start(IApplicationContext context) throws Exception {
 		Indexer indexer = new Indexer();
-		indexer.buildModel();
+		indexer.generateLsif();
 		return null;
 	}
 
