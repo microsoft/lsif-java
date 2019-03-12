@@ -63,4 +63,8 @@ public class EdgeBuilder {
 	public Edge refersTo(Vertex from, Vertex to) {
 		return new Edge(generator.next(), Edge.REFERSTO, from.getId(), to.getId());
 	}
+
+	public Edge diagnostic(Vertex from, Vertex to) {
+		return new Edge(generator.next(), Edge.T_DIAGNOSTIC, from.getId(), to.getId());
+	}
 }
