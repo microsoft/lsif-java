@@ -7,6 +7,7 @@ package com.microsoft.java.lsif.core.internal.indexer;
 
 import java.util.List;
 
+import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DocumentSymbol;
 import org.eclipse.lsp4j.Hover;
 import org.eclipse.lsp4j.Location;
@@ -14,6 +15,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 import com.microsoft.java.lsif.core.internal.JdtlsUtils;
 import com.microsoft.java.lsif.core.internal.protocol.DefinitionResult;
+import com.microsoft.java.lsif.core.internal.protocol.DiagnosticResult;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.DocumentSymbolResult;
 import com.microsoft.java.lsif.core.internal.protocol.HoverResult;
@@ -82,5 +84,9 @@ public final class VertexBuilder {
 
 	public DocumentSymbolResult documentSymbolResult(List<DocumentSymbol> symbols) {
 		return new DocumentSymbolResult(generator.next(), symbols);
+	}
+
+	public DiagnosticResult diagnosticResult(List<Diagnostic> diagnostics) {
+		return new DiagnosticResult(generator.next(), diagnostics);
 	}
 }

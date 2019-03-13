@@ -38,6 +38,7 @@ import com.microsoft.java.lsif.core.internal.emitter.JsonEmitter;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.Project;
 import com.microsoft.java.lsif.core.internal.visitors.DefinitionVisitor;
+import com.microsoft.java.lsif.core.internal.visitors.DiagnosticVisitor;
 import com.microsoft.java.lsif.core.internal.visitors.DocumentVisitor;
 import com.microsoft.java.lsif.core.internal.visitors.HoverVisitor;
 import com.microsoft.java.lsif.core.internal.visitors.ImplementationsVisitor;
@@ -136,6 +137,10 @@ public class Indexer {
 											vis.setContext(currentContext);
 											cu.accept(vis);
 										}
+
+										// Dump diagnostic information
+										DiagnosticVisitor diagnosticVisitor = new DiagnosticVisitor(currentContext, cu);
+										diagnosticVisitor.enlist();
 									}
 								}
 							}
