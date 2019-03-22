@@ -6,3 +6,4 @@ bin/
 maven-wrapper.jar
 cmd/repository/
 cmd/workspace/
+*.tgz
