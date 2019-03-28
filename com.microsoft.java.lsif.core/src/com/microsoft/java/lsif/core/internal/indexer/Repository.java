@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.microsoft.java.lsif.core.internal.protocol.Document;
+import com.microsoft.java.lsif.core.internal.protocol.HoverResult;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
 import com.microsoft.java.lsif.core.internal.protocol.ResultSet;
 
@@ -27,6 +28,10 @@ public class Repository {
 	// Key: Range
 	// Value: ResultSet that range refers to
 	private Map<Range, ResultSet> resultSetMap = new HashMap<>();
+
+	// Key: Hash Code of the Hover Content
+	// Value: HoverResult
+	private Map<Integer, HoverResult> hoverResultMap = new HashMap<>();
 
 	private static Repository instance = new Repository();
 
@@ -51,6 +56,10 @@ public class Repository {
 		this.resultSetMap.put(range, resultSet);
 	}
 
+	public void addHoverResult(int hashCode, HoverResult hoverResult) {
+		this.hoverResultMap.put(hashCode, hoverResult);
+	}
+
 	public Document findDocumentByUri(String uri) {
 		return this.documentMap.getOrDefault(uri, null);
 	}
@@ -69,5 +78,9 @@ public class Repository {
 
 	public ResultSet findResultSetByRange(Range range) {
 		return this.resultSetMap.getOrDefault(range, null);
+	}
+
+	public HoverResult findHoverResultByHashCode(int hashCode) {
+		return this.hoverResultMap.getOrDefault(hashCode, null);
 	}
 }

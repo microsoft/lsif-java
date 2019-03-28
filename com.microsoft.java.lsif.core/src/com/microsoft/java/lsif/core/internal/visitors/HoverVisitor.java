@@ -22,6 +22,7 @@ import com.microsoft.java.lsif.core.internal.indexer.LsifService;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.HoverResult;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
+import com.microsoft.java.lsif.core.internal.protocol.ResultSet;
 
 public class HoverVisitor extends ProtocolVisitor {
 
@@ -51,11 +52,13 @@ public class HoverVisitor extends ProtocolVisitor {
 			// Source range:
 			Range sourceRange = this.enlistRange(docVertex, fromRange);
 
+			// Result set
+			ResultSet resultSet = this.enlistResultSet(sourceRange);
+
 			// Link resultSet & definitionResult
 			Hover result = hover(fromRange.getStart().getLine(), fromRange.getStart().getCharacter());
-			HoverResult hoverResult = lsif.getVertexBuilder().hoverResult(result);
-			emitter.emit(hoverResult);
-			emitter.emit(lsif.getEdgeBuilder().hover(sourceRange, hoverResult));
+			HoverResult hoverResult = this.enlistHoverResult(result);
+			emitter.emit(lsif.getEdgeBuilder().hover(resultSet, hoverResult));
 
 		} catch (CoreException e) {
 			LanguageServerIndexerPlugin.log(e);

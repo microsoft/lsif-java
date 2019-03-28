@@ -6,11 +6,13 @@
 package com.microsoft.java.lsif.core.internal.visitors;
 
 import org.eclipse.jdt.core.dom.ASTVisitor;
+import org.eclipse.lsp4j.Hover;
 
 import com.microsoft.java.lsif.core.internal.JdtlsUtils;
 import com.microsoft.java.lsif.core.internal.indexer.IndexerContext;
 import com.microsoft.java.lsif.core.internal.indexer.Repository;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
+import com.microsoft.java.lsif.core.internal.protocol.HoverResult;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
 import com.microsoft.java.lsif.core.internal.protocol.ResultSet;
 
@@ -68,6 +70,18 @@ public abstract class ProtocolVisitor extends ASTVisitor {
 			this.context.getEmitter().emit(this.context.getLsif().getEdgeBuilder().contains(docVertex, range));
 		}
 		return range;
+	}
+
+	public HoverResult enlistHoverResult(Hover hover) {
+		Repository repo = Repository.getInstance();
+		int contentHash = hover.getContents().hashCode();
+		HoverResult hoverResult = repo.findHoverResultByHashCode(contentHash);
+		if (hoverResult == null) {
+			hoverResult = this.context.getLsif().getVertexBuilder().hoverResult(hover);
+			this.context.getEmitter().emit(hoverResult);
+			repo.addHoverResult(contentHash, hoverResult);
+		}
+		return hoverResult;
 	}
 
 	public Range enlistRange(String uri, org.eclipse.lsp4j.Range lspRange) {
