@@ -5,6 +5,9 @@
 
 package com.microsoft.java.lsif.core.internal.visitors;
 
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.dom.SimpleType;
@@ -12,9 +15,12 @@ import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.handlers.HoverHandler;
 import org.eclipse.lsp4j.Hover;
+import org.eclipse.lsp4j.MarkedString;
+import org.eclipse.lsp4j.MarkupContent;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 import com.microsoft.java.lsif.core.internal.LanguageServerIndexerPlugin;
 import com.microsoft.java.lsif.core.internal.emitter.Emitter;
@@ -57,9 +63,11 @@ public class HoverVisitor extends ProtocolVisitor {
 
 			// Link resultSet & definitionResult
 			Hover result = hover(fromRange.getStart().getLine(), fromRange.getStart().getCharacter());
+			if (isEmpty(result)) {
+				return;
+			}
 			HoverResult hoverResult = this.enlistHoverResult(result);
 			emitter.emit(lsif.getEdgeBuilder().hover(resultSet, hoverResult));
-
 		} catch (CoreException e) {
 			LanguageServerIndexerPlugin.log(e);
 		}
@@ -71,5 +79,35 @@ public class HoverVisitor extends ProtocolVisitor {
 
 		HoverHandler proxy = new HoverHandler(this.getContext().getPreferenceManger());
 		return proxy.hover(params, new NullProgressMonitor());
+	}
+
+	/**
+	 * Check if the hover is empty or not.
+	 *
+	 * @param hover The {@link org.eclipse.lsp4j.Hover} returned from LSFJ.
+	 * @return
+	 */
+	private boolean isEmpty(Hover hover) {
+		Either<List<Either<String, MarkedString>>, MarkupContent> content = hover.getContents();
+		if (content == null) {
+			return true;
+		}
+
+		if (content.isRight()) {
+			return false;
+		}
+
+		List<Either<String, MarkedString>> list = content.getLeft();
+		if (list == null || list.size() == 0) {
+			return true;
+		}
+
+		for (Either<String, MarkedString> either : list) {
+			if (StringUtils.isNotEmpty(either.getLeft()) || either.isRight()) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 }
