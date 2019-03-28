@@ -69,6 +69,7 @@ public class Indexer {
 	}
 
 	public void generateLsif() {
+		long startTime = System.currentTimeMillis();
 		NullProgressMonitor monitor = new NullProgressMonitor();
 		List<IPath> projectRoots = this.handler.initialize();
 		initializeJdtls();
@@ -87,6 +88,9 @@ public class Indexer {
 				LanguageServerIndexerPlugin.logException("Exception when indexing ", ex);
 			}
 		}
+		long stopTime = System.currentTimeMillis();
+		long elapsedTime = stopTime - startTime;
+		LanguageServerIndexerPlugin.logInfo("Total execution time: " + elapsedTime / 1000 + "s.");
 	}
 
 	private void buildIndex(IPath path, IProgressMonitor monitor, Emitter emitter) {
