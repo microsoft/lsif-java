@@ -7,7 +7,7 @@ package com.microsoft.java.lsif.core.internal.protocol;
 
 public class Vertex extends Element {
 
-	public static final String METADATA = "metadata";
+	public static final String METADATA = "metaData";
 
 	public static final String PROJECT = "project";
 
