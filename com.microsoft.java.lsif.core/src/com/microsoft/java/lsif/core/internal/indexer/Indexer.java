@@ -104,7 +104,7 @@ public class Indexer {
 				return;
 			}
 
-			emitter.emit(lsif.getVertexBuilder().metaData("0.1.0"));
+			emitter.emit(lsif.getVertexBuilder().metaData());
 
 			IJavaProject javaProject = JavaCore.create(proj);
 			if (!javaProject.exists()) {

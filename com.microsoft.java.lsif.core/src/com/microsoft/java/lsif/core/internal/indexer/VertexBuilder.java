@@ -35,8 +35,8 @@ public final class VertexBuilder {
 		this.generator = generator;
 	}
 
-	public MetaData metaData(String version) {
-		return new MetaData(generator.next(), version);
+	public MetaData metaData() {
+		return new MetaData(generator.next());
 	}
 
 	public Project project() {
