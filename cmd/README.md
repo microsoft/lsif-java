@@ -1,10 +1,10 @@
-# Setup for index
+# LSIF for Java
 
-1. Install Java SE 1.8
-1. Go to repo root
-2. ./mvnw clean verify
-3. Copy to the $repo%\com.microsoft.java.lsif.product\target\repository\ to current folder
-4. Invoke the index.bat, replace the argument with the target repos.
+## Prerequisite
+The LSIF Java Indexer currently supports Maven or Gradle managed project. You can find `pom.xml` or `build.gradle` file in the project's base path.
+
+## Usage
+1. Invoke the `index.bat` with the path of the target repo:
 ```bat
     index.bat D:\Workspace\github\spring-petclinic
 ```
