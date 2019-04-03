@@ -26,6 +26,7 @@ import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
+import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.IProjectImporter;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
@@ -53,7 +54,7 @@ public class WorkspaceHandler {
 		}
 
 		try {
-			deleteInvalidProjects(projectRoots, monitor);
+			deleteInvalidProjects(monitor);
 			GradleBuildSupport.cleanGradleModels(monitor);
 		} catch (OperationCanceledException e) {
 		}
@@ -107,8 +108,8 @@ public class WorkspaceHandler {
 
 	private Collection<IProjectImporter> importers() {
 		Map<Integer, IProjectImporter> importers = new TreeMap<>();
-		IExtensionPoint extensionPoint = Platform.getExtensionRegistry()
-				.getExtensionPoint(JavaLanguageServerPlugin.PLUGIN_ID, "importers");
+		IExtensionPoint extensionPoint = Platform.getExtensionRegistry().getExtensionPoint(IConstants.PLUGIN_ID,
+				"importers");
 		IConfigurationElement[] configs = extensionPoint.getConfigurationElements();
 		for (int i = 0; i < configs.length; i++) {
 			try {
@@ -125,7 +126,7 @@ public class WorkspaceHandler {
 		return ResourcesPlugin.getWorkspace().getRoot();
 	}
 
-	private void deleteInvalidProjects(Collection<IPath> rootPaths, IProgressMonitor monitor) {
+	private void deleteInvalidProjects(IProgressMonitor monitor) {
 		for (IProject project : getWorkspaceRoot().getProjects()) {
 			try {
 				project.delete(false, true, monitor);
@@ -142,7 +143,7 @@ public class WorkspaceHandler {
 		}
 	}
 
-	public void removeProject(IPath path, IProgressMonitor monitor) {
+	public void removeProject(IProgressMonitor monitor) {
 		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
 		try {
 			for (IProject proj : projects) {

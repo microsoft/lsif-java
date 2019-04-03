@@ -72,6 +72,11 @@ public class Indexer {
 		long startTime = System.currentTimeMillis();
 		NullProgressMonitor monitor = new NullProgressMonitor();
 		List<IPath> projectRoots = this.handler.initialize();
+		if (projectRoots != null && projectRoots.size() == 0) {
+			LanguageServerIndexerPlugin.logError(
+					"Failed to find project to index. Please make sure there is a valid 'pom.xml' or 'build.gradle' under the project base path.");
+			return;
+		}
 		initializeJdtls();
 
 		JsonEmitter emitter = new JsonEmitter();
@@ -82,7 +87,7 @@ public class Indexer {
 				handler.importProject(path, monitor);
 				handler.buildProject(monitor);
 				buildIndex(path, monitor, emitter);
-				handler.removeProject(path, monitor);
+				handler.removeProject(monitor);
 				LanguageServerIndexerPlugin.logInfo("End index project: " + path.toPortableString());
 			} catch (Exception ex) {
 				LanguageServerIndexerPlugin.logException("Exception when indexing ", ex);
