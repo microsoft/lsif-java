@@ -75,7 +75,7 @@ public class Indexer {
 		if (projectRoots != null && projectRoots.size() == 0) {
 			LanguageServerIndexerPlugin.logError(
 					"Failed to find project to index. Please make sure there is a valid 'pom.xml' or 'build.gradle' under the project base path.");
-			return;
+			System.exit(1);
 		}
 		initializeJdtls();
 
