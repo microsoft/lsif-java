@@ -5,8 +5,6 @@
 
 package com.microsoft.java.lsif.core.internal.emitter;
 
-import java.util.List;
-
 import com.microsoft.java.lsif.core.internal.protocol.Element;
 
 public interface Emitter {
@@ -16,6 +14,4 @@ public interface Emitter {
 	void emit(Element element);
 
 	void end();
-
-	List<Element> getElements();
 }

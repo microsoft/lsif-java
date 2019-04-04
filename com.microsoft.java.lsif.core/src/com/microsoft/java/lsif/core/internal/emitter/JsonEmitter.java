@@ -5,16 +5,14 @@
 
 package com.microsoft.java.lsif.core.internal.emitter;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import com.microsoft.java.lsif.core.internal.LanguageServerIndexerPlugin;
 import com.microsoft.java.lsif.core.internal.protocol.Element;
 
 public class JsonEmitter implements Emitter {
-
-	private List<Element> elements;
+	private boolean isFirst;
 
 	public JsonEmitter() {
+		this.isFirst = true;
 	}
 
 	/*
@@ -24,7 +22,7 @@ public class JsonEmitter implements Emitter {
 	 */
 	@Override
 	public void start() {
-		this.elements = new ArrayList<>();
+		LanguageServerIndexerPlugin.println("[");
 	}
 
 	/*
@@ -36,7 +34,12 @@ public class JsonEmitter implements Emitter {
 	 */
 	@Override
 	public void emit(Element element) {
-		this.elements.add(element);
+		if (!isFirst) {
+			LanguageServerIndexerPlugin.println(",");
+		}
+		LanguageServerIndexerPlugin.print("\t");
+		LanguageServerIndexerPlugin.print(JsonParser.toJson(element));
+		this.isFirst = false;
 	}
 
 	/*
@@ -46,9 +49,9 @@ public class JsonEmitter implements Emitter {
 	 */
 	@Override
 	public void end() {
-	}
-
-	public List<Element> getElements() {
-		return this.elements;
+		if (!isFirst) {
+			LanguageServerIndexerPlugin.println();
+		}
+		LanguageServerIndexerPlugin.println("]");
 	}
 }

@@ -5,8 +5,6 @@ IF "%~1" == "" GOTO Help
 set input=%~1
 
 :Main
-@echo Base dir is located in: %basePath% 
-@echo Repo dir is located in: %input% 
 
 java ^
 -Dlog.level=ALL ^

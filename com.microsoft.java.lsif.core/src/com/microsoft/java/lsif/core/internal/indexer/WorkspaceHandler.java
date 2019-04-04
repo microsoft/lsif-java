@@ -6,12 +6,11 @@
 package com.microsoft.java.lsif.core.internal.indexer;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
@@ -42,16 +41,8 @@ public class WorkspaceHandler {
 		this.workspaceFolder = workspaceFolder;
 	}
 
-	public List<IPath> initialize() {
+	public IPath initialize() {
 		NullProgressMonitor monitor = new NullProgressMonitor();
-		List<IPath> projectRoots = new ArrayList<>();
-		LanguageServerIndexerPlugin.logInfo("Collecting repo information");
-		if (workspaceFolder != null) {
-			File projectDir = new File(workspaceFolder);
-			if (projectDir.isDirectory()) {
-				collectionProjects(projectDir, projectRoots);
-			}
-		}
 
 		try {
 			deleteInvalidProjects(monitor);
@@ -59,7 +50,15 @@ public class WorkspaceHandler {
 		} catch (OperationCanceledException e) {
 		}
 
-		return projectRoots;
+		if (StringUtils.isEmpty(workspaceFolder)) {
+			throw new RuntimeException("Build path is not specified.");
+		}
+		File projectDir = new File(workspaceFolder);
+		if (!projectDir.isDirectory()) {
+			throw new RuntimeException("Build path should be a directory.");
+		}
+
+		return getProjectPathIfValid(projectDir);
 	}
 
 	public void importProject(IPath path, IProgressMonitor monitor) {
@@ -136,11 +135,14 @@ public class WorkspaceHandler {
 		}
 	}
 
-	private void collectionProjects(File f, List<IPath> result) {
+	private IPath getProjectPathIfValid(File f) {
 		if (f.isDirectory() && ((new File(f.getAbsolutePath(), "pom.xml")).exists()
 				|| (new File(f.getAbsolutePath(), "build.gradle")).exists())) {
-			result.add(ResourceUtils.filePathFromURI(f.toURI().toString()));
+			return ResourceUtils.filePathFromURI(f.toURI().toString());
 		}
+
+		throw new RuntimeException(
+				"Failed to find project to index. Please make sure there is a valid 'pom.xml' or 'build.gradle' under the project base path.");
 	}
 
 	public void removeProject(IProgressMonitor monitor) {

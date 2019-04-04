@@ -13,9 +13,16 @@ import com.microsoft.java.lsif.core.internal.indexer.Indexer;
 public class LanguageServerIndexer implements IApplication {
 
 	@Override
-	public Object start(IApplicationContext context) throws Exception {
-		Indexer indexer = new Indexer();
-		indexer.generateLsif();
+	public Object start(IApplicationContext context) {
+		try {
+			Indexer indexer = new Indexer();
+			indexer.generateLsif();
+
+		} catch (Exception ex) {
+			LanguageServerIndexerPlugin.logException("Exception when indexing ", ex);
+			System.exit(1);
+		}
+
 		return null;
 	}
 

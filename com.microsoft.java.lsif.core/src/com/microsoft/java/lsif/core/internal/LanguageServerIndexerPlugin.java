@@ -72,4 +72,16 @@ public class LanguageServerIndexerPlugin implements BundleActivator {
 			log(new Status(IStatus.ERROR, context.getBundle().getSymbolicName(), message, ex));
 		}
 	}
+
+	public static void print(String message) {
+		out.print(message);
+	}
+
+	public static void println() {
+		out.println();
+	}
+
+	public static void println(String message) {
+		out.println(message);
+	}
 }
