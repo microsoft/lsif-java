@@ -18,3 +18,6 @@ Invoke the `index.bat` with the path of the target repo:
 ```bat
 > ./index.bat "-Dintellinav.repo.path=D:\Workspace\spring-petclinic" "-Dintellinav.output.format=json"
 ```
+
+## Changelog
+See [CHANGELOG.md](https://dev.azure.com/mseng/VSJava/_git/lsif-java?path=%2FCHANGELOG.md&version=GBmaster)

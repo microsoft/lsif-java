@@ -55,17 +55,18 @@ public class HoverVisitor extends ProtocolVisitor {
 			org.eclipse.lsp4j.Range fromRange = JDTUtils.toRange(this.getContext().getTypeRoot(), startPosition,
 					length);
 
+			// Link resultSet & definitionResult
+			Hover result = hover(fromRange.getStart().getLine(), fromRange.getStart().getCharacter());
+			if (isEmpty(result)) {
+				return;
+			}
+
 			// Source range:
 			Range sourceRange = this.enlistRange(docVertex, fromRange);
 
 			// Result set
 			ResultSet resultSet = this.enlistResultSet(sourceRange);
 
-			// Link resultSet & definitionResult
-			Hover result = hover(fromRange.getStart().getLine(), fromRange.getStart().getCharacter());
-			if (isEmpty(result)) {
-				return;
-			}
 			HoverResult hoverResult = this.enlistHoverResult(result);
 			emitter.emit(lsif.getEdgeBuilder().hover(resultSet, hoverResult));
 		} catch (CoreException e) {
