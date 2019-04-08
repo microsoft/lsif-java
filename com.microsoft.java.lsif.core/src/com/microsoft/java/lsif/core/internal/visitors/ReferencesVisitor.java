@@ -11,7 +11,11 @@ import java.util.stream.Collectors;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.MethodInvocation;
+import org.eclipse.jdt.core.dom.SimpleType;
+import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
+import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
@@ -33,9 +37,36 @@ public class ReferencesVisitor extends ProtocolVisitor {
 	}
 
 	@Override
+	public boolean visit(SimpleType type) {
+		emitReferences(type.getStartPosition(), type.getLength());
+		return super.visit(type);
+	}
+
+	@Override
+	public boolean visit(SingleVariableDeclaration node) {
+		emitReferences(node.getName().getStartPosition(), node.getName().getLength());
+		return super.visit(node);
+	}
+
+	@Override
+	public boolean visit(VariableDeclarationFragment node) {
+		emitReferences(node.getName().getStartPosition(), node.getName().getLength());
+		return super.visit(node);
+	}
+
+	@Override
+	public boolean visit(MethodInvocation node) {
+		emitReferences(node.getName().getStartPosition(), node.getName().getLength());
+		if (node.getExpression() != null) {
+			emitReferences(node.getExpression().getStartPosition(), node.getExpression().getLength());
+		}
+		return super.visit(node);
+	}
+
+	@Override
 	public boolean visit(MethodDeclaration node) {
 		emitReferences(node.getName().getStartPosition(), node.getName().getLength());
-		return false;
+		return super.visit(node);
 	}
 
 	@Override
