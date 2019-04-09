@@ -10,8 +10,8 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
-import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.handlers.HoverHandler;
 import org.eclipse.lsp4j.Hover;
@@ -42,7 +42,7 @@ public class HoverVisitor extends ProtocolVisitor {
 	}
 
 	@Override
-	public boolean visit(TypeDeclaration node) {
+	public boolean visit(SimpleName node) {
 		emitHover(node.getStartPosition(), node.getLength());
 		return super.visit(node);
 	}

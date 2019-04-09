@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - Fix an NPE in ImplementationsVisitor when get the implementation ranges
 
+### Changed
+- Visit SimpleType and SimpleName in HoverVisitor and ReferencesVisitor
+
 ## 0.1.3
 ### Added
 - Add SimpleType, SingleVariableDeclaration, VariableDeclarationFragment and MethodInvocation into ReferencesVisitor
