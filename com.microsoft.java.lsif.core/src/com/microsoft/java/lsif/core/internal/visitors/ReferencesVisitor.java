@@ -35,13 +35,13 @@ public class ReferencesVisitor extends ProtocolVisitor {
 	@Override
 	public boolean visit(SimpleType type) {
 		emitReferences(type.getStartPosition(), type.getLength());
-		return super.visit(type);
+		return false;
 	}
 
 	@Override
 	public boolean visit(SimpleName node) {
 		emitReferences(node.getStartPosition(), node.getLength());
-		return super.visit(node);
+		return false;
 	}
 
 	public void emitReferences(int startPosition, int length) {

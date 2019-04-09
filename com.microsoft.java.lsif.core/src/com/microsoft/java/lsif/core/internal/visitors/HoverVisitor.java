@@ -38,13 +38,13 @@ public class HoverVisitor extends ProtocolVisitor {
 	@Override
 	public boolean visit(SimpleType type) {
 		emitHover(type.getStartPosition(), type.getLength());
-		return super.visit(type);
+		return false;
 	}
 
 	@Override
 	public boolean visit(SimpleName node) {
 		emitHover(node.getStartPosition(), node.getLength());
-		return super.visit(node);
+		return false;
 	}
 
 	private void emitHover(int startPosition, int length) {
