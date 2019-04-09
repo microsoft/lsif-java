@@ -5,6 +5,7 @@
 
 package com.microsoft.java.lsif.core.internal.visitors;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -84,6 +85,9 @@ public class ImplementationsVisitor extends ProtocolVisitor {
 
 	private List<Range> getImplementationRanges(int line, int character) {
 		List<? extends Location> locations = getImplementations(line, character);
+		if (locations == null) {
+			return Collections.emptyList();
+		}
 		return locations.stream().map(loc -> this.enlistRange(loc.getUri(), loc.getRange())).filter(r -> r != null)
 				.collect(Collectors.toList());
 	}
