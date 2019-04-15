@@ -20,4 +20,4 @@ Invoke the `index.bat` with the path of the target repo:
 ```
 
 ## Changelog
-See [CHANGELOG.md](https://dev.azure.com/mseng/VSJava/_git/lsif-java?path=%2FCHANGELOG.md&version=GBmaster)
+See [CHANGELOG.md](../CHANGELOG.md)
