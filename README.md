@@ -1,4 +1,5 @@
 # Java Language Server Indexer
+[![Build status](https://dev.azure.com/mseng/VSJava/_apis/build/status/LSIF-Java/LSIF-Java)](https://dev.azure.com/mseng/VSJava/_build/latest?definitionId=8346)
 
 ## Contributing
 
