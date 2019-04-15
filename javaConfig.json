@@ -1,0 +1,9 @@
+{
+    "projects": [
+        "com.microsoft.java.lsif.target",
+        "com.microsoft.java.lsif.core",
+        "com.microsoft.java.lsif.product"
+    ],
+
+   "targetPlatform": "com.microsoft.java.lsif.target/com.microsoft.java.lsif.tp.target"
+}

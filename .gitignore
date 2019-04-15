@@ -18,6 +18,19 @@
 *.zip
 *.tar.gz
 *.rar
+*.tgz
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
+
+# Build files
+target/
+bin/
+
+# NPM package
+**/node_modules/
+cmd/repository/
+cmd/workspace/
+
+# Mac OS
+.DS_Store
