@@ -3,6 +3,7 @@ set basePath=%cd%\repository
 
 IF "%~1" == "" GOTO Help
 set input=%*
+set randomPath=%TEMP%\%RANDOM%%RANDOM%
 
 :Main
 
@@ -11,7 +12,11 @@ java ^
 %input% ^
 -noverify ^
 -jar %basePath%\plugins\org.eclipse.equinox.launcher_1.5.200.v20180922-1751.jar ^
--configuration %basePath%\config_win
+-configuration %basePath%\config_win ^
+-data %randomPath%
+
+rmdir /s /q %randomPath%
+
 goto End
 
 :Help
