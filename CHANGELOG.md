@@ -5,7 +5,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 0.1.5
 ### Fixed
-- Generate workspace into a temporary folder instead of generating directly into the package directory [#4](https://github.com/Microsoft/lsif-java/issues/4)
+- [Fix Bugs](https://github.com/Microsoft/lsif-java/issues?q=is%3Aissue+is%3Aclosed+label%3Abug+milestone%3A0.1.5)
 
 ## 0.1.4
 ### Fixed
