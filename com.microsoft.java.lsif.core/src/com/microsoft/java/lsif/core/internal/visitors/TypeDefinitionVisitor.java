@@ -11,8 +11,6 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
-import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
-import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.handlers.NavigateToTypeDefinitionHandler;
 import org.eclipse.lsp4j.Location;
@@ -36,13 +34,6 @@ public class TypeDefinitionVisitor extends ProtocolVisitor {
 	@Override
 	public boolean visit(SimpleName node) {
 		emitTypeDefinition(node.getStartPosition(), node.getLength());
-		return false;
-	}
-
-	@Override
-	public boolean visit(SingleVariableDeclaration node) {
-		Type declarationType = node.getType();
-		emitTypeDefinition(declarationType.getStartPosition(), declarationType.getLength());
 		return false;
 	}
 
