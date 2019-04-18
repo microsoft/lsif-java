@@ -98,33 +98,29 @@ public class Repository {
 		return enlistRange(context, enlistDocument(context, uri), lspRange);
 	}
 
-	public void addDocument(Document doc) {
+	private void addDocument(Document doc) {
 		this.documentMap.put(doc.getUri(), doc);
 	}
 
-	public void addRange(Document owner, org.eclipse.lsp4j.Range lspRange, Range range) {
+	private void addRange(Document owner, org.eclipse.lsp4j.Range lspRange, Range range) {
 		Map<org.eclipse.lsp4j.Range, Range> ranges = this.rangeMap.computeIfAbsent(owner.getUri(),
 				s -> new ConcurrentHashMap<>());
 		ranges.putIfAbsent(lspRange, range);
 	}
 
-	public void addResultSet(Range range, ResultSet resultSet) {
+	private void addResultSet(Range range, ResultSet resultSet) {
 		this.resultSetMap.put(range, resultSet);
 	}
 
-	public void addHoverResult(int hashCode, HoverResult hoverResult) {
+	private void addHoverResult(int hashCode, HoverResult hoverResult) {
 		this.hoverResultMap.put(hashCode, hoverResult);
 	}
 
-	public Document findDocumentByUri(String uri) {
+	private Document findDocumentByUri(String uri) {
 		return this.documentMap.getOrDefault(uri, null);
 	}
 
-	public Document findDocumentById() {
-		throw new UnsupportedOperationException();
-	}
-
-	public Range findRange(String uri, org.eclipse.lsp4j.Range lspRange) {
+	private Range findRange(String uri, org.eclipse.lsp4j.Range lspRange) {
 		Map<org.eclipse.lsp4j.Range, Range> ranges = rangeMap.get(uri);
 		if (ranges != null) {
 			return ranges.get(lspRange);
@@ -132,7 +128,7 @@ public class Repository {
 		return null;
 	}
 
-	public ResultSet findResultSetByRange(Range range) {
+	private ResultSet findResultSetByRange(Range range) {
 		return this.resultSetMap.getOrDefault(range, null);
 	}
 
