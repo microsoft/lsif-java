@@ -120,6 +120,7 @@ public class Indexer {
 											cu.accept(vis);
 										}));
 									}
+
 									DiagnosticVisitor diagnosticVisitor = new DiagnosticVisitor(currentContext, cu);
 									completableFutures.add(CompletableFuture.runAsync(() -> {
 										diagnosticVisitor.enlist();
@@ -133,8 +134,6 @@ public class Indexer {
 										LanguageServerIndexerPlugin.logException("Exception occurs when indexing: ",
 												e);
 									}
-
-
 								}
 							}
 						}
