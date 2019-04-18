@@ -8,6 +8,9 @@ package com.microsoft.java.lsif.core.internal.indexer;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.eclipse.lsp4j.Hover;
+
+import com.microsoft.java.lsif.core.internal.JdtlsUtils;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.HoverResult;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
@@ -33,13 +36,66 @@ public class Repository {
 	// Value: HoverResult
 	private Map<Integer, HoverResult> hoverResultMap = new ConcurrentHashMap<>();
 
-	private static Repository instance = new Repository();
-
 	private Repository() {
 	}
 
+	private static class RepositoryHolder {
+		private static final Repository INSTANCE = new Repository();
+	}
+
 	public static Repository getInstance() {
-		return instance;
+		return RepositoryHolder.INSTANCE;
+	}
+
+	public synchronized Document enlistDocument(IndexerContext context, String uri) {
+		uri = JdtlsUtils.normalizeUri(uri);
+		Document targetDocument = findDocumentByUri(uri);
+		if (targetDocument == null) {
+			targetDocument = context.getLsif().getVertexBuilder().document(uri);
+			addDocument(targetDocument);
+			context.getEmitter().emit(targetDocument);
+		}
+
+		return targetDocument;
+	}
+
+	public synchronized ResultSet enlistResultSet(IndexerContext context, Range range) {
+		ResultSet resultSet = findResultSetByRange(range);
+		if (resultSet == null) {
+			resultSet = context.getLsif().getVertexBuilder().resultSet();
+			addResultSet(range, resultSet);
+			context.getEmitter().emit(resultSet);
+			context.getEmitter().emit(context.getLsif().getEdgeBuilder().refersTo(range, resultSet));
+		}
+
+		return resultSet;
+	}
+
+	public synchronized Range enlistRange(IndexerContext context, Document docVertex,
+			org.eclipse.lsp4j.Range lspRange) {
+		Range range = findRange(docVertex.getUri(), lspRange);
+		if (range == null) {
+			range = context.getLsif().getVertexBuilder().range(lspRange);
+			addRange(docVertex, lspRange, range);
+			context.getEmitter().emit(range);
+			context.getEmitter().emit(context.getLsif().getEdgeBuilder().contains(docVertex, range));
+		}
+		return range;
+	}
+
+	public synchronized HoverResult enlistHoverResult(IndexerContext context, Hover hover) {
+		int contentHash = hover.getContents().hashCode();
+		HoverResult hoverResult = findHoverResultByHashCode(contentHash);
+		if (hoverResult == null) {
+			hoverResult = context.getLsif().getVertexBuilder().hoverResult(hover);
+			context.getEmitter().emit(hoverResult);
+			addHoverResult(contentHash, hoverResult);
+		}
+		return hoverResult;
+	}
+
+	public Range enlistRange(IndexerContext context, String uri, org.eclipse.lsp4j.Range lspRange) {
+		return enlistRange(context, enlistDocument(context, uri), lspRange);
 	}
 
 	public void addDocument(Document doc) {

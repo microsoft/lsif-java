@@ -25,6 +25,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import com.microsoft.java.lsif.core.internal.LanguageServerIndexerPlugin;
 import com.microsoft.java.lsif.core.internal.emitter.Emitter;
 import com.microsoft.java.lsif.core.internal.indexer.LsifService;
+import com.microsoft.java.lsif.core.internal.indexer.Repository;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.HoverResult;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
@@ -62,12 +63,12 @@ public class HoverVisitor extends ProtocolVisitor {
 			}
 
 			// Source range:
-			Range sourceRange = this.enlistRange(docVertex, fromRange);
+			Range sourceRange = Repository.getInstance().enlistRange(this.getContext(), docVertex, fromRange);
 
 			// Result set
-			ResultSet resultSet = this.enlistResultSet(sourceRange);
+			ResultSet resultSet = Repository.getInstance().enlistResultSet(this.getContext(), sourceRange);
 
-			HoverResult hoverResult = this.enlistHoverResult(result);
+			HoverResult hoverResult = Repository.getInstance().enlistHoverResult(this.getContext(), result);
 			emitter.emit(lsif.getEdgeBuilder().hover(resultSet, hoverResult));
 		} catch (CoreException e) {
 			LanguageServerIndexerPlugin.log(e);
