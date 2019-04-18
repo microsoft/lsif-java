@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
@@ -36,7 +37,7 @@ public class ImplementationsVisitor extends ProtocolVisitor {
 
 	@Override
 	public boolean visit(SimpleName node) {
-		if (node.getParent() instanceof TypeDeclaration) {
+		if (node.getParent() instanceof TypeDeclaration || node.getParent() instanceof MethodDeclaration) {
 			this.emitImplementation(node.getStartPosition(), node.getLength());
 		}
 		return false;
