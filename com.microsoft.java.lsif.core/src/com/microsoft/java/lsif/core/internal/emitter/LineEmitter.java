@@ -29,7 +29,7 @@ public class LineEmitter implements Emitter {
 	 * .lsif.core.internal.protocol.Element)
 	 */
 	@Override
-	public void emit(Element element) {
+	public synchronized void emit(Element element) {
 		LanguageServerIndexerPlugin.println(JsonParser.toJson(element));
 
 	}

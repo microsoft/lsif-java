@@ -33,7 +33,7 @@ public class JsonEmitter implements Emitter {
 	 * .lsif.core.internal.protocol.Element)
 	 */
 	@Override
-	public void emit(Element element) {
+	public synchronized void emit(Element element) {
 		if (!isFirst) {
 			LanguageServerIndexerPlugin.println(",");
 		}
