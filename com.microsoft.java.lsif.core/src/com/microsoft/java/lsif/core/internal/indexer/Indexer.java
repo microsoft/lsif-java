@@ -1,9 +1,12 @@
 package com.microsoft.java.lsif.core.internal.indexer;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -22,6 +25,7 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.lsp4j.ClientCapabilities;
 
+import com.microsoft.java.lsif.core.internal.LanguageServerIndexerPlugin;
 import com.microsoft.java.lsif.core.internal.emitter.Emitter;
 import com.microsoft.java.lsif.core.internal.emitter.JsonEmitter;
 import com.microsoft.java.lsif.core.internal.emitter.LineEmitter;
@@ -109,14 +113,27 @@ public class Indexer {
 											.enlist(sourceFile);
 									currentContext.setDocVertex(docVertex);
 
+									List<CompletableFuture<Void>> completableFutures = new ArrayList<>();
 									for (ProtocolVisitor vis : this.visitors) {
 										vis.setContext(currentContext);
-										cu.accept(vis);
+										completableFutures.add(CompletableFuture.runAsync(() -> {
+											cu.accept(vis);
+										}));
 									}
 
-									// Dump diagnostic information
 									DiagnosticVisitor diagnosticVisitor = new DiagnosticVisitor(currentContext, cu);
-									diagnosticVisitor.enlist();
+									completableFutures.add(CompletableFuture.runAsync(() -> {
+										diagnosticVisitor.enlist();
+									}));
+									try {
+										CompletableFuture
+												.allOf(completableFutures
+														.toArray(new CompletableFuture[completableFutures.size()]))
+												.get();
+									} catch (InterruptedException | ExecutionException e) {
+										LanguageServerIndexerPlugin.logException("Exception occurs when indexing: ",
+												e);
+									}
 								}
 							}
 						}

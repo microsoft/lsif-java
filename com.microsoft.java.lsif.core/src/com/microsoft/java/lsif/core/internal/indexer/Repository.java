@@ -5,8 +5,8 @@
 
 package com.microsoft.java.lsif.core.internal.indexer;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.HoverResult;
@@ -17,21 +17,21 @@ public class Repository {
 
 	// Key: document URI
 	// Value: Document object
-	private Map<String, Document> documentMap = new HashMap<>();
+	private Map<String, Document> documentMap = new ConcurrentHashMap<>();
 
 	// Key: document URI
 	// Value: ranges among the documents
 	// Key: LSP range
 	// LSIF: range
-	private Map<String, Map<org.eclipse.lsp4j.Range, Range>> rangeMap = new HashMap<>();
+	private Map<String, Map<org.eclipse.lsp4j.Range, Range>> rangeMap = new ConcurrentHashMap<>();
 
 	// Key: Range
 	// Value: ResultSet that range refers to
-	private Map<Range, ResultSet> resultSetMap = new HashMap<>();
+	private Map<Range, ResultSet> resultSetMap = new ConcurrentHashMap<>();
 
 	// Key: Hash Code of the Hover Content
 	// Value: HoverResult
-	private Map<Integer, HoverResult> hoverResultMap = new HashMap<>();
+	private Map<Integer, HoverResult> hoverResultMap = new ConcurrentHashMap<>();
 
 	private static Repository instance = new Repository();
 
@@ -48,7 +48,7 @@ public class Repository {
 
 	public void addRange(Document owner, org.eclipse.lsp4j.Range lspRange, Range range) {
 		Map<org.eclipse.lsp4j.Range, Range> ranges = this.rangeMap.computeIfAbsent(owner.getUri(),
-				s -> new HashMap<>());
+				s -> new ConcurrentHashMap<>());
 		ranges.putIfAbsent(lspRange, range);
 	}
 
