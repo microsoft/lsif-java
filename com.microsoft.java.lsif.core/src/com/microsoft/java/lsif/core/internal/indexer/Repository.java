@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.eclipse.lsp4j.Hover;
 
 import com.microsoft.java.lsif.core.internal.JdtlsUtils;
+import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.HoverResult;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
@@ -53,7 +54,7 @@ public class Repository {
 		if (targetDocument == null) {
 			targetDocument = context.getLsif().getVertexBuilder().document(uri);
 			addDocument(targetDocument);
-			context.getEmitter().emit(targetDocument);
+			LsifEmitter.getInstance().emit(targetDocument);
 		}
 
 		return targetDocument;
@@ -64,8 +65,8 @@ public class Repository {
 		if (resultSet == null) {
 			resultSet = context.getLsif().getVertexBuilder().resultSet();
 			addResultSet(range, resultSet);
-			context.getEmitter().emit(resultSet);
-			context.getEmitter().emit(context.getLsif().getEdgeBuilder().refersTo(range, resultSet));
+			LsifEmitter.getInstance().emit(resultSet);
+			LsifEmitter.getInstance().emit(context.getLsif().getEdgeBuilder().refersTo(range, resultSet));
 		}
 
 		return resultSet;
@@ -77,8 +78,8 @@ public class Repository {
 		if (range == null) {
 			range = context.getLsif().getVertexBuilder().range(lspRange);
 			addRange(docVertex, lspRange, range);
-			context.getEmitter().emit(range);
-			context.getEmitter().emit(context.getLsif().getEdgeBuilder().contains(docVertex, range));
+			LsifEmitter.getInstance().emit(range);
+			LsifEmitter.getInstance().emit(context.getLsif().getEdgeBuilder().contains(docVertex, range));
 		}
 		return range;
 	}
@@ -88,7 +89,7 @@ public class Repository {
 		HoverResult hoverResult = findHoverResultByHashCode(contentHash);
 		if (hoverResult == null) {
 			hoverResult = context.getLsif().getVertexBuilder().hoverResult(hover);
-			context.getEmitter().emit(hoverResult);
+			LsifEmitter.getInstance().emit(hoverResult);
 			addHoverResult(contentHash, hoverResult);
 		}
 		return hoverResult;

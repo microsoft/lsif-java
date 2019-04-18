@@ -19,7 +19,7 @@ import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
 
 import com.microsoft.java.lsif.core.internal.LanguageServerIndexerPlugin;
-import com.microsoft.java.lsif.core.internal.emitter.Emitter;
+import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
 import com.microsoft.java.lsif.core.internal.indexer.LsifService;
 import com.microsoft.java.lsif.core.internal.indexer.Repository;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
@@ -61,7 +61,6 @@ public class TypeDefinitionVisitor extends ProtocolVisitor {
 				return;
 			}
 
-			Emitter emitter = this.getContext().getEmitter();
 			LsifService lsif = this.getContext().getLsif();
 			Document docVertex = this.getContext().getDocVertex();
 
@@ -80,8 +79,8 @@ public class TypeDefinitionVisitor extends ProtocolVisitor {
 
 			// Link resultSet & typeDefinitionResult
 			TypeDefinitionResult defResult = lsif.getVertexBuilder().typeDefinitionResult(targetRange.getId());
-			emitter.emit(defResult);
-			emitter.emit(lsif.getEdgeBuilder().typeDefinition(resultSet, defResult));
+			LsifEmitter.getInstance().emit(defResult);
+			LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().typeDefinition(resultSet, defResult));
 		} catch (CoreException e) {
 			LanguageServerIndexerPlugin.log(e);
 		}

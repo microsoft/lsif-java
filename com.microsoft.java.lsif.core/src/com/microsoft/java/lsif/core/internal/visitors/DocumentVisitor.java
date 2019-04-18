@@ -18,6 +18,7 @@ import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
+import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
 import com.microsoft.java.lsif.core.internal.indexer.IndexerContext;
 import com.microsoft.java.lsif.core.internal.indexer.Repository;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
@@ -36,8 +37,7 @@ public class DocumentVisitor extends ProtocolVisitor {
 	public Document enlist(IJavaElement sourceFile) {
 		String uri = ResourceUtils.fixURI(sourceFile.getResource().getRawLocationURI());
 		Document docVertex = Repository.getInstance().enlistDocument(this.getContext(), uri);
-		this.getContext().getEmitter()
-				.emit(this.getContext().getLsif().getEdgeBuilder().contains(projVertex, docVertex));
+		LsifEmitter.getInstance().emit(this.getContext().getLsif().getEdgeBuilder().contains(projVertex, docVertex));
 
 		handleDocumentSymbol(docVertex);
 		return docVertex;
@@ -48,8 +48,8 @@ public class DocumentVisitor extends ProtocolVisitor {
 		List<DocumentSymbol> symbols = this.handle(docVertex.getUri());
 		DocumentSymbolResult documentSymbolResult = this.getContext().getLsif().getVertexBuilder()
 				.documentSymbolResult(symbols);
-		this.getContext().getEmitter().emit(documentSymbolResult);
-		this.getContext().getEmitter()
+		LsifEmitter.getInstance().emit(documentSymbolResult);
+		LsifEmitter.getInstance()
 				.emit(this.getContext().getLsif().getEdgeBuilder().documentSymbols(docVertex, documentSymbolResult));
 	}
 
