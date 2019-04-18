@@ -22,6 +22,7 @@ import org.eclipse.lsp4j.TextDocumentIdentifier;
 import com.microsoft.java.lsif.core.internal.LanguageServerIndexerPlugin;
 import com.microsoft.java.lsif.core.internal.emitter.Emitter;
 import com.microsoft.java.lsif.core.internal.indexer.LsifService;
+import com.microsoft.java.lsif.core.internal.indexer.Repository;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
 import com.microsoft.java.lsif.core.internal.protocol.ReferenceItem;
 import com.microsoft.java.lsif.core.internal.protocol.ReferenceResult;
@@ -64,10 +65,11 @@ public class ReferencesVisitor extends ProtocolVisitor {
 			}
 
 			// Source range:
-			Range sourceRange = this.enlistRange(this.getContext().getDocVertex(), fromRange);
+			Range sourceRange = Repository.getInstance().enlistRange(this.getContext(),
+					this.getContext().getDocVertex(), fromRange);
 
 			// Result set
-			ResultSet resultSet = this.enlistResultSet(sourceRange);
+			ResultSet resultSet = Repository.getInstance().enlistResultSet(this.getContext(), sourceRange);
 
 			// ReferenceResult
 			ReferenceResult refResult = lsif.getVertexBuilder().referenceResult();
@@ -86,7 +88,9 @@ public class ReferencesVisitor extends ProtocolVisitor {
 
 	private List<Range> getReferenceRanges(int line, int character) {
 		List<Location> locations = getReferenceLocations(line, character);
-		return locations.stream().map(loc -> this.enlistRange(loc.getUri(), loc.getRange())).filter(r -> r != null)
+		return locations.stream()
+				.map(loc -> Repository.getInstance().enlistRange(this.getContext(), loc.getUri(), loc.getRange()))
+				.filter(r -> r != null)
 				.collect(Collectors.toList());
 	}
 

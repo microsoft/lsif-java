@@ -26,6 +26,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import com.microsoft.java.lsif.core.internal.LanguageServerIndexerPlugin;
 import com.microsoft.java.lsif.core.internal.emitter.Emitter;
 import com.microsoft.java.lsif.core.internal.indexer.LsifService;
+import com.microsoft.java.lsif.core.internal.indexer.Repository;
 import com.microsoft.java.lsif.core.internal.protocol.ImplementationResult;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
 import com.microsoft.java.lsif.core.internal.protocol.ResultSet;
@@ -66,10 +67,11 @@ public class ImplementationsVisitor extends ProtocolVisitor {
 			}
 
 			// Source range:
-			Range sourceRange = this.enlistRange(this.getContext().getDocVertex(), fromRange);
+			Range sourceRange = Repository.getInstance().enlistRange(this.getContext(),
+					this.getContext().getDocVertex(), fromRange);
 
 			// Result set
-			ResultSet resultSet = this.enlistResultSet(sourceRange);
+			ResultSet resultSet = Repository.getInstance().enlistResultSet(this.getContext(), sourceRange);
 
 			// ImplementationResult
 			List<Either<String, Location>> result = ranges.stream()
@@ -89,7 +91,9 @@ public class ImplementationsVisitor extends ProtocolVisitor {
 		if (locations == null) {
 			return Collections.emptyList();
 		}
-		return locations.stream().map(loc -> this.enlistRange(loc.getUri(), loc.getRange())).filter(r -> r != null)
+		return locations.stream()
+				.map(loc -> Repository.getInstance().enlistRange(this.getContext(), loc.getUri(), loc.getRange()))
+				.filter(r -> r != null)
 				.collect(Collectors.toList());
 	}
 

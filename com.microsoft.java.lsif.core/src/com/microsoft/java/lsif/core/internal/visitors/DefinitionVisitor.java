@@ -18,6 +18,7 @@ import com.microsoft.java.lsif.core.internal.JdtlsUtils;
 import com.microsoft.java.lsif.core.internal.LanguageServerIndexerPlugin;
 import com.microsoft.java.lsif.core.internal.emitter.Emitter;
 import com.microsoft.java.lsif.core.internal.indexer.LsifService;
+import com.microsoft.java.lsif.core.internal.indexer.Repository;
 import com.microsoft.java.lsif.core.internal.protocol.DefinitionResult;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
@@ -62,15 +63,16 @@ public class DefinitionVisitor extends ProtocolVisitor {
 			Document docVertex = this.getContext().getDocVertex();
 
 			// Source range:
-			Range sourceRange = this.enlistRange(docVertex, fromRange);
+			Range sourceRange = Repository.getInstance().enlistRange(this.getContext(), docVertex, fromRange);
 
 			// Target range:
 			org.eclipse.lsp4j.Range toRange = targetLocation.getRange();
-			Document targetDocument = this.enlistDocument(targetLocation.getUri());
-			Range targetRange = this.enlistRange(targetDocument, toRange);
+			Document targetDocument = Repository.getInstance().enlistDocument(this.getContext(),
+					targetLocation.getUri());
+			Range targetRange = Repository.getInstance().enlistRange(this.getContext(), targetDocument, toRange);
 
 			// Result set
-			ResultSet resultSet = this.enlistResultSet(sourceRange);
+			ResultSet resultSet = Repository.getInstance().enlistResultSet(this.getContext(), sourceRange);
 
 			// Link resultSet & definitionResult
 			DefinitionResult defResult = lsif.getVertexBuilder().definitionResult(targetRange.getId());

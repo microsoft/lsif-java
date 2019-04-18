@@ -8,6 +8,9 @@ package com.microsoft.java.lsif.core.internal.indexer;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.eclipse.lsp4j.Hover;
+
+import com.microsoft.java.lsif.core.internal.JdtlsUtils;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.HoverResult;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
@@ -33,42 +36,91 @@ public class Repository {
 	// Value: HoverResult
 	private Map<Integer, HoverResult> hoverResultMap = new ConcurrentHashMap<>();
 
-	private static Repository instance = new Repository();
-
 	private Repository() {
 	}
 
-	public static Repository getInstance() {
-		return instance;
+	private static class RepositoryHolder {
+		private static final Repository INSTANCE = new Repository();
 	}
 
-	public void addDocument(Document doc) {
+	public static Repository getInstance() {
+		return RepositoryHolder.INSTANCE;
+	}
+
+	public synchronized Document enlistDocument(IndexerContext context, String uri) {
+		uri = JdtlsUtils.normalizeUri(uri);
+		Document targetDocument = findDocumentByUri(uri);
+		if (targetDocument == null) {
+			targetDocument = context.getLsif().getVertexBuilder().document(uri);
+			addDocument(targetDocument);
+			context.getEmitter().emit(targetDocument);
+		}
+
+		return targetDocument;
+	}
+
+	public synchronized ResultSet enlistResultSet(IndexerContext context, Range range) {
+		ResultSet resultSet = findResultSetByRange(range);
+		if (resultSet == null) {
+			resultSet = context.getLsif().getVertexBuilder().resultSet();
+			addResultSet(range, resultSet);
+			context.getEmitter().emit(resultSet);
+			context.getEmitter().emit(context.getLsif().getEdgeBuilder().refersTo(range, resultSet));
+		}
+
+		return resultSet;
+	}
+
+	public synchronized Range enlistRange(IndexerContext context, Document docVertex,
+			org.eclipse.lsp4j.Range lspRange) {
+		Range range = findRange(docVertex.getUri(), lspRange);
+		if (range == null) {
+			range = context.getLsif().getVertexBuilder().range(lspRange);
+			addRange(docVertex, lspRange, range);
+			context.getEmitter().emit(range);
+			context.getEmitter().emit(context.getLsif().getEdgeBuilder().contains(docVertex, range));
+		}
+		return range;
+	}
+
+	public synchronized HoverResult enlistHoverResult(IndexerContext context, Hover hover) {
+		int contentHash = hover.getContents().hashCode();
+		HoverResult hoverResult = findHoverResultByHashCode(contentHash);
+		if (hoverResult == null) {
+			hoverResult = context.getLsif().getVertexBuilder().hoverResult(hover);
+			context.getEmitter().emit(hoverResult);
+			addHoverResult(contentHash, hoverResult);
+		}
+		return hoverResult;
+	}
+
+	public Range enlistRange(IndexerContext context, String uri, org.eclipse.lsp4j.Range lspRange) {
+		return enlistRange(context, enlistDocument(context, uri), lspRange);
+	}
+
+	private void addDocument(Document doc) {
 		this.documentMap.put(doc.getUri(), doc);
 	}
 
-	public void addRange(Document owner, org.eclipse.lsp4j.Range lspRange, Range range) {
+	private void addRange(Document owner, org.eclipse.lsp4j.Range lspRange, Range range) {
 		Map<org.eclipse.lsp4j.Range, Range> ranges = this.rangeMap.computeIfAbsent(owner.getUri(),
 				s -> new ConcurrentHashMap<>());
 		ranges.putIfAbsent(lspRange, range);
 	}
 
-	public void addResultSet(Range range, ResultSet resultSet) {
+	private void addResultSet(Range range, ResultSet resultSet) {
 		this.resultSetMap.put(range, resultSet);
 	}
 
-	public void addHoverResult(int hashCode, HoverResult hoverResult) {
+	private void addHoverResult(int hashCode, HoverResult hoverResult) {
 		this.hoverResultMap.put(hashCode, hoverResult);
 	}
 
-	public Document findDocumentByUri(String uri) {
+	private Document findDocumentByUri(String uri) {
 		return this.documentMap.getOrDefault(uri, null);
 	}
 
-	public Document findDocumentById() {
-		throw new UnsupportedOperationException();
-	}
-
-	public Range findRange(String uri, org.eclipse.lsp4j.Range lspRange) {
+	private Range findRange(String uri, org.eclipse.lsp4j.Range lspRange) {
 		Map<org.eclipse.lsp4j.Range, Range> ranges = rangeMap.get(uri);
 		if (ranges != null) {
 			return ranges.get(lspRange);
@@ -76,7 +128,7 @@ public class Repository {
 		return null;
 	}
 
-	public ResultSet findResultSetByRange(Range range) {
+	private ResultSet findResultSetByRange(Range range) {
 		return this.resultSetMap.getOrDefault(range, null);
 	}
 
