@@ -26,9 +26,7 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.lsp4j.ClientCapabilities;
 
 import com.microsoft.java.lsif.core.internal.LanguageServerIndexerPlugin;
-import com.microsoft.java.lsif.core.internal.emitter.Emitter;
-import com.microsoft.java.lsif.core.internal.emitter.JsonEmitter;
-import com.microsoft.java.lsif.core.internal.emitter.LineEmitter;
+import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.Project;
 import com.microsoft.java.lsif.core.internal.visitors.DefinitionVisitor;
@@ -64,19 +62,18 @@ public class Indexer {
 		initializeJdtls();
 		LsifService lsif = new LsifService();
 
-		Emitter emitter = this.createEmitter();
-		emitter.start();
-		emitter.emit(lsif.getVertexBuilder().metaData());
+		LsifEmitter.getInstance().start();
+		LsifEmitter.getInstance().emit(lsif.getVertexBuilder().metaData());
 
 		handler.importProject(path, monitor);
 		handler.buildProject(monitor);
-		buildIndex(path, monitor, emitter, lsif);
+		buildIndex(path, monitor, lsif);
 		handler.removeProject(monitor);
 
-		emitter.end();
+		LsifEmitter.getInstance().end();
 	}
 
-	private void buildIndex(IPath path, IProgressMonitor monitor, Emitter emitter, LsifService lsif)
+	private void buildIndex(IPath path, IProgressMonitor monitor, LsifService lsif)
 			throws JavaModelException {
 
 		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
@@ -91,7 +88,7 @@ public class Indexer {
 				continue;
 			}
 			Project projVertex = lsif.getVertexBuilder().project();
-			emitter.emit(projVertex);
+			LsifEmitter.getInstance().emit(projVertex);
 			IClasspathEntry[] references = javaProject.getRawClasspath();
 			for (IClasspathEntry reference : references) {
 				if (reference.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
@@ -106,7 +103,7 @@ public class Indexer {
 									}
 									CompilationUnit cu = ASTUtil.createAST((ITypeRoot) sourceFile, monitor);
 
-									IndexerContext currentContext = new IndexerContext(emitter, lsif, null,
+									IndexerContext currentContext = new IndexerContext(lsif, null,
 											(ITypeRoot) sourceFile, JavaLanguageServerPlugin.getPreferencesManager());
 
 									Document docVertex = (new DocumentVisitor(currentContext, projVertex))
@@ -148,17 +145,5 @@ public class Indexer {
 		extendedClientCapabilities.put("classFileContentsSupport", false);
 		JavaLanguageServerPlugin.getPreferencesManager().updateClientPrefences(new ClientCapabilities(),
 				extendedClientCapabilities);
-	}
-
-	private Emitter createEmitter() {
-		final String format = System.getProperty("intellinav.output.format", "line" /* default */);
-		switch (format) {
-			case "json":
-				return new JsonEmitter();
-			case "line":
-				return new LineEmitter();
-			default:
-				throw new RuntimeException("Unsupported output format: " + format);
-		}
 	}
 }

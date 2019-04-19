@@ -25,7 +25,7 @@ import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 import com.microsoft.java.lsif.core.internal.LanguageServerIndexerPlugin;
-import com.microsoft.java.lsif.core.internal.emitter.Emitter;
+import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
 import com.microsoft.java.lsif.core.internal.indexer.LsifService;
 import com.microsoft.java.lsif.core.internal.indexer.Repository;
 import com.microsoft.java.lsif.core.internal.protocol.ImplementationResult;
@@ -58,7 +58,6 @@ public class ImplementationsVisitor extends ProtocolVisitor {
 		try {
 			fromRange = JDTUtils.toRange(this.getContext().getTypeRoot(), startPosition, length);
 
-			Emitter emitter = this.getContext().getEmitter();
 			LsifService lsif = this.getContext().getLsif();
 
 			List<Range> ranges = getImplementationRanges(fromRange.getStart().getLine(),
@@ -79,8 +78,8 @@ public class ImplementationsVisitor extends ProtocolVisitor {
 					.map(r -> Either.<String, Location>forLeft(r.getId())).collect(Collectors.toList());
 			ImplementationResult implResult = lsif.getVertexBuilder().implementationResult(result);
 
-			emitter.emit(implResult);
-			emitter.emit(lsif.getEdgeBuilder().implementation(resultSet, implResult));
+			LsifEmitter.getInstance().emit(implResult);
+			LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().implementation(resultSet, implResult));
 
 		} catch (CoreException ex) {
 			LanguageServerIndexerPlugin.logException("Exception when visiting implementation ", ex);

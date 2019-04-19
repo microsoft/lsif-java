@@ -23,7 +23,7 @@ import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 import com.microsoft.java.lsif.core.internal.LanguageServerIndexerPlugin;
-import com.microsoft.java.lsif.core.internal.emitter.Emitter;
+import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
 import com.microsoft.java.lsif.core.internal.indexer.LsifService;
 import com.microsoft.java.lsif.core.internal.indexer.Repository;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
@@ -49,7 +49,6 @@ public class HoverVisitor extends ProtocolVisitor {
 	}
 
 	private void emitHover(int startPosition, int length) {
-		Emitter emitter = this.getContext().getEmitter();
 		LsifService lsif = this.getContext().getLsif();
 		Document docVertex = this.getContext().getDocVertex();
 		try {
@@ -69,7 +68,7 @@ public class HoverVisitor extends ProtocolVisitor {
 			ResultSet resultSet = Repository.getInstance().enlistResultSet(this.getContext(), sourceRange);
 
 			HoverResult hoverResult = Repository.getInstance().enlistHoverResult(this.getContext(), result);
-			emitter.emit(lsif.getEdgeBuilder().hover(resultSet, hoverResult));
+			LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().hover(resultSet, hoverResult));
 		} catch (CoreException e) {
 			LanguageServerIndexerPlugin.log(e);
 		}

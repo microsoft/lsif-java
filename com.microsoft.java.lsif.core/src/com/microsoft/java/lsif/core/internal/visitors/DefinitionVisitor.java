@@ -16,7 +16,7 @@ import org.eclipse.lsp4j.Location;
 
 import com.microsoft.java.lsif.core.internal.JdtlsUtils;
 import com.microsoft.java.lsif.core.internal.LanguageServerIndexerPlugin;
-import com.microsoft.java.lsif.core.internal.emitter.Emitter;
+import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
 import com.microsoft.java.lsif.core.internal.indexer.LsifService;
 import com.microsoft.java.lsif.core.internal.indexer.Repository;
 import com.microsoft.java.lsif.core.internal.protocol.DefinitionResult;
@@ -58,7 +58,6 @@ public class DefinitionVisitor extends ProtocolVisitor {
 				return;
 			}
 
-			Emitter emitter = this.getContext().getEmitter();
 			LsifService lsif = this.getContext().getLsif();
 			Document docVertex = this.getContext().getDocVertex();
 
@@ -76,8 +75,8 @@ public class DefinitionVisitor extends ProtocolVisitor {
 
 			// Link resultSet & definitionResult
 			DefinitionResult defResult = lsif.getVertexBuilder().definitionResult(targetRange.getId());
-			emitter.emit(defResult);
-			emitter.emit(lsif.getEdgeBuilder().definition(resultSet, defResult));
+			LsifEmitter.getInstance().emit(defResult);
+			LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().definition(resultSet, defResult));
 
 		} catch (CoreException ex) {
 			LanguageServerIndexerPlugin.logException("Exception in definition visitor: ", ex);

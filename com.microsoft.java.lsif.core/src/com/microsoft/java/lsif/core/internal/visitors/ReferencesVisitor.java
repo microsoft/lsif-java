@@ -20,7 +20,7 @@ import org.eclipse.lsp4j.ReferenceParams;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 
 import com.microsoft.java.lsif.core.internal.LanguageServerIndexerPlugin;
-import com.microsoft.java.lsif.core.internal.emitter.Emitter;
+import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
 import com.microsoft.java.lsif.core.internal.indexer.LsifService;
 import com.microsoft.java.lsif.core.internal.indexer.Repository;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
@@ -55,7 +55,6 @@ public class ReferencesVisitor extends ProtocolVisitor {
 				return;
 			}
 
-			Emitter emitter = this.getContext().getEmitter();
 			LsifService lsif = this.getContext().getLsif();
 
 			List<Range> ranges = getReferenceRanges(fromRange.getStart().getLine(),
@@ -73,11 +72,12 @@ public class ReferencesVisitor extends ProtocolVisitor {
 
 			// ReferenceResult
 			ReferenceResult refResult = lsif.getVertexBuilder().referenceResult();
-			emitter.emit(refResult);
-			emitter.emit(lsif.getEdgeBuilder().references(resultSet, refResult));
+			LsifEmitter.getInstance().emit(refResult);
+			LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().references(resultSet, refResult));
 
 			for (Range r : ranges) {
-				emitter.emit(lsif.getEdgeBuilder().referenceItem(refResult, r, ReferenceItem.REFERENCE));
+				LsifEmitter.getInstance()
+						.emit(lsif.getEdgeBuilder().referenceItem(refResult, r, ReferenceItem.REFERENCE));
 			}
 		} catch (
 

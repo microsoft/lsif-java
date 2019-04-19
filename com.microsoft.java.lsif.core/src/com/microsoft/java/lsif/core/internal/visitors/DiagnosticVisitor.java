@@ -27,7 +27,7 @@ import org.eclipse.lsp4j.Range;
 import org.eclipse.m2e.core.internal.IMavenConstants;
 
 import com.microsoft.java.lsif.core.internal.LanguageServerIndexerPlugin;
-import com.microsoft.java.lsif.core.internal.emitter.Emitter;
+import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
 import com.microsoft.java.lsif.core.internal.indexer.IndexerContext;
 import com.microsoft.java.lsif.core.internal.indexer.LsifService;
 import com.microsoft.java.lsif.core.internal.protocol.DiagnosticResult;
@@ -43,7 +43,6 @@ public class DiagnosticVisitor extends ProtocolVisitor {
 	}
 
 	public void enlist() {
-		Emitter emitter = this.getContext().getEmitter();
 		LsifService lsif = this.getContext().getLsif();
 		Document docVertex = this.getContext().getDocVertex();
 		IResource resource = cu.getJavaElement().getResource();
@@ -77,8 +76,8 @@ public class DiagnosticVisitor extends ProtocolVisitor {
 
 		List<Diagnostic> diagnostics = toDiagnosticsArray(document, markers);
 		DiagnosticResult diagnosticResult = lsif.getVertexBuilder().diagnosticResult(diagnostics);
-		emitter.emit(diagnosticResult);
-		emitter.emit(lsif.getEdgeBuilder().diagnostic(docVertex, diagnosticResult));
+		LsifEmitter.getInstance().emit(diagnosticResult);
+		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().diagnostic(docVertex, diagnosticResult));
 	}
 
 	private List<Diagnostic> toDiagnosticsArray(IDocument document, IMarker[] markers) {
