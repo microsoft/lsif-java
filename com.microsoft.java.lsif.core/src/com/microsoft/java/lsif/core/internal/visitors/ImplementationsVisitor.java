@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
@@ -38,7 +39,7 @@ public class ImplementationsVisitor extends ProtocolVisitor {
 
 	@Override
 	public boolean visit(SimpleName node) {
-		if (node.getParent() instanceof TypeDeclaration || node.getParent() instanceof MethodDeclaration) {
+		if (isTypeOrMethodDeclaration(node)) {
 			this.emitImplementation(node.getStartPosition(), node.getLength());
 		}
 		return false;
@@ -46,7 +47,7 @@ public class ImplementationsVisitor extends ProtocolVisitor {
 
 	@Override
 	public boolean visit(SimpleType node) {
-		if (node.getParent() instanceof TypeDeclaration) {
+		if (isTypeOrMethodDeclaration(node)) {
 			this.emitImplementation(node.getStartPosition(), node.getLength());
 		}
 		return false;
@@ -86,6 +87,10 @@ public class ImplementationsVisitor extends ProtocolVisitor {
 		}
 	}
 
+	private boolean isTypeOrMethodDeclaration(ASTNode node) {
+		return node.getParent() instanceof TypeDeclaration || node.getParent() instanceof MethodDeclaration;
+	}
+
 	private List<Range> getImplementationRanges(int line, int character) {
 		List<? extends Location> locations = getImplementations(line, character);
 		if (locations == null) {
@@ -97,7 +102,7 @@ public class ImplementationsVisitor extends ProtocolVisitor {
 				.collect(Collectors.toList());
 	}
 
-	public List<? extends Location> getImplementations(int line, int character) {
+	private List<? extends Location> getImplementations(int line, int character) {
 		TextDocumentPositionParams params = new TextDocumentPositionParams(
 				new TextDocumentIdentifier(this.getContext().getDocVertex().getUri()), new Position(line, character));
 
