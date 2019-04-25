@@ -7,7 +7,6 @@ package com.microsoft.java.lsif.core.internal.visitors;
 
 import java.util.List;
 
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
@@ -81,8 +80,8 @@ public class TypeDefinitionVisitor extends ProtocolVisitor {
 			TypeDefinitionResult defResult = lsif.getVertexBuilder().typeDefinitionResult(targetRange.getId());
 			LsifEmitter.getInstance().emit(defResult);
 			LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().typeDefinition(resultSet, defResult));
-		} catch (CoreException e) {
-			LanguageServerIndexerPlugin.log(e);
+		} catch (Throwable ex) {
+			LanguageServerIndexerPlugin.logException("Exception when dumping type definition information ", ex);
 		}
 	}
 

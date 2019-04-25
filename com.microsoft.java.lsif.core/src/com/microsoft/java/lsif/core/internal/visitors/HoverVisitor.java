@@ -8,7 +8,6 @@ package com.microsoft.java.lsif.core.internal.visitors;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
@@ -69,8 +68,8 @@ public class HoverVisitor extends ProtocolVisitor {
 
 			HoverResult hoverResult = Repository.getInstance().enlistHoverResult(this.getContext(), result);
 			LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().hover(resultSet, hoverResult));
-		} catch (CoreException e) {
-			LanguageServerIndexerPlugin.log(e);
+		} catch (Throwable ex) {
+			LanguageServerIndexerPlugin.logException("Exception when dumping hover information ", ex);
 		}
 	}
 

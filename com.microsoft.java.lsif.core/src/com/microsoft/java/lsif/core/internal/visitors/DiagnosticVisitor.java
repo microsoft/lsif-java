@@ -63,8 +63,8 @@ public class DiagnosticVisitor extends ProtocolVisitor {
 			markers = Arrays.copyOf(javaMarkers, javaMarkers.length + taskMarkers.length);
 			System.arraycopy(taskMarkers, 0, markers, javaMarkers.length, taskMarkers.length);
 			document = JsonRpcHelpers.toDocument(cu.getJavaElement().getOpenable().getBuffer());
-		} catch (CoreException ex) {
-			LanguageServerIndexerPlugin.logException("Exception when dumping diagnostics ", ex);
+		} catch (Throwable ex) {
+			LanguageServerIndexerPlugin.logException("Exception when dumping diagnostic information ", ex);
 			return;
 		}
 
