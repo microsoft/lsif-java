@@ -11,6 +11,8 @@ import com.microsoft.java.lsif.core.internal.protocol.Element;
 
 public class LineEmitter implements Emitter {
 
+	private final Object lock = new Object();
+
 	/*
 	 * (non-Javadoc)
 	 *
@@ -29,8 +31,11 @@ public class LineEmitter implements Emitter {
 	 * .lsif.core.internal.protocol.Element)
 	 */
 	@Override
-	public synchronized void emit(Element element) {
-		LanguageServerIndexerPlugin.println(JsonParser.toJson(element));
+	public void emit(Element element) {
+		String message = JsonParser.toJson(element);
+		synchronized (lock) {
+			LanguageServerIndexerPlugin.println(message);
+		}
 
 	}
 
