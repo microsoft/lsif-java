@@ -6,6 +6,7 @@
 package com.microsoft.java.lsif.core.internal.indexer;
 
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class IdGenerator {
 
@@ -13,7 +14,7 @@ public class IdGenerator {
 		UUID, COUNTER
 	}
 
-	private int counter = 0;
+	private AtomicInteger counter = new AtomicInteger(0);
 
 	public IdGenerator(IdType type) {
 		this.idtype = type;
@@ -24,7 +25,7 @@ public class IdGenerator {
 	public String next() {
 		switch (idtype) {
 			case COUNTER:
-				counter++;
+				counter.incrementAndGet();
 				return String.valueOf(counter);
 			case UUID:
 				return UUID.randomUUID().toString();
