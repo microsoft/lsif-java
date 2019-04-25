@@ -4,6 +4,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## 0.1.5
+### Changed
+- Improve the indexing performance[#12](https://github.com/Microsoft/lsif-java/issues/12)
+
 ### Fixed
 - [Fix Bugs](https://github.com/Microsoft/lsif-java/issues?q=is%3Aissue+is%3Aclosed+label%3Abug+milestone%3A0.1.5)
 
