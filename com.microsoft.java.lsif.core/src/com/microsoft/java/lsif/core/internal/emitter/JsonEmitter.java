@@ -9,6 +9,9 @@ import com.microsoft.java.lsif.core.internal.LanguageServerIndexerPlugin;
 import com.microsoft.java.lsif.core.internal.protocol.Element;
 
 public class JsonEmitter implements Emitter {
+
+	private final Object lock = new Object();
+
 	private boolean isFirst;
 
 	public JsonEmitter() {
@@ -33,13 +36,16 @@ public class JsonEmitter implements Emitter {
 	 * .lsif.core.internal.protocol.Element)
 	 */
 	@Override
-	public synchronized void emit(Element element) {
-		if (!isFirst) {
-			LanguageServerIndexerPlugin.println(",");
+	public void emit(Element element) {
+		String message = JsonParser.toJson(element);
+		synchronized (lock) {
+			if (!isFirst) {
+				LanguageServerIndexerPlugin.println(",");
+			}
+			LanguageServerIndexerPlugin.print("\t");
+			LanguageServerIndexerPlugin.print(message);
+			this.isFirst = false;
 		}
-		LanguageServerIndexerPlugin.print("\t");
-		LanguageServerIndexerPlugin.print(JsonParser.toJson(element));
-		this.isFirst = false;
 	}
 
 	/*
