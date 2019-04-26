@@ -7,7 +7,6 @@ package com.microsoft.java.lsif.core.internal;
 
 import java.io.PrintStream;
 
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.ILogListener;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
@@ -32,7 +31,8 @@ public class LanguageServerIndexerPlugin implements BundleActivator {
 			Platform.getLog(LanguageServerIndexerPlugin.context.getBundle()).addLogListener(new ILogListener() {
 				@Override
 				public void logging(IStatus status, String plugin) {
-					LanguageServerIndexerPlugin.out.println(status.getMessage());
+					out.println(); // Make sure the log will ruin the emitter output line.
+					out.println(status.getMessage());
 					if (status.getException() != null) {
 						status.getException().printStackTrace(LanguageServerIndexerPlugin.out);
 					}
@@ -43,16 +43,6 @@ public class LanguageServerIndexerPlugin implements BundleActivator {
 
 	@Override
 	public void stop(BundleContext context) throws Exception {
-	}
-
-	public static void log(IStatus status) {
-		if (context != null) {
-			Platform.getLog(LanguageServerIndexerPlugin.context.getBundle()).log(status);
-		}
-	}
-
-	public static void log(CoreException e) {
-		log(e.getStatus());
 	}
 
 	public static void logError(String message) {
@@ -83,5 +73,11 @@ public class LanguageServerIndexerPlugin implements BundleActivator {
 
 	public static void println(String message) {
 		out.println(message);
+	}
+
+	private static void log(IStatus status) {
+		if (context != null) {
+			Platform.getLog(LanguageServerIndexerPlugin.context.getBundle()).log(status);
+		}
 	}
 }

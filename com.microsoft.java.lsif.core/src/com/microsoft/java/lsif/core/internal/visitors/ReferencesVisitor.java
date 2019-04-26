@@ -8,7 +8,6 @@ package com.microsoft.java.lsif.core.internal.visitors;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
@@ -79,10 +78,8 @@ public class ReferencesVisitor extends ProtocolVisitor {
 				LsifEmitter.getInstance()
 						.emit(lsif.getEdgeBuilder().referenceItem(refResult, r, ReferenceItem.REFERENCE));
 			}
-		} catch (
-
-		CoreException ex) {
-			LanguageServerIndexerPlugin.logException("Exception in visit references ", ex);
+		} catch (Throwable ex) {
+			LanguageServerIndexerPlugin.logException("Exception when dumping reference information ", ex);
 		}
 	}
 
