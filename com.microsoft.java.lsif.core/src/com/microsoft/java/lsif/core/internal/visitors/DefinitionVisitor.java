@@ -5,7 +5,6 @@
 
 package com.microsoft.java.lsif.core.internal.visitors;
 
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.dom.SimpleName;
@@ -78,8 +77,8 @@ public class DefinitionVisitor extends ProtocolVisitor {
 			LsifEmitter.getInstance().emit(defResult);
 			LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().definition(resultSet, defResult));
 
-		} catch (CoreException ex) {
-			LanguageServerIndexerPlugin.logException("Exception in definition visitor: ", ex);
+		} catch (Throwable ex) {
+			LanguageServerIndexerPlugin.logException("Exception when dumping definition information ", ex);
 		}
 	}
 

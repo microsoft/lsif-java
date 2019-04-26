@@ -25,8 +25,7 @@ public class IdGenerator {
 	public String next() {
 		switch (idtype) {
 			case COUNTER:
-				counter.incrementAndGet();
-				return String.valueOf(counter);
+				return String.valueOf(counter.incrementAndGet());
 			case UUID:
 				return UUID.randomUUID().toString();
 			default:

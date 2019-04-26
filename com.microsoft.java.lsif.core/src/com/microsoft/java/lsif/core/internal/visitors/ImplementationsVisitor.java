@@ -9,7 +9,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
@@ -81,8 +80,8 @@ public class ImplementationsVisitor extends ProtocolVisitor {
 			LsifEmitter.getInstance().emit(implResult);
 			LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().implementation(resultSet, implResult));
 
-		} catch (CoreException ex) {
-			LanguageServerIndexerPlugin.logException("Exception when visiting implementation ", ex);
+		} catch (Throwable ex) {
+			LanguageServerIndexerPlugin.logException("Exception when dumping implementation information ", ex);
 		}
 	}
 
