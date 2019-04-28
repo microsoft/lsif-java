@@ -16,6 +16,7 @@ import org.eclipse.lsp4j.Location;
 import com.microsoft.java.lsif.core.internal.JdtlsUtils;
 import com.microsoft.java.lsif.core.internal.LanguageServerIndexerPlugin;
 import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
+import com.microsoft.java.lsif.core.internal.indexer.IndexerContext;
 import com.microsoft.java.lsif.core.internal.indexer.LsifService;
 import com.microsoft.java.lsif.core.internal.indexer.Repository;
 import com.microsoft.java.lsif.core.internal.protocol.DefinitionResult;
@@ -25,7 +26,8 @@ import com.microsoft.java.lsif.core.internal.protocol.ResultSet;
 
 public class DefinitionVisitor extends ProtocolVisitor {
 
-	public DefinitionVisitor() {
+	public DefinitionVisitor(LsifService lsif, IndexerContext context) {
+		super(lsif, context);
 	}
 
 	@Override
@@ -42,10 +44,11 @@ public class DefinitionVisitor extends ProtocolVisitor {
 
 	private void emitDefinition(int startPosition, int length) {
 		try {
-			org.eclipse.lsp4j.Range fromRange = JDTUtils.toRange(this.getContext().getTypeRoot(), startPosition,
+			org.eclipse.lsp4j.Range fromRange = JDTUtils.toRange(this.getContext().getCompilationUnit().getTypeRoot(),
+					startPosition,
 					length);
 
-			IJavaElement element = JDTUtils.findElementAtSelection(this.getContext().getTypeRoot(),
+			IJavaElement element = JDTUtils.findElementAtSelection(this.getContext().getCompilationUnit().getTypeRoot(),
 					fromRange.getStart().getLine(), fromRange.getStart().getCharacter(), new PreferenceManager(),
 					new NullProgressMonitor());
 			if (element == null) {
@@ -57,20 +60,20 @@ public class DefinitionVisitor extends ProtocolVisitor {
 				return;
 			}
 
-			LsifService lsif = this.getContext().getLsif();
+			LsifService lsif = this.getLsif();
 			Document docVertex = this.getContext().getDocVertex();
 
 			// Source range:
-			Range sourceRange = Repository.getInstance().enlistRange(this.getContext(), docVertex, fromRange);
+			Range sourceRange = Repository.getInstance().enlistRange(lsif, docVertex, fromRange);
 
 			// Target range:
 			org.eclipse.lsp4j.Range toRange = targetLocation.getRange();
-			Document targetDocument = Repository.getInstance().enlistDocument(this.getContext(),
+			Document targetDocument = Repository.getInstance().enlistDocument(lsif,
 					targetLocation.getUri());
-			Range targetRange = Repository.getInstance().enlistRange(this.getContext(), targetDocument, toRange);
+			Range targetRange = Repository.getInstance().enlistRange(lsif, targetDocument, toRange);
 
 			// Result set
-			ResultSet resultSet = Repository.getInstance().enlistResultSet(this.getContext(), sourceRange);
+			ResultSet resultSet = Repository.getInstance().enlistResultSet(lsif, sourceRange);
 
 			// Link resultSet & definitionResult
 			DefinitionResult defResult = lsif.getVertexBuilder().definitionResult(targetRange.getId());

@@ -12,6 +12,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.handlers.HoverHandler;
 import org.eclipse.lsp4j.Hover;
 import org.eclipse.lsp4j.MarkedString;
@@ -23,6 +24,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 import com.microsoft.java.lsif.core.internal.LanguageServerIndexerPlugin;
 import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
+import com.microsoft.java.lsif.core.internal.indexer.IndexerContext;
 import com.microsoft.java.lsif.core.internal.indexer.LsifService;
 import com.microsoft.java.lsif.core.internal.indexer.Repository;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
@@ -32,7 +34,8 @@ import com.microsoft.java.lsif.core.internal.protocol.ResultSet;
 
 public class HoverVisitor extends ProtocolVisitor {
 
-	public HoverVisitor() {
+	public HoverVisitor(LsifService lsif, IndexerContext context) {
+		super(lsif, context);
 	}
 
 	@Override
@@ -48,10 +51,11 @@ public class HoverVisitor extends ProtocolVisitor {
 	}
 
 	private void emitHover(int startPosition, int length) {
-		LsifService lsif = this.getContext().getLsif();
+		LsifService lsif = this.getLsif();
 		Document docVertex = this.getContext().getDocVertex();
 		try {
-			org.eclipse.lsp4j.Range fromRange = JDTUtils.toRange(this.getContext().getTypeRoot(), startPosition,
+			org.eclipse.lsp4j.Range fromRange = JDTUtils.toRange(this.getContext().getCompilationUnit().getTypeRoot(),
+					startPosition,
 					length);
 
 			// Link resultSet & definitionResult
@@ -61,12 +65,12 @@ public class HoverVisitor extends ProtocolVisitor {
 			}
 
 			// Source range:
-			Range sourceRange = Repository.getInstance().enlistRange(this.getContext(), docVertex, fromRange);
+			Range sourceRange = Repository.getInstance().enlistRange(lsif, docVertex, fromRange);
 
 			// Result set
-			ResultSet resultSet = Repository.getInstance().enlistResultSet(this.getContext(), sourceRange);
+			ResultSet resultSet = Repository.getInstance().enlistResultSet(lsif, sourceRange);
 
-			HoverResult hoverResult = Repository.getInstance().enlistHoverResult(this.getContext(), result);
+			HoverResult hoverResult = Repository.getInstance().enlistHoverResult(lsif, result);
 			LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().hover(resultSet, hoverResult));
 		} catch (Throwable ex) {
 			LanguageServerIndexerPlugin.logException("Exception when dumping hover information ", ex);
@@ -77,7 +81,7 @@ public class HoverVisitor extends ProtocolVisitor {
 		TextDocumentPositionParams params = new TextDocumentPositionParams(
 				new TextDocumentIdentifier(this.getContext().getDocVertex().getUri()), new Position(line, character));
 
-		HoverHandler proxy = new HoverHandler(this.getContext().getPreferenceManger());
+		HoverHandler proxy = new HoverHandler(JavaLanguageServerPlugin.getPreferencesManager());
 		return proxy.hover(params, new NullProgressMonitor());
 	}
 
