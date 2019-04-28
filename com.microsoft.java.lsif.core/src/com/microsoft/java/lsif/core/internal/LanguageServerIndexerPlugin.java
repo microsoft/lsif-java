@@ -21,20 +21,27 @@ public class LanguageServerIndexerPlugin implements BundleActivator {
 	// Language server will redirect the out when starting, save this value for
 	// indexer usage.
 	private static PrintStream out;
+	private static PrintStream err;
 
 	@Override
 	public void start(BundleContext context) throws Exception {
 		LanguageServerIndexerPlugin.context = context;
 
 		LanguageServerIndexerPlugin.out = System.out;
+		LanguageServerIndexerPlugin.err = System.err;
 		if (context != null) {
 			Platform.getLog(LanguageServerIndexerPlugin.context.getBundle()).addLogListener(new ILogListener() {
 				@Override
 				public void logging(IStatus status, String plugin) {
-					out.println(); // Make sure the log will ruin the emitter output line.
-					out.println(status.getMessage());
-					if (status.getException() != null) {
-						status.getException().printStackTrace(LanguageServerIndexerPlugin.out);
+					if (status.getSeverity() == IStatus.ERROR) {
+						LanguageServerIndexerPlugin.err.println(status.getMessage());
+						if (status.getException() != null) {
+							status.getException().printStackTrace(LanguageServerIndexerPlugin.err);
+						}
+					} else {
+						// Make sure the log will ruin the emitter output line.
+						LanguageServerIndexerPlugin.out.println();
+						LanguageServerIndexerPlugin.out.println(status.getMessage());
 					}
 				}
 			});
