@@ -16,6 +16,7 @@ import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.handlers.ImplementationsHandler;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
@@ -25,6 +26,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 import com.microsoft.java.lsif.core.internal.LanguageServerIndexerPlugin;
 import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
+import com.microsoft.java.lsif.core.internal.indexer.IndexerContext;
 import com.microsoft.java.lsif.core.internal.indexer.LsifService;
 import com.microsoft.java.lsif.core.internal.indexer.Repository;
 import com.microsoft.java.lsif.core.internal.protocol.ImplementationResult;
@@ -33,7 +35,8 @@ import com.microsoft.java.lsif.core.internal.protocol.ResultSet;
 
 public class ImplementationsVisitor extends ProtocolVisitor {
 
-	public ImplementationsVisitor() {
+	public ImplementationsVisitor(LsifService lsif, IndexerContext context) {
+		super(lsif, context);
 	}
 
 	@Override
@@ -55,9 +58,9 @@ public class ImplementationsVisitor extends ProtocolVisitor {
 	private void emitImplementation(int startPosition, int length) {
 		org.eclipse.lsp4j.Range fromRange;
 		try {
-			fromRange = JDTUtils.toRange(this.getContext().getTypeRoot(), startPosition, length);
+			fromRange = JDTUtils.toRange(this.getContext().getCompilationUnit().getTypeRoot(), startPosition, length);
 
-			LsifService lsif = this.getContext().getLsif();
+			LsifService lsif = this.getLsif();
 
 			List<Range> ranges = getImplementationRanges(fromRange.getStart().getLine(),
 					fromRange.getStart().getCharacter());
@@ -66,11 +69,11 @@ public class ImplementationsVisitor extends ProtocolVisitor {
 			}
 
 			// Source range:
-			Range sourceRange = Repository.getInstance().enlistRange(this.getContext(),
+			Range sourceRange = Repository.getInstance().enlistRange(lsif,
 					this.getContext().getDocVertex(), fromRange);
 
 			// Result set
-			ResultSet resultSet = Repository.getInstance().enlistResultSet(this.getContext(), sourceRange);
+			ResultSet resultSet = Repository.getInstance().enlistResultSet(lsif, sourceRange);
 
 			// ImplementationResult
 			List<Either<String, Location>> result = ranges.stream()
@@ -95,7 +98,7 @@ public class ImplementationsVisitor extends ProtocolVisitor {
 			return Collections.emptyList();
 		}
 		return locations.stream()
-				.map(loc -> Repository.getInstance().enlistRange(this.getContext(), loc.getUri(), loc.getRange()))
+				.map(loc -> Repository.getInstance().enlistRange(this.getLsif(), loc.getUri(), loc.getRange()))
 				.filter(r -> r != null)
 				.collect(Collectors.toList());
 	}
@@ -104,7 +107,7 @@ public class ImplementationsVisitor extends ProtocolVisitor {
 		TextDocumentPositionParams params = new TextDocumentPositionParams(
 				new TextDocumentIdentifier(this.getContext().getDocVertex().getUri()), new Position(line, character));
 
-		ImplementationsHandler proxy = new ImplementationsHandler(this.getContext().getPreferenceManger());
+		ImplementationsHandler proxy = new ImplementationsHandler(JavaLanguageServerPlugin.getPreferencesManager());
 		return proxy.findImplementations(params, new NullProgressMonitor());
 	}
 }

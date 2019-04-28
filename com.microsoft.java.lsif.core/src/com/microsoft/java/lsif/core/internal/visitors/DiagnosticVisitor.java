@@ -15,7 +15,6 @@ import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.IJavaModelMarker;
-import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
 import org.eclipse.jface.text.BadLocationException;
@@ -35,19 +34,17 @@ import com.microsoft.java.lsif.core.internal.protocol.Document;
 
 public class DiagnosticVisitor extends ProtocolVisitor {
 
-	private CompilationUnit cu;
-
-	public DiagnosticVisitor(IndexerContext context, CompilationUnit cu) {
-		this.setContext(context);
-		this.cu = cu;
+	public DiagnosticVisitor(LsifService lsif, IndexerContext context) {
+		super(lsif, context);
 	}
 
 	public void enlist() {
-		LsifService lsif = this.getContext().getLsif();
+		LsifService lsif = this.getLsif();
 		Document docVertex = this.getContext().getDocVertex();
-		IResource resource = cu.getJavaElement().getResource();
+		IResource resource = this.getContext().getCompilationUnit().getJavaElement().getResource();
 		if (resource == null || !resource.exists()) {
-			LanguageServerIndexerPlugin.logError("Cannot find resource for: " + cu.getJavaElement().getElementName());
+			LanguageServerIndexerPlugin.logError("Cannot find resource for: "
+					+ this.getContext().getCompilationUnit().getJavaElement().getElementName());
 			return;
 		}
 		IMarker[] markers = null;
@@ -62,7 +59,8 @@ public class DiagnosticVisitor extends ProtocolVisitor {
 			}
 			markers = Arrays.copyOf(javaMarkers, javaMarkers.length + taskMarkers.length);
 			System.arraycopy(taskMarkers, 0, markers, javaMarkers.length, taskMarkers.length);
-			document = JsonRpcHelpers.toDocument(cu.getJavaElement().getOpenable().getBuffer());
+			document = JsonRpcHelpers
+					.toDocument(this.getContext().getCompilationUnit().getJavaElement().getOpenable().getBuffer());
 		} catch (Throwable ex) {
 			LanguageServerIndexerPlugin.logException("Exception when dumping diagnostic information ", ex);
 			return;
@@ -70,7 +68,8 @@ public class DiagnosticVisitor extends ProtocolVisitor {
 
 		if (document == null) {
 			LanguageServerIndexerPlugin
-					.logError("Cannot parse the document for: " + cu.getJavaElement().getElementName());
+					.logError("Cannot parse the document for: "
+							+ this.getContext().getCompilationUnit().getJavaElement().getElementName());
 			return;
 		}
 

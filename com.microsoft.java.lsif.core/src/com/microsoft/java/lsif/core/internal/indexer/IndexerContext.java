@@ -5,59 +5,23 @@
 
 package com.microsoft.java.lsif.core.internal.indexer;
 
-import org.eclipse.jdt.core.ITypeRoot;
-import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jdt.core.dom.CompilationUnit;
 
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 
 public class IndexerContext {
 
-	private LsifService lsif;
-
 	private Document docVertex;
 
-	private ITypeRoot typeRoot;
+	private CompilationUnit compilationUnit;
 
-	private PreferenceManager preferenceManger;
-
-	public IndexerContext(LsifService lsif, Document docVertex, ITypeRoot typeRoot,
-			PreferenceManager preferenceManager) {
-		this.setLsif(lsif);
+	public IndexerContext(Document docVertex, CompilationUnit compilationUnit) {
 		this.setDocVertex(docVertex);
-		this.setTypeRoot(typeRoot);
-		this.setPreferenceManger(preferenceManager);
-	}
-
-	/**
-	 * @return the lsif
-	 */
-	public LsifService getLsif() {
-		return lsif;
+		this.setCompilationUnit(compilationUnit);
 	}
 
 	public Document getDocVertex() {
 		return this.docVertex;
-	}
-
-	/**
-	 * @return the typeRoot
-	 */
-	public ITypeRoot getTypeRoot() {
-		return typeRoot;
-	}
-
-	/**
-	 * @param typeRoot the typeRoot to set
-	 */
-	public void setTypeRoot(ITypeRoot typeRoot) {
-		this.typeRoot = typeRoot;
-	}
-
-	/**
-	 * @param lsif the lsif to set
-	 */
-	public void setLsif(LsifService lsif) {
-		this.lsif = lsif;
 	}
 
 	/**
@@ -68,16 +32,16 @@ public class IndexerContext {
 	}
 
 	/**
-	 * @return the preferenceManger
+	 * @return the compilationUnit
 	 */
-	public PreferenceManager getPreferenceManger() {
-		return preferenceManger;
+	public CompilationUnit getCompilationUnit() {
+		return compilationUnit;
 	}
 
 	/**
-	 * @param preferenceManger the preferenceManger to set
+	 * @param compilationUnit the compilationUnit to set
 	 */
-	public void setPreferenceManger(PreferenceManager preferenceManger) {
-		this.preferenceManger = preferenceManger;
+	public void setCompilationUnit(CompilationUnit compilationUnit) {
+		this.compilationUnit = compilationUnit;
 	}
 }
