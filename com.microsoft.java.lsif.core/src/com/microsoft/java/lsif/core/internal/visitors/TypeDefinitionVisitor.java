@@ -19,6 +19,7 @@ import org.eclipse.lsp4j.TextDocumentPositionParams;
 
 import com.microsoft.java.lsif.core.internal.LanguageServerIndexerPlugin;
 import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
+import com.microsoft.java.lsif.core.internal.indexer.IndexerContext;
 import com.microsoft.java.lsif.core.internal.indexer.LsifService;
 import com.microsoft.java.lsif.core.internal.indexer.Repository;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
@@ -28,7 +29,8 @@ import com.microsoft.java.lsif.core.internal.protocol.TypeDefinitionResult;
 
 public class TypeDefinitionVisitor extends ProtocolVisitor {
 
-	public TypeDefinitionVisitor() {
+	public TypeDefinitionVisitor(LsifService lsif, IndexerContext context) {
+		super(lsif, context);
 	}
 
 	@Override
@@ -46,7 +48,8 @@ public class TypeDefinitionVisitor extends ProtocolVisitor {
 	private void emitTypeDefinition(int startPosition, int length) {
 
 		try {
-			org.eclipse.lsp4j.Range fromRange = JDTUtils.toRange(this.getContext().getTypeRoot(), startPosition,
+			org.eclipse.lsp4j.Range fromRange = JDTUtils.toRange(this.getContext().getCompilationUnit().getTypeRoot(),
+					startPosition,
 					length);
 
 			if (fromRange == null) {
@@ -60,21 +63,21 @@ public class TypeDefinitionVisitor extends ProtocolVisitor {
 				return;
 			}
 
-			LsifService lsif = this.getContext().getLsif();
+			LsifService lsif = this.getLsif();
 			Document docVertex = this.getContext().getDocVertex();
 
 			// Definition start position
 			// Source range:
-			Range sourceRange = Repository.getInstance().enlistRange(this.getContext(), docVertex, fromRange);
+			Range sourceRange = Repository.getInstance().enlistRange(lsif, docVertex, fromRange);
 
 			// Target range:
 			org.eclipse.lsp4j.Range toRange = targetLocation.getRange();
-			Document targetDocument = Repository.getInstance().enlistDocument(this.getContext(),
+			Document targetDocument = Repository.getInstance().enlistDocument(lsif,
 					targetLocation.getUri());
-			Range targetRange = Repository.getInstance().enlistRange(this.getContext(), targetDocument, toRange);
+			Range targetRange = Repository.getInstance().enlistRange(lsif, targetDocument, toRange);
 
 			// Result set
-			ResultSet resultSet = Repository.getInstance().enlistResultSet(this.getContext(), sourceRange);
+			ResultSet resultSet = Repository.getInstance().enlistResultSet(lsif, sourceRange);
 
 			// Link resultSet & typeDefinitionResult
 			TypeDefinitionResult defResult = lsif.getVertexBuilder().typeDefinitionResult(targetRange.getId());
