@@ -6,7 +6,7 @@
 	<groupId>com.microsoft.java.lsif</groupId>
 	<artifactId>parent</artifactId>
 	<name>${base.name} :: Parent</name>
-	<version>0.1.5-SNAPSHOT</version>
+	<version>0.1.6-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<properties>
 		<base.name>Java Language Server Indexer</base.name>
