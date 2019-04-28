@@ -19,7 +19,7 @@ import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
-import com.microsoft.java.lsif.core.internal.indexer.IndexerContext;
+import com.microsoft.java.lsif.core.internal.indexer.LsifService;
 import com.microsoft.java.lsif.core.internal.indexer.Repository;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.DocumentSymbolResult;
@@ -29,15 +29,15 @@ public class DocumentVisitor extends ProtocolVisitor {
 
 	private Project projVertex;
 
-	public DocumentVisitor(IndexerContext context, Project projVertex) {
-		this.setContext(context);
+	public DocumentVisitor(LsifService lsif, Project projVertex) {
+		super(lsif, null /* DocumentVisitor does not need context information for parallel build */);
 		this.projVertex = projVertex;
 	}
 
 	public Document enlist(IJavaElement sourceFile) {
 		String uri = ResourceUtils.fixURI(sourceFile.getResource().getRawLocationURI());
-		Document docVertex = Repository.getInstance().enlistDocument(this.getContext(), uri);
-		LsifEmitter.getInstance().emit(this.getContext().getLsif().getEdgeBuilder().contains(projVertex, docVertex));
+		Document docVertex = Repository.getInstance().enlistDocument(this.getLsif(), uri);
+		LsifEmitter.getInstance().emit(this.getLsif().getEdgeBuilder().contains(projVertex, docVertex));
 
 		handleDocumentSymbol(docVertex);
 		return docVertex;
@@ -46,11 +46,11 @@ public class DocumentVisitor extends ProtocolVisitor {
 	// TODO: Refine the symbol to range-based
 	private void handleDocumentSymbol(Document docVertex) {
 		List<DocumentSymbol> symbols = this.handle(docVertex.getUri());
-		DocumentSymbolResult documentSymbolResult = this.getContext().getLsif().getVertexBuilder()
+		DocumentSymbolResult documentSymbolResult = this.getLsif().getVertexBuilder()
 				.documentSymbolResult(symbols);
 		LsifEmitter.getInstance().emit(documentSymbolResult);
 		LsifEmitter.getInstance()
-				.emit(this.getContext().getLsif().getEdgeBuilder().documentSymbols(docVertex, documentSymbolResult));
+				.emit(this.getLsif().getEdgeBuilder().documentSymbols(docVertex, documentSymbolResult));
 	}
 
 	private List<DocumentSymbol> handle(String uri) {

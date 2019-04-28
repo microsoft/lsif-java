@@ -48,11 +48,11 @@ public class Repository {
 		return RepositoryHolder.INSTANCE;
 	}
 
-	public synchronized Document enlistDocument(IndexerContext context, String uri) {
+	public synchronized Document enlistDocument(LsifService service, String uri) {
 		uri = JdtlsUtils.normalizeUri(uri);
 		Document targetDocument = findDocumentByUri(uri);
 		if (targetDocument == null) {
-			targetDocument = context.getLsif().getVertexBuilder().document(uri);
+			targetDocument = service.getVertexBuilder().document(uri);
 			addDocument(targetDocument);
 			LsifEmitter.getInstance().emit(targetDocument);
 		}
@@ -60,43 +60,43 @@ public class Repository {
 		return targetDocument;
 	}
 
-	public synchronized ResultSet enlistResultSet(IndexerContext context, Range range) {
+	public synchronized ResultSet enlistResultSet(LsifService service, Range range) {
 		ResultSet resultSet = findResultSetByRange(range);
 		if (resultSet == null) {
-			resultSet = context.getLsif().getVertexBuilder().resultSet();
+			resultSet = service.getVertexBuilder().resultSet();
 			addResultSet(range, resultSet);
 			LsifEmitter.getInstance().emit(resultSet);
-			LsifEmitter.getInstance().emit(context.getLsif().getEdgeBuilder().refersTo(range, resultSet));
+			LsifEmitter.getInstance().emit(service.getEdgeBuilder().refersTo(range, resultSet));
 		}
 
 		return resultSet;
 	}
 
-	public synchronized Range enlistRange(IndexerContext context, Document docVertex,
+	public synchronized Range enlistRange(LsifService service, Document docVertex,
 			org.eclipse.lsp4j.Range lspRange) {
 		Range range = findRange(docVertex.getUri(), lspRange);
 		if (range == null) {
-			range = context.getLsif().getVertexBuilder().range(lspRange);
+			range = service.getVertexBuilder().range(lspRange);
 			addRange(docVertex, lspRange, range);
 			LsifEmitter.getInstance().emit(range);
-			LsifEmitter.getInstance().emit(context.getLsif().getEdgeBuilder().contains(docVertex, range));
+			LsifEmitter.getInstance().emit(service.getEdgeBuilder().contains(docVertex, range));
 		}
 		return range;
 	}
 
-	public synchronized HoverResult enlistHoverResult(IndexerContext context, Hover hover) {
+	public synchronized HoverResult enlistHoverResult(LsifService service, Hover hover) {
 		int contentHash = hover.getContents().hashCode();
 		HoverResult hoverResult = findHoverResultByHashCode(contentHash);
 		if (hoverResult == null) {
-			hoverResult = context.getLsif().getVertexBuilder().hoverResult(hover);
+			hoverResult = service.getVertexBuilder().hoverResult(hover);
 			LsifEmitter.getInstance().emit(hoverResult);
 			addHoverResult(contentHash, hoverResult);
 		}
 		return hoverResult;
 	}
 
-	public Range enlistRange(IndexerContext context, String uri, org.eclipse.lsp4j.Range lspRange) {
-		return enlistRange(context, enlistDocument(context, uri), lspRange);
+	public Range enlistRange(LsifService service, String uri, org.eclipse.lsp4j.Range lspRange) {
+		return enlistRange(service, enlistDocument(service, uri), lspRange);
 	}
 
 	private void addDocument(Document doc) {
