@@ -51,7 +51,11 @@ public class Indexer {
 	private WorkspaceHandler handler;
 
 	public Indexer() {
-		this.handler = new WorkspaceHandler(System.getProperty("intellinav.repo.path"));
+		String repoPath = System.getProperty("repo.path");
+		if (repoPath == null) {
+			repoPath = System.getProperty("user.dir");
+		}
+		this.handler = new WorkspaceHandler(repoPath);
 	}
 
 	public void generateLsif() throws JavaModelException {

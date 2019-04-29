@@ -21,14 +21,14 @@ goto End
 
 :Help
 @echo Parameters:
-@echo.   -Dintellinav.repo.path=[path of repo]
+@echo.   -Drepo.path=[path of repo]
 @echo.
-@echo.   -Dintellinav.output.format=[format]
+@echo.   -Doutput.format=[format]
 @echo.      Supported values: line, json. Default: line
 @echo.
 @echo Example:
-@echo.   index.bat "-Dintellinav.repo.path=D:\Workspace\spring-petclinic"
+@echo.   index.bat "-Drepo.path=D:\Workspace\spring-petclinic"
 @echo.
-@echo.   index.bat "-Dintellinav.repo.path=D:\Workspace\spring-petclinic" "-Dintellinav.output.format=json"
+@echo.   index.bat "-Drepo.path=D:\Workspace\spring-petclinic" "-Doutput.format=json"
 
 :End

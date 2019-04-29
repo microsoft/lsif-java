@@ -23,7 +23,7 @@ A first draft specification can be found [here](https://github.com/Microsoft/lan
 
 - Run the tools:
 
-  `> ./index.bat "-Dintellinav.repo.path=<your java project path>"`
+  `> ./index.bat "-Drepo.path=<your java project path>"`
 
 > Note: More information can be found [here](./cmd/README.md).
 
