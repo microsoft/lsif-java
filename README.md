@@ -1,4 +1,4 @@
-# Java Language Server Indexer
+# Language Server Indexing Format Implementation for Java
 [![Build status](https://dev.azure.com/mseng/VSJava/_apis/build/status/LSIF-Java/LSIF-Java)](https://dev.azure.com/mseng/VSJava/_build/latest?definitionId=8346)
 
 ## Language Server Index Format
