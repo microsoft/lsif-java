@@ -15,7 +15,7 @@ public class LsifEmitter {
 		private static final Emitter INSTANCE = createEmitter();
 
 		private static Emitter createEmitter() {
-			final String format = System.getProperty("intellinav.output.format", "line" /* default */);
+			final String format = System.getProperty("output.format", "line" /* default */);
 			switch (format) {
 				case "json":
 					return new JsonEmitter();
