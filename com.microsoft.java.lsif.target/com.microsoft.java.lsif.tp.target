@@ -14,12 +14,12 @@
             <repository location="http://download.eclipse.org/tools/orbit/R-builds/R20170516192513/repository"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="org.eclipse.buildship.feature.group" version="3.0.0.v20181205-1821"/>
+            <unit id="org.eclipse.buildship.feature.group" version="3.1.0.v20190501-0830"/>
             <repository location="http://download.eclipse.org/buildship/updates/e410/releases/3.x/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="org.eclipse.m2e.feature.feature.group" version="1.10.0.20181127-2120"/>
-            <repository location="http://download.eclipse.org/technology/m2e/releases/1.10/1.10.0.20181127-2120/"/>
+            <unit id="org.eclipse.m2e.feature.feature.group" version="0.0.0"/>
+	    <repository location="https://download.eclipse.org/technology/m2e/milestones/1.12/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.equinox.core.feature.feature.group" version="0.0.0"/>
@@ -29,16 +29,16 @@
             <unit id="org.eclipse.equinox.sdk.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.jdt.source.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.sdk.feature.group" version="0.0.0"/>
-            <repository location="http://download.eclipse.org/releases/2018-12/"/>
-        </location>
-        <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.6.0.v20181130-0905"/>
-            <repository location="http://download.eclipse.org/lsp4j/updates/releases/"/>
+            <repository location="https://download.eclipse.org/eclipse/updates/4.13-I-builds"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.xtend.sdk.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.xtext.sdk.feature.group" version="0.0.0"/>
-            <repository location="http://download.eclipse.org/releases/2018-12/"/>
+            <repository location="http://download.eclipse.org/releases/2019-06/"/>
+        </location>
+        <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
+           <unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.7.2.v20190528-0935"/>
+           <repository location="http://download.eclipse.org/lsp4j/updates/releases/0.7.2"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.jboss.tools.maven.apt.core" version="0.0.0"/>
@@ -46,7 +46,7 @@
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.jdt.ls.core" version="0.0.0"/>
-            <repository location="http://download.eclipse.org/jdtls/snapshots/repository/0.35.0.201903142358/"/>
+            <repository location="http://download.eclipse.org/jdtls/snapshots/repository/0.41.0.201907021619/"/>
         </location>
     </locations>
     <targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
