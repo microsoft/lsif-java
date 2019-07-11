@@ -64,7 +64,7 @@ public class LsifVisitor extends ProtocolVisitor {
 
 			Location definitionLocation = JdtlsUtils.getElementLocation(element);
 			if (definitionLocation == null) {
-				// not target location, only resolve hover.
+				// no target location, only resolve hover.
 				Hover hover = VisitorUtils.resolveHoverInformation(docVertex, sourceRange.getStart().getLine(),
 						sourceRange.getStart().getCharacter());
 				if (VisitorUtils.isEmptyHover(hover)) {

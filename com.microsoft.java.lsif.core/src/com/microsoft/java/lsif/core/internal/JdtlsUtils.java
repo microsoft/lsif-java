@@ -186,5 +186,4 @@ public final class JdtlsUtils {
 		}
 		return uriString;
 	}
-
 }
