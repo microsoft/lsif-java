@@ -5,17 +5,19 @@
 
 package com.microsoft.java.lsif.core.internal.protocol;
 
+import java.util.Arrays;
+import java.util.List;
+
 public class DefinitionResult extends Vertex {
 
-	// TODO: Support bag result.
-	private String result;
+	private List<String> result;
 
 	public DefinitionResult(String id, String result) {
 		super(id, Vertex.DEFINITIONRESULT);
-		this.result = result;
+		this.result = Arrays.asList(result);
 	}
 
-	public String getResult() {
+	public List<String> getResult() {
 		return this.result;
 	}
 }
