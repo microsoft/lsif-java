@@ -8,14 +8,11 @@ package com.microsoft.java.lsif.core.internal.indexer;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.eclipse.lsp4j.Hover;
-
 import com.microsoft.java.lsif.core.internal.JdtlsUtils;
 import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
-import com.microsoft.java.lsif.core.internal.protocol.HoverResult;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
-import com.microsoft.java.lsif.core.internal.protocol.ResultSet;
+import com.microsoft.java.lsif.core.internal.protocol.SymbolData;
 
 public class Repository {
 
@@ -29,13 +26,9 @@ public class Repository {
 	// LSIF: range
 	private Map<String, Map<org.eclipse.lsp4j.Range, Range>> rangeMap = new ConcurrentHashMap<>();
 
-	// Key: Range
-	// Value: ResultSet that range refers to
-	private Map<Range, ResultSet> resultSetMap = new ConcurrentHashMap<>();
-
-	// Key: Hash Code of the Hover Content
-	// Value: HoverResult
-	private Map<Integer, HoverResult> hoverResultMap = new ConcurrentHashMap<>();
+	// Key: definition meta-data id
+	// Value: SymbolData
+	private Map<String, SymbolData> symbolDataMap = new ConcurrentHashMap<>();
 
 	private Repository() {
 	}
@@ -60,18 +53,6 @@ public class Repository {
 		return targetDocument;
 	}
 
-	public synchronized ResultSet enlistResultSet(LsifService service, Range range) {
-		ResultSet resultSet = findResultSetByRange(range);
-		if (resultSet == null) {
-			resultSet = service.getVertexBuilder().resultSet();
-			addResultSet(range, resultSet);
-			LsifEmitter.getInstance().emit(resultSet);
-			LsifEmitter.getInstance().emit(service.getEdgeBuilder().refersTo(range, resultSet));
-		}
-
-		return resultSet;
-	}
-
 	public synchronized Range enlistRange(LsifService service, Document docVertex,
 			org.eclipse.lsp4j.Range lspRange) {
 		Range range = findRange(docVertex.getUri(), lspRange);
@@ -84,19 +65,17 @@ public class Repository {
 		return range;
 	}
 
-	public synchronized HoverResult enlistHoverResult(LsifService service, Hover hover) {
-		int contentHash = hover.getContents().hashCode();
-		HoverResult hoverResult = findHoverResultByHashCode(contentHash);
-		if (hoverResult == null) {
-			hoverResult = service.getVertexBuilder().hoverResult(hover);
-			LsifEmitter.getInstance().emit(hoverResult);
-			addHoverResult(contentHash, hoverResult);
-		}
-		return hoverResult;
-	}
-
 	public Range enlistRange(LsifService service, String uri, org.eclipse.lsp4j.Range lspRange) {
 		return enlistRange(service, enlistDocument(service, uri), lspRange);
+	}
+
+	public synchronized SymbolData enlistSymbolData(String id) {
+		SymbolData symbolData = findSymbolDataById(id);
+		if (symbolData == null) {
+			symbolData = new SymbolData();
+			addSymbolData(id, symbolData);
+		}
+		return symbolData;
 	}
 
 	private void addDocument(Document doc) {
@@ -109,12 +88,8 @@ public class Repository {
 		ranges.putIfAbsent(lspRange, range);
 	}
 
-	private void addResultSet(Range range, ResultSet resultSet) {
-		this.resultSetMap.put(range, resultSet);
-	}
-
-	private void addHoverResult(int hashCode, HoverResult hoverResult) {
-		this.hoverResultMap.put(hashCode, hoverResult);
+	private void addSymbolData(String id, SymbolData symbolData) {
+		this.symbolDataMap.put(id, symbolData);
 	}
 
 	private Document findDocumentByUri(String uri) {
@@ -129,11 +104,7 @@ public class Repository {
 		return null;
 	}
 
-	private ResultSet findResultSetByRange(Range range) {
-		return this.resultSetMap.getOrDefault(range, null);
-	}
-
-	public HoverResult findHoverResultByHashCode(int hashCode) {
-		return this.hoverResultMap.getOrDefault(hashCode, null);
+	private SymbolData findSymbolDataById(String id) {
+		return this.symbolDataMap.getOrDefault(id, null);
 	}
 }
