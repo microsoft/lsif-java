@@ -31,6 +31,8 @@ import org.eclipse.lsp4j.Range;
 
 public final class JdtlsUtils {
 
+	private static final String JDT_SCHEME = "jdt";
+
 	private JdtlsUtils() {
 	}
 
@@ -178,7 +180,7 @@ public final class JdtlsUtils {
 		String uriString = null;
 		try {
 			uriString = new URI(
-					"jdt", "contents", JDTUtils.PATH_SEPARATOR + jarName + JDTUtils.PATH_SEPARATOR + packageName
+					JDT_SCHEME, "contents", JDTUtils.PATH_SEPARATOR + jarName + JDTUtils.PATH_SEPARATOR + packageName
 							+ JDTUtils.PATH_SEPARATOR + classFile.getElementName(),
 					classFile.getHandleIdentifier(), null).toASCIIString();
 		} catch (URISyntaxException e) {
