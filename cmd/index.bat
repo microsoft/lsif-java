@@ -11,7 +11,7 @@ java ^
 -Dlog.level=ALL ^
 %input% ^
 -noverify ^
--jar %basePath%\plugins\org.eclipse.equinox.launcher_1.5.500.v20190620-1700.jar ^
+-jar %basePath%\plugins\org.eclipse.equinox.launcher_1.5.500.v20190715-1310.jar ^
 -configuration %basePath%\config_win ^
 -data %randomPath%
 
