@@ -100,7 +100,7 @@ public class SymbolData {
 		if (!VisitorUtils.isDefinitionItself(sourceDocument, sourceRange, definitionDocument, definitionRange)) {
 			LsifEmitter.getInstance()
 					.emit(lsif.getEdgeBuilder().referenceItem(this.referenceResult,
-					sourceRange, ReferenceItem.REFERENCE));
+					sourceRange, ReferenceItem.REFERENCES));
 		}
 	}
 

@@ -7,11 +7,11 @@ package com.microsoft.java.lsif.core.internal.protocol;
 
 public class ReferenceItem extends Edge {
 
-	public final static String DECLARATION = "declaration";
+	public final static String DECLARATIONS = "declarations";
 
-	public final static String DEFINITION = "definition";
+	public final static String DEFINITIONS = "definitions";
 
-	public final static String REFERENCE = "reference";
+	public final static String REFERENCES = "references";
 
 	private String property;
 
