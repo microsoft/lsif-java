@@ -10,7 +10,6 @@ import java.net.URISyntaxException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.Platform;
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
@@ -161,19 +160,6 @@ public final class JdtlsUtils {
 		return nameRange;
 	}
 
-	/**
-	 * Normalize the URI to the same format as the client.
-	 */
-	public final static String normalizeUri(String uri) {
-		if (Platform.OS_WIN32.equals(Platform.getOS())) {
-			if (uri.startsWith("file:///") && uri.length() > 10 && Character.isUpperCase(uri.charAt(8))
-					&& uri.charAt(9) == ':') {
-				return "file:///" + Character.toLowerCase(uri.charAt(8)) + uri.substring(9);
-			}
-		}
-		return uri;
-	}
-
 	public static String toUri(IClassFile classFile) {
 		String packageName = classFile.getParent().getElementName();
 		String jarName = classFile.getParent().getParent().getElementName();
@@ -187,5 +173,22 @@ public final class JdtlsUtils {
 			LanguageServerIndexerPlugin.logException("Error generating URI for class ", e);
 		}
 		return uriString;
+	}
+
+	public static String getDocumentContent(String uriString) {
+		ICompilationUnit compilationUnit = JDTUtils.resolveCompilationUnit(uriString);
+		try {
+			if (compilationUnit != null) {
+				return compilationUnit.getSource();
+			}
+
+			IClassFile classFile = JDTUtils.resolveClassFile(uriString);
+			if (classFile != null) {
+				return classFile.getSource();
+			}
+		} catch (JavaModelException e) {
+			return "";
+		}
+		return "";
 	}
 }

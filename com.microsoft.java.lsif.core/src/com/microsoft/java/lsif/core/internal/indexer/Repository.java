@@ -8,7 +8,7 @@ package com.microsoft.java.lsif.core.internal.indexer;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.microsoft.java.lsif.core.internal.JdtlsUtils;
+import com.microsoft.java.lsif.core.internal.LsifUtils;
 import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
@@ -42,7 +42,7 @@ public class Repository {
 	}
 
 	public synchronized Document enlistDocument(LsifService service, String uri) {
-		uri = JdtlsUtils.normalizeUri(uri);
+		uri = LsifUtils.normalizeUri(uri);
 		Document targetDocument = findDocumentByUri(uri);
 		if (targetDocument == null) {
 			targetDocument = service.getVertexBuilder().document(uri);
