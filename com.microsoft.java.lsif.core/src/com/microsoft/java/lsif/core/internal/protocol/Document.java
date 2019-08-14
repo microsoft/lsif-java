@@ -13,6 +13,8 @@ public class Document extends Vertex {
 
 	private String languageId;
 
+	private String contents;
+
 	public Document(String id, String uri) {
 		super(id, Vertex.DOCUMENT);
 		this.uri = uri;
@@ -25,5 +27,13 @@ public class Document extends Vertex {
 
 	public String getLanguageId() {
 		return this.languageId;
+	}
+
+	public String getContents() {
+		return contents;
+	}
+
+	public void setContents(String contents) {
+		this.contents = contents;
 	}
 }

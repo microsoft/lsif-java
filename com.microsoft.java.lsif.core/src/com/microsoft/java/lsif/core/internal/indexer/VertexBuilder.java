@@ -14,6 +14,7 @@ import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 import com.microsoft.java.lsif.core.internal.JdtlsUtils;
+import com.microsoft.java.lsif.core.internal.LsifUtils;
 import com.microsoft.java.lsif.core.internal.protocol.DefinitionResult;
 import com.microsoft.java.lsif.core.internal.protocol.DiagnosticResult;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
@@ -44,8 +45,10 @@ public final class VertexBuilder {
 	}
 
 	public Document document(String uri) {
-		uri = JdtlsUtils.normalizeUri(uri);
+		uri = LsifUtils.normalizeUri(uri);
 		Document res = new Document(generator.next(), uri);
+		String base64Contents = LsifUtils.encodeToBase64(JdtlsUtils.getDocumentContent(uri));
+		res.setContents(base64Contents);
 		return res;
 	}
 

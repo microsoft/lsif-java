@@ -24,7 +24,7 @@ import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
-import com.microsoft.java.lsif.core.internal.JdtlsUtils;
+import com.microsoft.java.lsif.core.internal.LsifUtils;
 import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
 import com.microsoft.java.lsif.core.internal.indexer.LsifService;
 import com.microsoft.java.lsif.core.internal.indexer.Repository;
@@ -96,7 +96,7 @@ public class VisitorUtils {
 	/* reference */
 	public static boolean isDefinitionItself(Document sourceDoc, Range sourceRange, Document definitionDoc,
 			Range definitionRange) {
-		return JdtlsUtils.normalizeUri(definitionDoc.getUri()).equals(JdtlsUtils.normalizeUri(sourceDoc.getUri()))
+		return LsifUtils.normalizeUri(definitionDoc.getUri()).equals(LsifUtils.normalizeUri(sourceDoc.getUri()))
 				&& sourceRange.equals(definitionRange);
 	}
 
