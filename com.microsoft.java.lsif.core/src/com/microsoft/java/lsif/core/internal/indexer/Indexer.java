@@ -27,6 +27,7 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.lsp4j.ClientCapabilities;
 
 import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
@@ -58,7 +59,7 @@ public class Indexer {
 		LsifService lsif = new LsifService();
 
 		LsifEmitter.getInstance().start();
-		LsifEmitter.getInstance().emit(lsif.getVertexBuilder().metaData());
+		LsifEmitter.getInstance().emit(lsif.getVertexBuilder().metaData(ResourceUtils.fixURI(path.toFile().toURI())));
 
 		handler.importProject(path, monitor);
 		handler.buildProject(monitor);
