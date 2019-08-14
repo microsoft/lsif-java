@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -33,8 +32,6 @@ import org.eclipse.lsp4j.ClientCapabilities;
 import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.Project;
-import com.microsoft.java.lsif.core.internal.task.ASTTask;
-import com.microsoft.java.lsif.core.internal.task.TaskType;
 import com.microsoft.java.lsif.core.internal.visitors.DiagnosticVisitor;
 import com.microsoft.java.lsif.core.internal.visitors.DocumentVisitor;
 import com.microsoft.java.lsif.core.internal.visitors.LsifVisitor;
@@ -71,8 +68,7 @@ public class Indexer {
 		LsifEmitter.getInstance().end();
 	}
 
-	private void buildIndex(IPath path, IProgressMonitor monitor, LsifService lsif)
-			throws JavaModelException {
+	private void buildIndex(IPath path, IProgressMonitor monitor, LsifService lsif) throws JavaModelException {
 
 		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
 
@@ -92,11 +88,7 @@ public class Indexer {
 
 			List<ICompilationUnit> sourceList = getAllSourceFiles(javaProject);
 
-			ConcurrentLinkedQueue<ASTTask> taskQueue = new ConcurrentLinkedQueue<>();
-			buildASTParallely(sourceList, taskQueue, threadPool, projVertex, lsif,
-					monitor);
-
-			dumpParallely(taskQueue, threadPool, lsif);
+			dumpParallely(sourceList, threadPool, projVertex, lsif, monitor);
 		}
 
 		threadPool.shutdown();
@@ -132,9 +124,8 @@ public class Indexer {
 		return res;
 	}
 
-	private void buildASTParallely(List<ICompilationUnit> sourceList,
-			ConcurrentLinkedQueue<ASTTask> taskQueue, ExecutorService threadPool,
-			Project projVertex, LsifService lsif, IProgressMonitor monitor) {
+	private void dumpParallely(List<ICompilationUnit> sourceList, ExecutorService threadPool, Project projVertex,
+			LsifService lsif, IProgressMonitor monitor) {
 		Observable.fromIterable(sourceList)
 				.flatMap(item -> Observable.just(item).observeOn(Schedulers.from(threadPool)).map(sourceFile -> {
 					CompilationUnit cu = ASTUtil.createAST(sourceFile, monitor);
@@ -143,26 +134,13 @@ public class Indexer {
 						return 0;
 					}
 					IndexerContext context = new IndexerContext(docVertex, cu);
-					for (TaskType type : TaskType.values()) {
-						taskQueue.add(new ASTTask(type, context));
-					}
-					return 0;
-				})).blockingSubscribe();
-	}
 
-	private void dumpParallely(ConcurrentLinkedQueue<ASTTask> taskQueue, ExecutorService threadPool, LsifService lsif) {
-		Observable.fromIterable(taskQueue)
-				.flatMap(item -> Observable.just(item).observeOn(Schedulers.from(threadPool)).map(task -> {
-					switch (task.getTaskType()) {
-						case DEFINITION:
-							LsifVisitor lsifVisitor = new LsifVisitor(lsif, task.getContext());
-							task.getContext().getCompilationUnit().accept(lsifVisitor);
-							break;
-						case DIAGNOSTIC:
-							DiagnosticVisitor diagnosticVisitor = new DiagnosticVisitor(lsif, task.getContext());
-							diagnosticVisitor.enlist();
-							break;
-					}
+					LsifVisitor lsifVisitor = new LsifVisitor(lsif, context);
+					cu.accept(lsifVisitor);
+
+					DiagnosticVisitor diagnosticVisitor = new DiagnosticVisitor(lsif, context);
+					diagnosticVisitor.enlist();
+
 					return 0;
 				})).blockingSubscribe();
 	}
