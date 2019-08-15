@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 
 import org.eclipse.lsp4j.Hover;
 import org.eclipse.lsp4j.Location;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
 import com.microsoft.java.lsif.core.internal.indexer.LsifService;
@@ -77,9 +76,9 @@ public class SymbolData {
 		if (implementationRanges != null && implementationRanges.size() > 0) {
 
 			// ImplementationResult
-			List<Either<String, Location>> result = implementationRanges.stream()
-					.map(r -> Either.<String, Location>forLeft(r.getId())).collect(Collectors.toList());
-			VisitorUtils.ensureImplementationResult(lsif, this.resultSet, result);
+			List<String> rangeIds = implementationRanges.stream().map(r -> r.getId()).collect(Collectors.toList());
+			ImplementationResult implResult = VisitorUtils.ensureImplementationResult(lsif, this.resultSet);
+			LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().item(implResult, rangeIds));
 		}
 		this.implementationResolved = true;
 	}

@@ -87,11 +87,11 @@ public class VisitorUtils {
 		return proxy.findImplementations(params, new NullProgressMonitor());
 	}
 
-	public static void ensureImplementationResult(LsifService lsif, ResultSet resultSet,
-			List<Either<String, Location>> result) {
-		ImplementationResult implResult = lsif.getVertexBuilder().implementationResult(result);
+	public static ImplementationResult ensureImplementationResult(LsifService lsif, ResultSet resultSet) {
+		ImplementationResult implResult = lsif.getVertexBuilder().implementationResult();
 		LsifEmitter.getInstance().emit(implResult);
 		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().implementation(resultSet, implResult));
+		return implResult;
 	}
 
 	/* reference */
