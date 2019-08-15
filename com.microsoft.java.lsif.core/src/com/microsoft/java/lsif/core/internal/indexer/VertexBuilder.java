@@ -65,8 +65,8 @@ public final class VertexBuilder {
 		return new ResultSet(generator.next());
 	}
 
-	public DefinitionResult definitionResult(String resultId) {
-		return new DefinitionResult(generator.next(), resultId);
+	public DefinitionResult definitionResult() {
+		return new DefinitionResult(generator.next());
 	}
 
 	public HoverResult hoverResult(Hover hover) {

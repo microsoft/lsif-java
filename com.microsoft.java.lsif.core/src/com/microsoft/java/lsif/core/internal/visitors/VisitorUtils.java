@@ -42,15 +42,16 @@ public class VisitorUtils {
 	public static ResultSet ensureResultSet(LsifService lsif, Range sourceRange) {
 		ResultSet resultSet = lsif.getVertexBuilder().resultSet();
 		LsifEmitter.getInstance().emit(resultSet);
-		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().refersTo(sourceRange, resultSet));
+		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().next(sourceRange, resultSet));
 		return resultSet;
 	}
 
 	/* definition */
-	public static void ensureDefinitionResult(LsifService lsif, ResultSet resultSet, Range targetRange) {
-		DefinitionResult defResult = lsif.getVertexBuilder().definitionResult(targetRange.getId());
+	public static DefinitionResult ensureDefinitionResult(LsifService lsif, ResultSet resultSet) {
+		DefinitionResult defResult = lsif.getVertexBuilder().definitionResult();
 		LsifEmitter.getInstance().emit(defResult);
 		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().definition(resultSet, defResult));
+		return defResult;
 	}
 
 	/* typeDefinition */

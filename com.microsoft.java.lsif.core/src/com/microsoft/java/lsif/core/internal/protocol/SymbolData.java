@@ -31,7 +31,7 @@ public class SymbolData {
 			LsifEmitter.getInstance().emit(resultSet);
 			this.resultSet = resultSet;
 		}
-		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().refersTo(sourceRange, this.resultSet));
+		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().next(sourceRange, this.resultSet));
 	}
 
 	synchronized public void resolveDefinition(LsifService lsif, Location definitionLocation) {
@@ -41,8 +41,8 @@ public class SymbolData {
 		org.eclipse.lsp4j.Range definitionLspRange = definitionLocation.getRange();
 		Document definitionDocument = Repository.getInstance().enlistDocument(lsif, definitionLocation.getUri());
 		Range definitionRange = Repository.getInstance().enlistRange(lsif, definitionDocument, definitionLspRange);
-
-		VisitorUtils.ensureDefinitionResult(lsif, this.resultSet, definitionRange);
+		DefinitionResult defResult = VisitorUtils.ensureDefinitionResult(lsif, this.resultSet);
+		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().item(defResult, definitionRange));
 		this.definitionResolved = true;
 	}
 

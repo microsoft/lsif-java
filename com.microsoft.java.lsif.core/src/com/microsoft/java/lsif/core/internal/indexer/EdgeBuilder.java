@@ -5,6 +5,8 @@
 
 package com.microsoft.java.lsif.core.internal.indexer;
 
+import java.util.Collections;
+
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.Edge;
 import com.microsoft.java.lsif.core.internal.protocol.Project;
@@ -30,6 +32,10 @@ public class EdgeBuilder {
 
 	public Edge contains(Vertex from, Vertex to) {
 		return new Edge(generator.next(), Edge.CONTAINS, from.getId(), to.getId());
+	}
+
+	public Edge item(Vertex from, Vertex to) {
+		return new Edge(generator.next(), Edge.ITEM, from.getId(), Collections.singletonList(to.getId()));
 	}
 
 	public Edge hover(Vertex from, Vertex to) {
@@ -60,8 +66,8 @@ public class EdgeBuilder {
 		return new Edge(generator.next(), Edge.T_DOCUMENTSYMBOL, from.getId(), to.getId());
 	}
 
-	public Edge refersTo(Vertex from, Vertex to) {
-		return new Edge(generator.next(), Edge.REFERSTO, from.getId(), to.getId());
+	public Edge next(Vertex from, Vertex to) {
+		return new Edge(generator.next(), Edge.NEXT, from.getId(), to.getId());
 	}
 
 	public Edge diagnostic(Vertex from, Vertex to) {
