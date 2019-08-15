@@ -5,13 +5,15 @@
 
 package com.microsoft.java.lsif.core.internal.protocol;
 
+import com.microsoft.java.lsif.core.internal.IConstant;
+
 public class Project extends Vertex {
 
 	private String kind;
 
 	public Project(String id) {
 		super(id, Vertex.PROJECT);
-		this.kind = "java";
+		this.kind = IConstant.JAVA_ID;
 	}
 
 	public String getKind() {
