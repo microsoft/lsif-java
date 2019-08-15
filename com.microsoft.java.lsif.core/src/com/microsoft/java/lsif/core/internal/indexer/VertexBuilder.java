@@ -19,6 +19,7 @@ import com.microsoft.java.lsif.core.internal.protocol.DefinitionResult;
 import com.microsoft.java.lsif.core.internal.protocol.DiagnosticResult;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.DocumentSymbolResult;
+import com.microsoft.java.lsif.core.internal.protocol.Event;
 import com.microsoft.java.lsif.core.internal.protocol.HoverResult;
 import com.microsoft.java.lsif.core.internal.protocol.ImplementationResult;
 import com.microsoft.java.lsif.core.internal.protocol.MetaData;
@@ -38,6 +39,10 @@ public final class VertexBuilder {
 
 	public MetaData metaData(String projectRoot) {
 		return new MetaData(generator.next(), projectRoot);
+	}
+
+	public Event event(String scope, String kind) {
+		return new Event(generator.next(), scope, kind);
 	}
 
 	public Project project() {

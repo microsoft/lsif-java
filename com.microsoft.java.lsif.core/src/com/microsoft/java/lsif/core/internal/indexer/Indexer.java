@@ -26,12 +26,14 @@ import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.lsp4j.ClientCapabilities;
 
 import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
+import com.microsoft.java.lsif.core.internal.protocol.Event;
 import com.microsoft.java.lsif.core.internal.protocol.Project;
 import com.microsoft.java.lsif.core.internal.visitors.DiagnosticVisitor;
 import com.microsoft.java.lsif.core.internal.visitors.DocumentVisitor;
@@ -62,8 +64,13 @@ public class Indexer {
 		LsifEmitter.getInstance().emit(lsif.getVertexBuilder().metaData(ResourceUtils.fixURI(path.toFile().toURI())));
 
 		handler.importProject(path, monitor);
-		handler.buildProject(monitor);
+		BuildWorkspaceStatus buildStatus = handler.buildProject(monitor);
+		if (buildStatus != BuildWorkspaceStatus.SUCCEED) {
+			return;
+
+		}
 		buildIndex(path, monitor, lsif);
+		LsifEmitter.getInstance().emit(lsif.getVertexBuilder().event(Event.EventScope.Project, Event.EventKind.END));
 		handler.removeProject(monitor);
 
 		LsifEmitter.getInstance().end();
@@ -86,6 +93,8 @@ public class Indexer {
 
 			Project projVertex = lsif.getVertexBuilder().project();
 			LsifEmitter.getInstance().emit(projVertex);
+			LsifEmitter.getInstance()
+					.emit(lsif.getVertexBuilder().event(Event.EventScope.Project, Event.EventKind.BEGIN));
 
 			List<ICompilationUnit> sourceList = getAllSourceFiles(javaProject);
 
@@ -141,6 +150,9 @@ public class Indexer {
 
 					DiagnosticVisitor diagnosticVisitor = new DiagnosticVisitor(lsif, context);
 					diagnosticVisitor.enlist();
+
+					LsifEmitter.getInstance()
+							.emit(lsif.getVertexBuilder().event(Event.EventScope.DOCUMENT, Event.EventKind.END));
 
 					return 0;
 				})).blockingSubscribe();
