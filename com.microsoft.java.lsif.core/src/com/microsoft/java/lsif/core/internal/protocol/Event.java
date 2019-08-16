@@ -12,10 +12,13 @@ public class Event extends Vertex {
 
 	private String scope;
 
-	public Event(String id, String scope, String kind) {
+	private String data;
+
+	public Event(String id, String scope, String kind, String data) {
 		super(id, Vertex.EVENT);
 		this.scope = scope;
 		this.kind = kind;
+		this.data = data;
 	}
 
 	public String getScope() {
@@ -24,6 +27,10 @@ public class Event extends Vertex {
 
 	public String getKind() {
 		return kind;
+	}
+
+	public String getData() {
+		return data;
 	}
 
 	public static class EventScope {

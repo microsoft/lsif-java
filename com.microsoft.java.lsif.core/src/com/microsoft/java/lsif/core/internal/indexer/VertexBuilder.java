@@ -39,8 +39,8 @@ public final class VertexBuilder {
 		return new MetaData(generator.next(), projectRoot);
 	}
 
-	public Event event(String scope, String kind) {
-		return new Event(generator.next(), scope, kind);
+	public Event event(String scope, String kind, String data) {
+		return new Event(generator.next(), scope, kind, data);
 	}
 
 	public Project project() {
@@ -71,8 +71,8 @@ public final class VertexBuilder {
 		return new HoverResult(generator.next(), hover);
 	}
 
-	public TypeDefinitionResult typeDefinitionResult(String resultId) {
-		return new TypeDefinitionResult(generator.next(), resultId);
+	public TypeDefinitionResult typeDefinitionResult() {
+		return new TypeDefinitionResult(generator.next());
 	}
 
 	public ReferenceResult referenceResult() {

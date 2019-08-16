@@ -70,7 +70,6 @@ public class Indexer {
 
 		}
 		buildIndex(path, monitor, lsif);
-		LsifEmitter.getInstance().emit(lsif.getVertexBuilder().event(Event.EventScope.Project, Event.EventKind.END));
 		handler.removeProject(monitor);
 
 		LsifEmitter.getInstance().end();
@@ -94,11 +93,14 @@ public class Indexer {
 			Project projVertex = lsif.getVertexBuilder().project();
 			LsifEmitter.getInstance().emit(projVertex);
 			LsifEmitter.getInstance()
-					.emit(lsif.getVertexBuilder().event(Event.EventScope.Project, Event.EventKind.BEGIN));
+					.emit(lsif.getVertexBuilder().event(Event.EventScope.Project, Event.EventKind.BEGIN,
+							projVertex.getId()));
 
 			List<ICompilationUnit> sourceList = getAllSourceFiles(javaProject);
 
 			dumpParallely(sourceList, threadPool, projVertex, lsif, monitor);
+			LsifEmitter.getInstance().emit(
+					lsif.getVertexBuilder().event(Event.EventScope.Project, Event.EventKind.END, projVertex.getId()));
 		}
 
 		threadPool.shutdown();
@@ -152,7 +154,8 @@ public class Indexer {
 					diagnosticVisitor.enlist();
 
 					LsifEmitter.getInstance()
-							.emit(lsif.getVertexBuilder().event(Event.EventScope.DOCUMENT, Event.EventKind.END));
+							.emit(lsif.getVertexBuilder().event(Event.EventScope.DOCUMENT, Event.EventKind.END,
+									docVertex.getId()));
 
 					return 0;
 				})).blockingSubscribe();

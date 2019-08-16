@@ -76,7 +76,7 @@ public class LsifVisitor extends ProtocolVisitor {
 			}
 
 			String id = createSymbolKey(definitionLocation);
-			SymbolData symbolData = Repository.getInstance().enlistSymbolData(id);
+			SymbolData symbolData = Repository.getInstance().enlistSymbolData(id, docVertex);
 
 			/* Ensure resultSet */
 			symbolData.ensureResultSet(lsif, sourceRange);

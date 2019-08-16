@@ -49,7 +49,8 @@ public class Repository {
 			targetDocument = service.getVertexBuilder().document(uri);
 			addDocument(targetDocument);
 			LsifEmitter.getInstance()
-					.emit(service.getVertexBuilder().event(Event.EventScope.DOCUMENT, Event.EventKind.BEGIN));
+					.emit(service.getVertexBuilder().event(Event.EventScope.DOCUMENT, Event.EventKind.BEGIN,
+							targetDocument.getId()));
 			LsifEmitter.getInstance().emit(targetDocument);
 		}
 
@@ -72,10 +73,10 @@ public class Repository {
 		return enlistRange(service, enlistDocument(service, uri), lspRange);
 	}
 
-	public synchronized SymbolData enlistSymbolData(String id) {
+	public synchronized SymbolData enlistSymbolData(String id, Document docVertex) {
 		SymbolData symbolData = findSymbolDataById(id);
 		if (symbolData == null) {
-			symbolData = new SymbolData();
+			symbolData = new SymbolData(docVertex);
 			addSymbolData(id, symbolData);
 		}
 		return symbolData;

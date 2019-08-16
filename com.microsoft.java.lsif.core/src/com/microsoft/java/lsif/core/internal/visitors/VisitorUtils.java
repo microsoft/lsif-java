@@ -64,10 +64,11 @@ public class VisitorUtils {
 		return typeDefinition != null && typeDefinition.size() > 0 ? typeDefinition.get(0) : null;
 	}
 
-	public static void ensureTypeDefinitionResult(LsifService lsif, ResultSet resultSet, Range targetRange) {
-		TypeDefinitionResult typeDefinitionResult = lsif.getVertexBuilder().typeDefinitionResult(targetRange.getId());
+	public static TypeDefinitionResult ensureTypeDefinitionResult(LsifService lsif, ResultSet resultSet) {
+		TypeDefinitionResult typeDefinitionResult = lsif.getVertexBuilder().typeDefinitionResult();
 		LsifEmitter.getInstance().emit(typeDefinitionResult);
 		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().typeDefinition(resultSet, typeDefinitionResult));
+		return typeDefinitionResult;
 	}
 
 	public static ReferenceResult ensureReferenceResult(LsifService lsif, ResultSet resultSet) {

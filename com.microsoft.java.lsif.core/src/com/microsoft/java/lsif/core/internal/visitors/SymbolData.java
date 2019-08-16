@@ -20,14 +20,21 @@ import com.microsoft.java.lsif.core.internal.protocol.ImplementationResult;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
 import com.microsoft.java.lsif.core.internal.protocol.ReferenceResult;
 import com.microsoft.java.lsif.core.internal.protocol.ResultSet;
+import com.microsoft.java.lsif.core.internal.protocol.TypeDefinitionResult;
 
 public class SymbolData {
+
+	private Document document;
 	private ResultSet resultSet;
 	private ReferenceResult referenceResult;
 	private boolean definitionResolved;
 	private boolean typeDefinitionResolved;
 	private boolean implementationResolved;
 	private boolean hoverResolved;
+
+	public SymbolData(Document document) {
+		this.document = document;
+	}
 
 	synchronized public void ensureResultSet(LsifService lsif, Range sourceRange) {
 		if (this.resultSet == null) {
@@ -46,7 +53,7 @@ public class SymbolData {
 		Document definitionDocument = Repository.getInstance().enlistDocument(lsif, definitionLocation.getUri());
 		Range definitionRange = Repository.getInstance().enlistRange(lsif, definitionDocument, definitionLspRange);
 		DefinitionResult defResult = VisitorUtils.ensureDefinitionResult(lsif, this.resultSet);
-		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().item(defResult, definitionRange));
+		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().item(defResult, definitionRange, document));
 		this.definitionResolved = true;
 	}
 
@@ -65,7 +72,8 @@ public class SymbolData {
 			Range typeDefinitionRange = Repository.getInstance().enlistRange(lsif, typeDefinitionDocument,
 					typeDefinitionLspRange);
 
-			VisitorUtils.ensureTypeDefinitionResult(lsif, this.resultSet, typeDefinitionRange);
+			TypeDefinitionResult typeDefResult = VisitorUtils.ensureTypeDefinitionResult(lsif, this.resultSet);
+			LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().item(typeDefResult, typeDefinitionRange, document));
 		}
 		this.typeDefinitionResolved = true;
 	}
@@ -83,7 +91,7 @@ public class SymbolData {
 			// ImplementationResult
 			List<String> rangeIds = implementationRanges.stream().map(r -> r.getId()).collect(Collectors.toList());
 			ImplementationResult implResult = VisitorUtils.ensureImplementationResult(lsif, this.resultSet);
-			LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().item(implResult, rangeIds));
+			LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().item(implResult, rangeIds, document));
 		}
 		this.implementationResolved = true;
 	}
@@ -100,7 +108,7 @@ public class SymbolData {
 				definitionLocation.getRange());
 
 		if (!VisitorUtils.isDefinitionItself(sourceDocument, sourceRange, definitionDocument, definitionRange)) {
-			LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().item(this.referenceResult, definitionRange));
+			LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().item(this.referenceResult, definitionRange, document));
 		}
 	}
 
