@@ -17,6 +17,7 @@ import com.microsoft.java.lsif.core.internal.indexer.Repository;
 import com.microsoft.java.lsif.core.internal.protocol.DefinitionResult;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.ImplementationResult;
+import com.microsoft.java.lsif.core.internal.protocol.ItemEdge;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
 import com.microsoft.java.lsif.core.internal.protocol.ReferenceResult;
 import com.microsoft.java.lsif.core.internal.protocol.ResultSet;
@@ -53,7 +54,8 @@ public class SymbolData {
 		Document definitionDocument = Repository.getInstance().enlistDocument(lsif, definitionLocation.getUri());
 		Range definitionRange = Repository.getInstance().enlistRange(lsif, definitionDocument, definitionLspRange);
 		DefinitionResult defResult = VisitorUtils.ensureDefinitionResult(lsif, this.resultSet);
-		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().item(defResult, definitionRange, document));
+		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().item(defResult, definitionRange, document,
+				ItemEdge.ItemEdgeProperties.DEFINITIONS));
 		this.definitionResolved = true;
 	}
 
@@ -73,7 +75,8 @@ public class SymbolData {
 					typeDefinitionLspRange);
 
 			TypeDefinitionResult typeDefResult = VisitorUtils.ensureTypeDefinitionResult(lsif, this.resultSet);
-			LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().item(typeDefResult, typeDefinitionRange, document));
+			LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().item(typeDefResult, typeDefinitionRange, document,
+					ItemEdge.ItemEdgeProperties.DEFINITIONS));
 		}
 		this.typeDefinitionResolved = true;
 	}
@@ -91,7 +94,8 @@ public class SymbolData {
 			// ImplementationResult
 			List<String> rangeIds = implementationRanges.stream().map(r -> r.getId()).collect(Collectors.toList());
 			ImplementationResult implResult = VisitorUtils.ensureImplementationResult(lsif, this.resultSet);
-			LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().item(implResult, rangeIds, document));
+			LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().item(implResult, rangeIds, document,
+					ItemEdge.ItemEdgeProperties.IMPLEMENTATION_RESULTS));
 		}
 		this.implementationResolved = true;
 	}
@@ -108,7 +112,8 @@ public class SymbolData {
 				definitionLocation.getRange());
 
 		if (!VisitorUtils.isDefinitionItself(sourceDocument, sourceRange, definitionDocument, definitionRange)) {
-			LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().item(this.referenceResult, definitionRange, document));
+			LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().item(this.referenceResult, sourceRange, document,
+					ItemEdge.ItemEdgeProperties.REFERENCES));
 		}
 	}
 

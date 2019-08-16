@@ -25,13 +25,13 @@ public class EdgeBuilder {
 		return new Edge(generator.next(), Edge.CONTAINS, from.getId(), Collections.singletonList(to.getId()));
 	}
 
-	public Edge item(Vertex from, Vertex to, Document doc) {
+	public Edge item(Vertex from, Vertex to, Document doc, String property) {
 		return new ItemEdge(generator.next(), Edge.ITEM, from.getId(), Collections.singletonList(to.getId()),
-				doc.getId());
+				doc.getId(), property);
 	}
 
-	public Edge item(Vertex from, List<String> inVs, Document doc) {
-		return new ItemEdge(generator.next(), Edge.ITEM, from.getId(), inVs, doc.getId());
+	public Edge item(Vertex from, List<String> inVs, Document doc, String property) {
+		return new ItemEdge(generator.next(), Edge.ITEM, from.getId(), inVs, doc.getId(), property);
 	}
 
 	public Edge hover(Vertex from, Vertex to) {
