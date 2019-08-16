@@ -12,7 +12,6 @@ import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.Edge;
 import com.microsoft.java.lsif.core.internal.protocol.Project;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
-import com.microsoft.java.lsif.core.internal.protocol.ReferenceItem;
 import com.microsoft.java.lsif.core.internal.protocol.Vertex;
 
 public class EdgeBuilder {
@@ -45,10 +44,6 @@ public class EdgeBuilder {
 
 	public Edge hover(Vertex from, Vertex to) {
 		return new Edge(generator.next(), Edge.T_HOVER, from.getId(), to.getId());
-	}
-
-	public Edge referenceItem(Vertex from, Vertex to, String property) {
-		return new ReferenceItem(generator.next(), Edge.ITEM, from.getId(), to.getId(), property);
 	}
 
 	public Edge definition(Vertex from, Vertex to) {

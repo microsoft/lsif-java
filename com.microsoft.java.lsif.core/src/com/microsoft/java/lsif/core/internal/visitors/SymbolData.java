@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-package com.microsoft.java.lsif.core.internal.protocol;
+package com.microsoft.java.lsif.core.internal.visitors;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -14,7 +14,12 @@ import org.eclipse.lsp4j.Location;
 import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
 import com.microsoft.java.lsif.core.internal.indexer.LsifService;
 import com.microsoft.java.lsif.core.internal.indexer.Repository;
-import com.microsoft.java.lsif.core.internal.visitors.VisitorUtils;
+import com.microsoft.java.lsif.core.internal.protocol.DefinitionResult;
+import com.microsoft.java.lsif.core.internal.protocol.Document;
+import com.microsoft.java.lsif.core.internal.protocol.ImplementationResult;
+import com.microsoft.java.lsif.core.internal.protocol.Range;
+import com.microsoft.java.lsif.core.internal.protocol.ReferenceResult;
+import com.microsoft.java.lsif.core.internal.protocol.ResultSet;
 
 public class SymbolData {
 	private ResultSet resultSet;
@@ -86,9 +91,7 @@ public class SymbolData {
 	synchronized public void resolveReference(LsifService lsif, Document sourceDocument, Location definitionLocation,
 			Range sourceRange) {
 		if (this.referenceResult == null) {
-			ReferenceResult referenceResult = lsif.getVertexBuilder().referenceResult();
-			LsifEmitter.getInstance().emit(referenceResult);
-			LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().references(this.resultSet, referenceResult));
+			ReferenceResult referenceResult = VisitorUtils.ensureReferenceResult(lsif, this.resultSet);
 			this.referenceResult = referenceResult;
 		}
 
@@ -97,9 +100,7 @@ public class SymbolData {
 				definitionLocation.getRange());
 
 		if (!VisitorUtils.isDefinitionItself(sourceDocument, sourceRange, definitionDocument, definitionRange)) {
-			LsifEmitter.getInstance()
-					.emit(lsif.getEdgeBuilder().referenceItem(this.referenceResult,
-					sourceRange, ReferenceItem.REFERENCES));
+			LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().item(this.referenceResult, definitionRange));
 		}
 	}
 

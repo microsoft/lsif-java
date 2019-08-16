@@ -13,7 +13,7 @@ import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.Event;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
-import com.microsoft.java.lsif.core.internal.protocol.SymbolData;
+import com.microsoft.java.lsif.core.internal.visitors.SymbolData;
 
 public class Repository {
 

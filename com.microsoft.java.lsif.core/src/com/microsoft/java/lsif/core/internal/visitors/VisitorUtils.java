@@ -33,6 +33,7 @@ import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.HoverResult;
 import com.microsoft.java.lsif.core.internal.protocol.ImplementationResult;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
+import com.microsoft.java.lsif.core.internal.protocol.ReferenceResult;
 import com.microsoft.java.lsif.core.internal.protocol.ResultSet;
 import com.microsoft.java.lsif.core.internal.protocol.TypeDefinitionResult;
 
@@ -67,6 +68,13 @@ public class VisitorUtils {
 		TypeDefinitionResult typeDefinitionResult = lsif.getVertexBuilder().typeDefinitionResult(targetRange.getId());
 		LsifEmitter.getInstance().emit(typeDefinitionResult);
 		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().typeDefinition(resultSet, typeDefinitionResult));
+	}
+
+	public static ReferenceResult ensureReferenceResult(LsifService lsif, ResultSet resultSet) {
+		ReferenceResult referenceResult = lsif.getVertexBuilder().referenceResult();
+		LsifEmitter.getInstance().emit(referenceResult);
+		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().references(resultSet, referenceResult));
+		return referenceResult;
 	}
 
 	/* implementation */
