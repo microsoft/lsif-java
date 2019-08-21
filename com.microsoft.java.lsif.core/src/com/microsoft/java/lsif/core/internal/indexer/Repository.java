@@ -11,8 +11,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.microsoft.java.lsif.core.internal.LsifUtils;
 import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
+import com.microsoft.java.lsif.core.internal.protocol.Event;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
-import com.microsoft.java.lsif.core.internal.protocol.SymbolData;
+import com.microsoft.java.lsif.core.internal.visitors.SymbolData;
 
 public class Repository {
 
@@ -47,6 +48,9 @@ public class Repository {
 		if (targetDocument == null) {
 			targetDocument = service.getVertexBuilder().document(uri);
 			addDocument(targetDocument);
+			LsifEmitter.getInstance()
+					.emit(service.getVertexBuilder().event(Event.EventScope.DOCUMENT, Event.EventKind.BEGIN,
+							targetDocument.getId()));
 			LsifEmitter.getInstance().emit(targetDocument);
 		}
 
@@ -69,10 +73,10 @@ public class Repository {
 		return enlistRange(service, enlistDocument(service, uri), lspRange);
 	}
 
-	public synchronized SymbolData enlistSymbolData(String id) {
+	public synchronized SymbolData enlistSymbolData(String id, Document docVertex) {
 		SymbolData symbolData = findSymbolDataById(id);
 		if (symbolData == null) {
-			symbolData = new SymbolData();
+			symbolData = new SymbolData(docVertex);
 			addSymbolData(id, symbolData);
 		}
 		return symbolData;

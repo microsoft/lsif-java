@@ -9,6 +9,8 @@ public class Vertex extends Element {
 
 	public static final String METADATA = "metaData";
 
+	public static final String EVENT = "$event";
+
 	public static final String PROJECT = "project";
 
 	public static final String RANGE = "range";

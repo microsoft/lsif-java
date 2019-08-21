@@ -33,6 +33,7 @@ import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.HoverResult;
 import com.microsoft.java.lsif.core.internal.protocol.ImplementationResult;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
+import com.microsoft.java.lsif.core.internal.protocol.ReferenceResult;
 import com.microsoft.java.lsif.core.internal.protocol.ResultSet;
 import com.microsoft.java.lsif.core.internal.protocol.TypeDefinitionResult;
 
@@ -42,15 +43,16 @@ public class VisitorUtils {
 	public static ResultSet ensureResultSet(LsifService lsif, Range sourceRange) {
 		ResultSet resultSet = lsif.getVertexBuilder().resultSet();
 		LsifEmitter.getInstance().emit(resultSet);
-		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().refersTo(sourceRange, resultSet));
+		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().next(sourceRange, resultSet));
 		return resultSet;
 	}
 
 	/* definition */
-	public static void ensureDefinitionResult(LsifService lsif, ResultSet resultSet, Range targetRange) {
-		DefinitionResult defResult = lsif.getVertexBuilder().definitionResult(targetRange.getId());
+	public static DefinitionResult ensureDefinitionResult(LsifService lsif, ResultSet resultSet) {
+		DefinitionResult defResult = lsif.getVertexBuilder().definitionResult();
 		LsifEmitter.getInstance().emit(defResult);
 		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().definition(resultSet, defResult));
+		return defResult;
 	}
 
 	/* typeDefinition */
@@ -62,10 +64,18 @@ public class VisitorUtils {
 		return typeDefinition != null && typeDefinition.size() > 0 ? typeDefinition.get(0) : null;
 	}
 
-	public static void ensureTypeDefinitionResult(LsifService lsif, ResultSet resultSet, Range targetRange) {
-		TypeDefinitionResult typeDefinitionResult = lsif.getVertexBuilder().typeDefinitionResult(targetRange.getId());
+	public static TypeDefinitionResult ensureTypeDefinitionResult(LsifService lsif, ResultSet resultSet) {
+		TypeDefinitionResult typeDefinitionResult = lsif.getVertexBuilder().typeDefinitionResult();
 		LsifEmitter.getInstance().emit(typeDefinitionResult);
 		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().typeDefinition(resultSet, typeDefinitionResult));
+		return typeDefinitionResult;
+	}
+
+	public static ReferenceResult ensureReferenceResult(LsifService lsif, ResultSet resultSet) {
+		ReferenceResult referenceResult = lsif.getVertexBuilder().referenceResult();
+		LsifEmitter.getInstance().emit(referenceResult);
+		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().references(resultSet, referenceResult));
+		return referenceResult;
 	}
 
 	/* implementation */
@@ -86,11 +96,11 @@ public class VisitorUtils {
 		return proxy.findImplementations(params, new NullProgressMonitor());
 	}
 
-	public static void ensureImplementationResult(LsifService lsif, ResultSet resultSet,
-			List<Either<String, Location>> result) {
-		ImplementationResult implResult = lsif.getVertexBuilder().implementationResult(result);
+	public static ImplementationResult ensureImplementationResult(LsifService lsif, ResultSet resultSet) {
+		ImplementationResult implResult = lsif.getVertexBuilder().implementationResult();
 		LsifEmitter.getInstance().emit(implResult);
 		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().implementation(resultSet, implResult));
+		return implResult;
 	}
 
 	/* reference */

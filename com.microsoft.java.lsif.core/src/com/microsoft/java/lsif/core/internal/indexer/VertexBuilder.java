@@ -10,8 +10,6 @@ import java.util.List;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DocumentSymbol;
 import org.eclipse.lsp4j.Hover;
-import org.eclipse.lsp4j.Location;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 import com.microsoft.java.lsif.core.internal.JdtlsUtils;
 import com.microsoft.java.lsif.core.internal.LsifUtils;
@@ -19,6 +17,7 @@ import com.microsoft.java.lsif.core.internal.protocol.DefinitionResult;
 import com.microsoft.java.lsif.core.internal.protocol.DiagnosticResult;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.DocumentSymbolResult;
+import com.microsoft.java.lsif.core.internal.protocol.Event;
 import com.microsoft.java.lsif.core.internal.protocol.HoverResult;
 import com.microsoft.java.lsif.core.internal.protocol.ImplementationResult;
 import com.microsoft.java.lsif.core.internal.protocol.MetaData;
@@ -36,8 +35,12 @@ public final class VertexBuilder {
 		this.generator = generator;
 	}
 
-	public MetaData metaData() {
-		return new MetaData(generator.next());
+	public MetaData metaData(String projectRoot) {
+		return new MetaData(generator.next(), projectRoot);
+	}
+
+	public Event event(String scope, String kind, String data) {
+		return new Event(generator.next(), scope, kind, data);
 	}
 
 	public Project project() {
@@ -60,29 +63,24 @@ public final class VertexBuilder {
 		return new ResultSet(generator.next());
 	}
 
-	public DefinitionResult definitionResult(String resultId) {
-		return new DefinitionResult(generator.next(), resultId);
+	public DefinitionResult definitionResult() {
+		return new DefinitionResult(generator.next());
 	}
 
 	public HoverResult hoverResult(Hover hover) {
 		return new HoverResult(generator.next(), hover);
 	}
 
-	public TypeDefinitionResult typeDefinitionResult(String resultId) {
-		return new TypeDefinitionResult(generator.next(), resultId);
+	public TypeDefinitionResult typeDefinitionResult() {
+		return new TypeDefinitionResult(generator.next());
 	}
 
 	public ReferenceResult referenceResult() {
 		return new ReferenceResult(generator.next());
 	}
 
-	public ReferenceResult referenceResult(List<String> declarations, List<String> definitions, List<String> references,
-			List<String> referenceResults) {
-		return new ReferenceResult(generator.next(), declarations, definitions, references, referenceResults);
-	}
-
-	public ImplementationResult implementationResult(List<Either<String, Location>> result) {
-		return new ImplementationResult(generator.next(), result);
+	public ImplementationResult implementationResult() {
+		return new ImplementationResult(generator.next());
 	}
 
 	public DocumentSymbolResult documentSymbolResult(List<DocumentSymbol> symbols) {

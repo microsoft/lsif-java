@@ -26,11 +26,14 @@ import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.lsp4j.ClientCapabilities;
 
 import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
+import com.microsoft.java.lsif.core.internal.protocol.Event;
 import com.microsoft.java.lsif.core.internal.protocol.Project;
 import com.microsoft.java.lsif.core.internal.visitors.DiagnosticVisitor;
 import com.microsoft.java.lsif.core.internal.visitors.DocumentVisitor;
@@ -58,10 +61,14 @@ public class Indexer {
 		LsifService lsif = new LsifService();
 
 		LsifEmitter.getInstance().start();
-		LsifEmitter.getInstance().emit(lsif.getVertexBuilder().metaData());
+		LsifEmitter.getInstance().emit(lsif.getVertexBuilder().metaData(ResourceUtils.fixURI(path.toFile().toURI())));
 
 		handler.importProject(path, monitor);
-		handler.buildProject(monitor);
+		BuildWorkspaceStatus buildStatus = handler.buildProject(monitor);
+		if (buildStatus != BuildWorkspaceStatus.SUCCEED) {
+			return;
+
+		}
 		buildIndex(path, monitor, lsif);
 		handler.removeProject(monitor);
 
@@ -85,10 +92,15 @@ public class Indexer {
 
 			Project projVertex = lsif.getVertexBuilder().project();
 			LsifEmitter.getInstance().emit(projVertex);
+			LsifEmitter.getInstance()
+					.emit(lsif.getVertexBuilder().event(Event.EventScope.Project, Event.EventKind.BEGIN,
+							projVertex.getId()));
 
 			List<ICompilationUnit> sourceList = getAllSourceFiles(javaProject);
 
 			dumpParallely(sourceList, threadPool, projVertex, lsif, monitor);
+			LsifEmitter.getInstance().emit(
+					lsif.getVertexBuilder().event(Event.EventScope.Project, Event.EventKind.END, projVertex.getId()));
 		}
 
 		threadPool.shutdown();
@@ -140,6 +152,10 @@ public class Indexer {
 
 					DiagnosticVisitor diagnosticVisitor = new DiagnosticVisitor(lsif, context);
 					diagnosticVisitor.enlist();
+
+					LsifEmitter.getInstance()
+							.emit(lsif.getVertexBuilder().event(Event.EventScope.DOCUMENT, Event.EventKind.END,
+									docVertex.getId()));
 
 					return 0;
 				})).blockingSubscribe();

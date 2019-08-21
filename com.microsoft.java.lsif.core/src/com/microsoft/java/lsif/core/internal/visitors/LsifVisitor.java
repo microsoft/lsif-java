@@ -26,7 +26,6 @@ import com.microsoft.java.lsif.core.internal.indexer.Repository;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
 import com.microsoft.java.lsif.core.internal.protocol.ResultSet;
-import com.microsoft.java.lsif.core.internal.protocol.SymbolData;
 
 public class LsifVisitor extends ProtocolVisitor {
 
@@ -77,7 +76,7 @@ public class LsifVisitor extends ProtocolVisitor {
 			}
 
 			String id = createSymbolKey(definitionLocation);
-			SymbolData symbolData = Repository.getInstance().enlistSymbolData(id);
+			SymbolData symbolData = Repository.getInstance().enlistSymbolData(id, docVertex);
 
 			/* Ensure resultSet */
 			symbolData.ensureResultSet(lsif, sourceRange);

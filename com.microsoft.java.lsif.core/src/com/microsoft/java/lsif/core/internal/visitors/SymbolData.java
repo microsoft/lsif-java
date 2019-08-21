@@ -3,21 +3,29 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-package com.microsoft.java.lsif.core.internal.protocol;
+package com.microsoft.java.lsif.core.internal.visitors;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.eclipse.lsp4j.Hover;
 import org.eclipse.lsp4j.Location;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
 import com.microsoft.java.lsif.core.internal.indexer.LsifService;
 import com.microsoft.java.lsif.core.internal.indexer.Repository;
-import com.microsoft.java.lsif.core.internal.visitors.VisitorUtils;
+import com.microsoft.java.lsif.core.internal.protocol.DefinitionResult;
+import com.microsoft.java.lsif.core.internal.protocol.Document;
+import com.microsoft.java.lsif.core.internal.protocol.ImplementationResult;
+import com.microsoft.java.lsif.core.internal.protocol.ItemEdge;
+import com.microsoft.java.lsif.core.internal.protocol.Range;
+import com.microsoft.java.lsif.core.internal.protocol.ReferenceResult;
+import com.microsoft.java.lsif.core.internal.protocol.ResultSet;
+import com.microsoft.java.lsif.core.internal.protocol.TypeDefinitionResult;
 
 public class SymbolData {
+
+	private Document document;
 	private ResultSet resultSet;
 	private ReferenceResult referenceResult;
 	private boolean definitionResolved;
@@ -25,13 +33,17 @@ public class SymbolData {
 	private boolean implementationResolved;
 	private boolean hoverResolved;
 
+	public SymbolData(Document document) {
+		this.document = document;
+	}
+
 	synchronized public void ensureResultSet(LsifService lsif, Range sourceRange) {
 		if (this.resultSet == null) {
 			ResultSet resultSet = lsif.getVertexBuilder().resultSet();
 			LsifEmitter.getInstance().emit(resultSet);
 			this.resultSet = resultSet;
 		}
-		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().refersTo(sourceRange, this.resultSet));
+		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().next(sourceRange, this.resultSet));
 	}
 
 	synchronized public void resolveDefinition(LsifService lsif, Location definitionLocation) {
@@ -41,8 +53,9 @@ public class SymbolData {
 		org.eclipse.lsp4j.Range definitionLspRange = definitionLocation.getRange();
 		Document definitionDocument = Repository.getInstance().enlistDocument(lsif, definitionLocation.getUri());
 		Range definitionRange = Repository.getInstance().enlistRange(lsif, definitionDocument, definitionLspRange);
-
-		VisitorUtils.ensureDefinitionResult(lsif, this.resultSet, definitionRange);
+		DefinitionResult defResult = VisitorUtils.ensureDefinitionResult(lsif, this.resultSet);
+		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().item(defResult, definitionRange, document,
+				ItemEdge.ItemEdgeProperties.DEFINITIONS));
 		this.definitionResolved = true;
 	}
 
@@ -61,7 +74,9 @@ public class SymbolData {
 			Range typeDefinitionRange = Repository.getInstance().enlistRange(lsif, typeDefinitionDocument,
 					typeDefinitionLspRange);
 
-			VisitorUtils.ensureTypeDefinitionResult(lsif, this.resultSet, typeDefinitionRange);
+			TypeDefinitionResult typeDefResult = VisitorUtils.ensureTypeDefinitionResult(lsif, this.resultSet);
+			LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().item(typeDefResult, typeDefinitionRange, document,
+					ItemEdge.ItemEdgeProperties.DEFINITIONS));
 		}
 		this.typeDefinitionResolved = true;
 	}
@@ -77,9 +92,10 @@ public class SymbolData {
 		if (implementationRanges != null && implementationRanges.size() > 0) {
 
 			// ImplementationResult
-			List<Either<String, Location>> result = implementationRanges.stream()
-					.map(r -> Either.<String, Location>forLeft(r.getId())).collect(Collectors.toList());
-			VisitorUtils.ensureImplementationResult(lsif, this.resultSet, result);
+			List<String> rangeIds = implementationRanges.stream().map(r -> r.getId()).collect(Collectors.toList());
+			ImplementationResult implResult = VisitorUtils.ensureImplementationResult(lsif, this.resultSet);
+			LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().item(implResult, rangeIds, document,
+					ItemEdge.ItemEdgeProperties.IMPLEMENTATION_RESULTS));
 		}
 		this.implementationResolved = true;
 	}
@@ -87,9 +103,7 @@ public class SymbolData {
 	synchronized public void resolveReference(LsifService lsif, Document sourceDocument, Location definitionLocation,
 			Range sourceRange) {
 		if (this.referenceResult == null) {
-			ReferenceResult referenceResult = lsif.getVertexBuilder().referenceResult();
-			LsifEmitter.getInstance().emit(referenceResult);
-			LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().references(this.resultSet, referenceResult));
+			ReferenceResult referenceResult = VisitorUtils.ensureReferenceResult(lsif, this.resultSet);
 			this.referenceResult = referenceResult;
 		}
 
@@ -98,9 +112,8 @@ public class SymbolData {
 				definitionLocation.getRange());
 
 		if (!VisitorUtils.isDefinitionItself(sourceDocument, sourceRange, definitionDocument, definitionRange)) {
-			LsifEmitter.getInstance()
-					.emit(lsif.getEdgeBuilder().referenceItem(this.referenceResult,
-					sourceRange, ReferenceItem.REFERENCES));
+			LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().item(this.referenceResult, sourceRange, document,
+					ItemEdge.ItemEdgeProperties.REFERENCES));
 		}
 	}
 

@@ -5,11 +5,12 @@
 
 package com.microsoft.java.lsif.core.internal.indexer;
 
+import java.util.Collections;
+import java.util.List;
+
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.Edge;
-import com.microsoft.java.lsif.core.internal.protocol.Project;
-import com.microsoft.java.lsif.core.internal.protocol.Range;
-import com.microsoft.java.lsif.core.internal.protocol.ReferenceItem;
+import com.microsoft.java.lsif.core.internal.protocol.ItemEdge;
 import com.microsoft.java.lsif.core.internal.protocol.Vertex;
 
 public class EdgeBuilder {
@@ -20,24 +21,21 @@ public class EdgeBuilder {
 		this.generator = idGenerator;
 	}
 
-	public Edge contains(Project from, Document to) {
-		return new Edge(generator.next(), Edge.CONTAINS, from.getId(), to.getId());
-	}
-
-	public Edge contains(Document from, Range to) {
-		return new Edge(generator.next(), Edge.CONTAINS, from.getId(), to.getId());
-	}
-
 	public Edge contains(Vertex from, Vertex to) {
-		return new Edge(generator.next(), Edge.CONTAINS, from.getId(), to.getId());
+		return new Edge(generator.next(), Edge.CONTAINS, from.getId(), Collections.singletonList(to.getId()));
+	}
+
+	public Edge item(Vertex from, Vertex to, Document doc, String property) {
+		return new ItemEdge(generator.next(), Edge.ITEM, from.getId(), Collections.singletonList(to.getId()),
+				doc.getId(), property);
+	}
+
+	public Edge item(Vertex from, List<String> inVs, Document doc, String property) {
+		return new ItemEdge(generator.next(), Edge.ITEM, from.getId(), inVs, doc.getId(), property);
 	}
 
 	public Edge hover(Vertex from, Vertex to) {
 		return new Edge(generator.next(), Edge.T_HOVER, from.getId(), to.getId());
-	}
-
-	public Edge referenceItem(Vertex from, Vertex to, String property) {
-		return new ReferenceItem(generator.next(), Edge.ITEM, from.getId(), to.getId(), property);
 	}
 
 	public Edge definition(Vertex from, Vertex to) {
@@ -60,8 +58,8 @@ public class EdgeBuilder {
 		return new Edge(generator.next(), Edge.T_DOCUMENTSYMBOL, from.getId(), to.getId());
 	}
 
-	public Edge refersTo(Vertex from, Vertex to) {
-		return new Edge(generator.next(), Edge.REFERSTO, from.getId(), to.getId());
+	public Edge next(Vertex from, Vertex to) {
+		return new Edge(generator.next(), Edge.NEXT, from.getId(), to.getId());
 	}
 
 	public Edge diagnostic(Vertex from, Vertex to) {

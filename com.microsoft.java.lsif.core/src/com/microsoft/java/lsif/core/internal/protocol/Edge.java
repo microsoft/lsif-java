@@ -5,13 +5,15 @@
 
 package com.microsoft.java.lsif.core.internal.protocol;
 
+import java.util.List;
+
 public class Edge extends Element {
 
 	public final static String CONTAINS = "contains";
 
 	public final static String ITEM = "item";
 
-	public final static String REFERSTO = "refersTo";
+	public final static String NEXT = "next";
 
 	public final static String EXPORTS = "exports";
 
@@ -41,10 +43,18 @@ public class Edge extends Element {
 
 	private String inV;
 
+	private List<String> inVs;
+
 	public Edge(String id, String label, String outV, String inV) {
 		super(id, Element.EDGE, label);
 		this.outV = outV;
 		this.inV = inV;
+	}
+
+	public Edge(String id, String label, String outV, List<String> inVs) {
+		super(id, Element.EDGE, label);
+		this.outV = outV;
+		this.inVs = inVs;
 	}
 
 	public String getOutV() {
@@ -53,5 +63,9 @@ public class Edge extends Element {
 
 	public String getInV() {
 		return this.inV;
+	}
+
+	public List<String> getInVs() {
+		return inVs;
 	}
 }
