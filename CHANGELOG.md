@@ -3,6 +3,10 @@
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 0.3.0
+### Changed
+- Update the implementation to align with the v4 protocol. [PR#45](https://github.com/microsoft/lsif-java/pull/45)
+
 ## 0.2.0
 ### Changed
 - Default to the current working directory if `repo.path` is not specified. [#30](https://github.com/Microsoft/lsif-java/issues/30)
