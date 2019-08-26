@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT license.
+
 const gulp = require('gulp');
 const cp = require('child_process');
 const path = require('path');
@@ -19,8 +22,14 @@ gulp.task('clean', (done) => {
 
 gulp.task('build-indexer', (done) => {
     cp.execSync(`${mvnw()} clean verify`, { cwd: rootPath, stdio: [0, 1, 2] });
-    gulp.src(path.join(rootPath, 'com.microsoft.java.lsif.product', 'target', 'repository', '**/*'))
-        .pipe(gulp.dest(path.join(rootPath, 'cmd', 'repository')));
+    const srouceRepositoryPath = path.join(rootPath, 'com.microsoft.java.lsif.product', 'target', 'repository');
+    const targetRepositoryPath = path.join(rootPath, 'cmd', 'repository');
+
+    gulp.src(path.join(srouceRepositoryPath, 'config_linux', '**/*')).pipe(gulp.dest(path.join(targetRepositoryPath, 'config_linux')));
+    gulp.src(path.join(srouceRepositoryPath, 'config_mac', '**/*')).pipe(gulp.dest(path.join(targetRepositoryPath, 'config_mac')));
+    gulp.src(path.join(srouceRepositoryPath, 'config_win', '**/*')).pipe(gulp.dest(path.join(targetRepositoryPath, 'config_win')));
+    gulp.src(path.join(srouceRepositoryPath, 'features', '**/*')).pipe(gulp.dest(path.join(targetRepositoryPath, 'features')));
+    gulp.src(path.join(srouceRepositoryPath, 'plugins', '**/*')).pipe(gulp.dest(path.join(targetRepositoryPath, 'plugins')));
     done();
 });
 
