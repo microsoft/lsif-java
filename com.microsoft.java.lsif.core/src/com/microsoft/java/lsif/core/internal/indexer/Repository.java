@@ -48,10 +48,10 @@ public class Repository {
 		if (targetDocument == null) {
 			targetDocument = service.getVertexBuilder().document(uri);
 			addDocument(targetDocument);
+			LsifEmitter.getInstance().emit(targetDocument);
 			LsifEmitter.getInstance()
 					.emit(service.getVertexBuilder().event(Event.EventScope.DOCUMENT, Event.EventKind.BEGIN,
 							targetDocument.getId()));
-			LsifEmitter.getInstance().emit(targetDocument);
 		}
 
 		return targetDocument;
