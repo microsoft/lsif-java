@@ -24,6 +24,7 @@ import com.microsoft.java.lsif.core.internal.indexer.IndexerContext;
 import com.microsoft.java.lsif.core.internal.indexer.LsifService;
 import com.microsoft.java.lsif.core.internal.indexer.Repository;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
+import com.microsoft.java.lsif.core.internal.protocol.Project;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
 import com.microsoft.java.lsif.core.internal.protocol.ResultSet;
 
@@ -59,6 +60,7 @@ public class LsifVisitor extends ProtocolVisitor {
 
 			LsifService lsif = this.getLsif();
 			Document docVertex = this.getContext().getDocVertex();
+			Project projVertex = this.getContext().getProjVertex();
 			Range sourceRange = Repository.getInstance().enlistRange(lsif, docVertex, sourceLspRange);
 
 			Location definitionLocation = JdtlsUtils.getElementLocation(element);
@@ -76,7 +78,9 @@ public class LsifVisitor extends ProtocolVisitor {
 			}
 
 			String id = createSymbolKey(definitionLocation);
-			SymbolData symbolData = Repository.getInstance().enlistSymbolData(id, docVertex);
+			Document definitionDocument = Repository.getInstance().enlistDocument(lsif, definitionLocation.getUri(),
+					projVertex);
+			SymbolData symbolData = Repository.getInstance().enlistSymbolData(id, definitionDocument, projVertex);
 
 			/* Ensure resultSet */
 			symbolData.ensureResultSet(lsif, sourceRange);

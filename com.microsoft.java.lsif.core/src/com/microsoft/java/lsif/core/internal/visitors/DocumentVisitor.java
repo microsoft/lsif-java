@@ -36,8 +36,7 @@ public class DocumentVisitor extends ProtocolVisitor {
 
 	public Document enlist(IJavaElement sourceFile) {
 		String uri = ResourceUtils.fixURI(sourceFile.getResource().getRawLocationURI());
-		Document docVertex = Repository.getInstance().enlistDocument(this.getLsif(), uri);
-		LsifEmitter.getInstance().emit(this.getLsif().getEdgeBuilder().contains(projVertex, docVertex));
+		Document docVertex = Repository.getInstance().enlistDocument(this.getLsif(), uri, this.projVertex);
 
 		handleDocumentSymbol(docVertex);
 		return docVertex;

@@ -12,6 +12,7 @@ import com.microsoft.java.lsif.core.internal.LsifUtils;
 import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.Event;
+import com.microsoft.java.lsif.core.internal.protocol.Project;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
 import com.microsoft.java.lsif.core.internal.visitors.SymbolData;
 
@@ -42,7 +43,7 @@ public class Repository {
 		return RepositoryHolder.INSTANCE;
 	}
 
-	public synchronized Document enlistDocument(LsifService service, String uri) {
+	public synchronized Document enlistDocument(LsifService service, String uri, Project projVertex) {
 		uri = LsifUtils.normalizeUri(uri);
 		Document targetDocument = findDocumentByUri(uri);
 		if (targetDocument == null) {
@@ -52,6 +53,7 @@ public class Repository {
 			LsifEmitter.getInstance()
 					.emit(service.getVertexBuilder().event(Event.EventScope.DOCUMENT, Event.EventKind.BEGIN,
 							targetDocument.getId()));
+			LsifEmitter.getInstance().emit(service.getEdgeBuilder().contains(projVertex, targetDocument));
 		}
 
 		return targetDocument;
@@ -69,14 +71,14 @@ public class Repository {
 		return range;
 	}
 
-	public Range enlistRange(LsifService service, String uri, org.eclipse.lsp4j.Range lspRange) {
-		return enlistRange(service, enlistDocument(service, uri), lspRange);
+	public Range enlistRange(LsifService service, String uri, org.eclipse.lsp4j.Range lspRange, Project projVertex) {
+		return enlistRange(service, enlistDocument(service, uri, projVertex), lspRange);
 	}
 
-	public synchronized SymbolData enlistSymbolData(String id, Document docVertex) {
+	public synchronized SymbolData enlistSymbolData(String id, Document docVertex, Project projVertex) {
 		SymbolData symbolData = findSymbolDataById(id);
 		if (symbolData == null) {
-			symbolData = new SymbolData(docVertex);
+			symbolData = new SymbolData(projVertex, docVertex);
 			addSymbolData(id, symbolData);
 		}
 		return symbolData;
