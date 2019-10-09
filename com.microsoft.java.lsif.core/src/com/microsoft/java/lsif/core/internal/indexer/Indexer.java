@@ -145,7 +145,7 @@ public class Indexer {
 					if (cu == null || docVertex == null) {
 						return 0;
 					}
-					IndexerContext context = new IndexerContext(docVertex, cu);
+					IndexerContext context = new IndexerContext(docVertex, cu, projVertex);
 
 					LsifVisitor lsifVisitor = new LsifVisitor(lsif, context);
 					cu.accept(lsifVisitor);

@@ -18,6 +18,7 @@ import com.microsoft.java.lsif.core.internal.protocol.DefinitionResult;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.ImplementationResult;
 import com.microsoft.java.lsif.core.internal.protocol.ItemEdge;
+import com.microsoft.java.lsif.core.internal.protocol.Project;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
 import com.microsoft.java.lsif.core.internal.protocol.ReferenceResult;
 import com.microsoft.java.lsif.core.internal.protocol.ResultSet;
@@ -25,6 +26,7 @@ import com.microsoft.java.lsif.core.internal.protocol.TypeDefinitionResult;
 
 public class SymbolData {
 
+	private Project project;
 	private Document document;
 	private ResultSet resultSet;
 	private ReferenceResult referenceResult;
@@ -33,7 +35,8 @@ public class SymbolData {
 	private boolean implementationResolved;
 	private boolean hoverResolved;
 
-	public SymbolData(Document document) {
+	public SymbolData(Project project, Document document) {
+		this.project = project;
 		this.document = document;
 	}
 
@@ -51,7 +54,8 @@ public class SymbolData {
 			return;
 		}
 		org.eclipse.lsp4j.Range definitionLspRange = definitionLocation.getRange();
-		Document definitionDocument = Repository.getInstance().enlistDocument(lsif, definitionLocation.getUri());
+		Document definitionDocument = Repository.getInstance().enlistDocument(lsif, definitionLocation.getUri(),
+				project);
 		Range definitionRange = Repository.getInstance().enlistRange(lsif, definitionDocument, definitionLspRange);
 		DefinitionResult defResult = VisitorUtils.ensureDefinitionResult(lsif, this.resultSet);
 		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().item(defResult, definitionRange, document,
@@ -70,7 +74,7 @@ public class SymbolData {
 		if (typeDefinitionLocation != null) {
 			org.eclipse.lsp4j.Range typeDefinitionLspRange = typeDefinitionLocation.getRange();
 			Document typeDefinitionDocument = Repository.getInstance().enlistDocument(lsif,
-					typeDefinitionLocation.getUri());
+					typeDefinitionLocation.getUri(), project);
 			Range typeDefinitionRange = Repository.getInstance().enlistRange(lsif, typeDefinitionDocument,
 					typeDefinitionLspRange);
 
@@ -86,7 +90,7 @@ public class SymbolData {
 		if (this.implementationResolved) {
 			return;
 		}
-		List<Range> implementationRanges = VisitorUtils.getImplementationRanges(lsif, docVertex,
+		List<Range> implementationRanges = VisitorUtils.getImplementationRanges(lsif, project, docVertex,
 				sourceLspRange.getStart().getLine(),
 				sourceLspRange.getStart().getCharacter());
 		if (implementationRanges != null && implementationRanges.size() > 0) {
@@ -107,7 +111,8 @@ public class SymbolData {
 			this.referenceResult = referenceResult;
 		}
 
-		Document definitionDocument = Repository.getInstance().enlistDocument(lsif, definitionLocation.getUri());
+		Document definitionDocument = Repository.getInstance().enlistDocument(lsif, definitionLocation.getUri(),
+				project);
 		Range definitionRange = Repository.getInstance().enlistRange(lsif, definitionDocument,
 				definitionLocation.getRange());
 

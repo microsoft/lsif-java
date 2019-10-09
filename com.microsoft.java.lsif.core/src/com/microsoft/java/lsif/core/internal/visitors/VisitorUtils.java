@@ -32,6 +32,7 @@ import com.microsoft.java.lsif.core.internal.protocol.DefinitionResult;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.HoverResult;
 import com.microsoft.java.lsif.core.internal.protocol.ImplementationResult;
+import com.microsoft.java.lsif.core.internal.protocol.Project;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
 import com.microsoft.java.lsif.core.internal.protocol.ReferenceResult;
 import com.microsoft.java.lsif.core.internal.protocol.ResultSet;
@@ -79,12 +80,14 @@ public class VisitorUtils {
 	}
 
 	/* implementation */
-	public static List<Range> getImplementationRanges(LsifService lsif, Document docVertex, int line, int character) {
+	public static List<Range> getImplementationRanges(LsifService lsif, Project projVertex, Document docVertex,
+			int line, int character) {
 		List<? extends Location> locations = getImplementations(docVertex, line, character);
 		if (locations == null) {
 			return Collections.emptyList();
 		}
-		return locations.stream().map(loc -> Repository.getInstance().enlistRange(lsif, loc.getUri(), loc.getRange()))
+		return locations.stream()
+				.map(loc -> Repository.getInstance().enlistRange(lsif, loc.getUri(), loc.getRange(), projVertex))
 				.filter(r -> r != null).collect(Collectors.toList());
 	}
 

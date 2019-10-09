@@ -8,6 +8,7 @@ package com.microsoft.java.lsif.core.internal.indexer;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 
 import com.microsoft.java.lsif.core.internal.protocol.Document;
+import com.microsoft.java.lsif.core.internal.protocol.Project;
 
 public class IndexerContext {
 
@@ -15,9 +16,12 @@ public class IndexerContext {
 
 	private CompilationUnit compilationUnit;
 
-	public IndexerContext(Document docVertex, CompilationUnit compilationUnit) {
+	private Project projVertex;
+
+	public IndexerContext(Document docVertex, CompilationUnit compilationUnit, Project projVertex) {
 		this.setDocVertex(docVertex);
 		this.setCompilationUnit(compilationUnit);
+		this.setProjVertex(projVertex);
 	}
 
 	public Document getDocVertex() {
@@ -43,5 +47,19 @@ public class IndexerContext {
 	 */
 	public void setCompilationUnit(CompilationUnit compilationUnit) {
 		this.compilationUnit = compilationUnit;
+	}
+
+	/**
+	 * @return the projVertex
+	 */
+	public Project getProjVertex() {
+		return projVertex;
+	}
+
+	/**
+	 * @param projVertex the projVertex to set
+	 */
+	public void setProjVertex(Project projVertex) {
+		this.projVertex = projVertex;
 	}
 }
