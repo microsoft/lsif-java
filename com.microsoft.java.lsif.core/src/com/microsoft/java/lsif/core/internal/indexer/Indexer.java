@@ -38,6 +38,7 @@ import com.microsoft.java.lsif.core.internal.protocol.Project;
 import com.microsoft.java.lsif.core.internal.visitors.DiagnosticVisitor;
 import com.microsoft.java.lsif.core.internal.visitors.DocumentVisitor;
 import com.microsoft.java.lsif.core.internal.visitors.LsifVisitor;
+import com.microsoft.java.lsif.core.internal.visitors.VisitorUtils;
 
 import io.reactivex.Observable;
 import io.reactivex.schedulers.Schedulers;
@@ -99,6 +100,8 @@ public class Indexer {
 			List<ICompilationUnit> sourceList = getAllSourceFiles(javaProject);
 
 			dumpParallely(sourceList, threadPool, projVertex, lsif, monitor);
+
+			VisitorUtils.endAllDocument(lsif);
 			LsifEmitter.getInstance().emit(
 					lsif.getVertexBuilder().event(Event.EventScope.Project, Event.EventKind.END, projVertex.getId()));
 		}
@@ -153,9 +156,7 @@ public class Indexer {
 					DiagnosticVisitor diagnosticVisitor = new DiagnosticVisitor(lsif, context);
 					diagnosticVisitor.enlist();
 
-					LsifEmitter.getInstance()
-							.emit(lsif.getVertexBuilder().event(Event.EventScope.DOCUMENT, Event.EventKind.END,
-									docVertex.getId()));
+					VisitorUtils.endDocument(lsif, docVertex);
 
 					return 0;
 				})).blockingSubscribe();

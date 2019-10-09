@@ -30,6 +30,7 @@ import com.microsoft.java.lsif.core.internal.indexer.LsifService;
 import com.microsoft.java.lsif.core.internal.indexer.Repository;
 import com.microsoft.java.lsif.core.internal.protocol.DefinitionResult;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
+import com.microsoft.java.lsif.core.internal.protocol.Event;
 import com.microsoft.java.lsif.core.internal.protocol.HoverResult;
 import com.microsoft.java.lsif.core.internal.protocol.ImplementationResult;
 import com.microsoft.java.lsif.core.internal.protocol.Project;
@@ -150,5 +151,17 @@ public class VisitorUtils {
 		HoverResult hoverResult = lsif.getVertexBuilder().hoverResult(hover);
 		LsifEmitter.getInstance().emit(hoverResult);
 		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().hover(resultSet, hoverResult));
+	}
+
+	public static void endDocument(LsifService lsif, Document doc) {
+		Repository.getInstance().removeFromBeginededDocuments(doc.getUri());
+		LsifEmitter.getInstance()
+				.emit(lsif.getVertexBuilder().event(Event.EventScope.DOCUMENT, Event.EventKind.END, doc.getId()));
+	}
+
+	public static void endAllDocument(LsifService lsif) {
+		for (Document doc : Repository.getInstance().getAllBeginededDocuments()) {
+			endDocument(lsif, doc);
+		}
 	}
 }

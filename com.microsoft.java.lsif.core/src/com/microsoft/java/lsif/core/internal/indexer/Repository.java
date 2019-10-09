@@ -5,6 +5,7 @@
 
 package com.microsoft.java.lsif.core.internal.indexer;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -32,6 +33,10 @@ public class Repository {
 	// Value: SymbolData
 	private Map<String, SymbolData> symbolDataMap = new ConcurrentHashMap<>();
 
+	// Key: documentURI
+	// Value: Document object
+	private Map<String, Document> beginededDocumentMap = new ConcurrentHashMap<>();
+
 	private Repository() {
 	}
 
@@ -50,6 +55,7 @@ public class Repository {
 			targetDocument = service.getVertexBuilder().document(uri);
 			addDocument(targetDocument);
 			LsifEmitter.getInstance().emit(targetDocument);
+			addToBeginededDocuments(targetDocument);
 			LsifEmitter.getInstance()
 					.emit(service.getVertexBuilder().event(Event.EventScope.DOCUMENT, Event.EventKind.BEGIN,
 							targetDocument.getId()));
@@ -82,6 +88,18 @@ public class Repository {
 			addSymbolData(id, symbolData);
 		}
 		return symbolData;
+	}
+
+	public void addToBeginededDocuments(Document doc) {
+		this.beginededDocumentMap.put(doc.getUri(), doc);
+	}
+
+	public void removeFromBeginededDocuments(String uri) {
+		this.beginededDocumentMap.remove(uri);
+	}
+
+	public ArrayList<Document> getAllBeginededDocuments() {
+		return new ArrayList<>(this.documentMap.values());
 	}
 
 	private void addDocument(Document doc) {
