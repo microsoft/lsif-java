@@ -18,6 +18,7 @@ import com.microsoft.java.lsif.core.internal.protocol.DefinitionResult;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.ImplementationResult;
 import com.microsoft.java.lsif.core.internal.protocol.ItemEdge;
+import com.microsoft.java.lsif.core.internal.protocol.Moniker;
 import com.microsoft.java.lsif.core.internal.protocol.Project;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
 import com.microsoft.java.lsif.core.internal.protocol.ReferenceResult;
@@ -30,6 +31,7 @@ public class SymbolData {
 	private Document document;
 	private ResultSet resultSet;
 	private ReferenceResult referenceResult;
+	private Moniker moniker;
 	private boolean definitionResolved;
 	private boolean typeDefinitionResolved;
 	private boolean implementationResolved;
@@ -47,6 +49,17 @@ public class SymbolData {
 			this.resultSet = resultSet;
 		}
 		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().next(sourceRange, this.resultSet));
+	}
+
+	synchronized public void generateMoniker(LsifService lsif, Range sourceRange, String kind,
+			String identifier) {
+		if (this.resultSet == null || this.moniker != null) {
+			return;
+		}
+		Moniker moniker = lsif.getVertexBuilder().moniker(kind, identifier);
+		LsifEmitter.getInstance().emit(moniker);
+		this.moniker = moniker;
+		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().moniker(this.resultSet, this.moniker));
 	}
 
 	synchronized public void resolveDefinition(LsifService lsif, Location definitionLocation) {

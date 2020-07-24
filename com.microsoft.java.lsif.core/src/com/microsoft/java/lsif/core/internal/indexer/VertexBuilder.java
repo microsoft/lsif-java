@@ -21,6 +21,7 @@ import com.microsoft.java.lsif.core.internal.protocol.Event;
 import com.microsoft.java.lsif.core.internal.protocol.HoverResult;
 import com.microsoft.java.lsif.core.internal.protocol.ImplementationResult;
 import com.microsoft.java.lsif.core.internal.protocol.MetaData;
+import com.microsoft.java.lsif.core.internal.protocol.Moniker;
 import com.microsoft.java.lsif.core.internal.protocol.Project;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
 import com.microsoft.java.lsif.core.internal.protocol.ReferenceResult;
@@ -89,5 +90,9 @@ public final class VertexBuilder {
 
 	public DiagnosticResult diagnosticResult(List<Diagnostic> diagnostics) {
 		return new DiagnosticResult(generator.next(), diagnostics);
+	}
+
+	public Moniker moniker(String kind, String identifier) {
+		return new Moniker(generator.next(), kind, identifier);
 	}
 }
