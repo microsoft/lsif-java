@@ -7,16 +7,19 @@ package com.microsoft.java.lsif.core.internal.protocol;
 
 public class Moniker extends Vertex {
 
-	private String scheme = "jdt";
-
 	private String kind;
+
+	private String scheme;
 
 	private String identifier;
 
-	public Moniker(String id, String kind, String identifier) {
+	private String unique;
+
+	public Moniker(String id, String kind, String scheme, String identifier, String unique) {
 		super(id, Vertex.MONIKER);
 		this.kind = kind;
 		this.identifier = identifier;
-		this.scheme = "jdt";
+		this.scheme = scheme;
+		this.unique = unique;
 	}
 }

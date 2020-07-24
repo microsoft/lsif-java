@@ -13,6 +13,7 @@ import com.microsoft.java.lsif.core.internal.LsifUtils;
 import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.Event;
+import com.microsoft.java.lsif.core.internal.protocol.PackageData;
 import com.microsoft.java.lsif.core.internal.protocol.Project;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
 import com.microsoft.java.lsif.core.internal.visitors.SymbolData;
@@ -36,6 +37,10 @@ public class Repository {
 	// Key: documentURI
 	// Value: Document object
 	private Map<String, Document> beginededDocumentMap = new ConcurrentHashMap<>();
+
+	// Key: groupId + artifactId + version
+	// Value: PackageData
+	private Map<String, PackageData> packageDataMap = new ConcurrentHashMap<>();
 
 	private Repository() {
 	}
@@ -90,6 +95,15 @@ public class Repository {
 		return symbolData;
 	}
 
+	public synchronized PackageData enlistPackageData(String id, String groupId, String artifactId, String version) {
+		PackageData packageData = findPackageDataById(id);
+		if (packageData == null) {
+			packageData = new PackageData(groupId, artifactId, version);
+			addPackageData(id, packageData);
+		}
+		return packageData;
+	}
+
 	public void addToBeginededDocuments(Document doc) {
 		this.beginededDocumentMap.put(doc.getUri(), doc);
 	}
@@ -130,5 +144,13 @@ public class Repository {
 
 	private SymbolData findSymbolDataById(String id) {
 		return this.symbolDataMap.getOrDefault(id, null);
+	}
+
+	private PackageData findPackageDataById(String id) {
+		return this.packageDataMap.getOrDefault(id, null);
+	}
+
+	private void addPackageData(String id, PackageData packageData) {
+		this.packageDataMap.put(id, packageData);
 	}
 }

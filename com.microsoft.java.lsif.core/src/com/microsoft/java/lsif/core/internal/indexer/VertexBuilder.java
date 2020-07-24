@@ -92,7 +92,7 @@ public final class VertexBuilder {
 		return new DiagnosticResult(generator.next(), diagnostics);
 	}
 
-	public Moniker moniker(String kind, String identifier) {
-		return new Moniker(generator.next(), kind, identifier);
+	public Moniker moniker(String kind, String scheme, String identifier, String unique) {
+		return new Moniker(generator.next(), kind, scheme, identifier, unique);
 	}
 }

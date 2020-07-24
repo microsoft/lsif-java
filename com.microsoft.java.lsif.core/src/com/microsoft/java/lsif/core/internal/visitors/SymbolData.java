@@ -31,7 +31,8 @@ public class SymbolData {
 	private Document document;
 	private ResultSet resultSet;
 	private ReferenceResult referenceResult;
-	private Moniker moniker;
+	private Moniker projectMoniker;
+	private Moniker schemeMoniker;
 	private boolean definitionResolved;
 	private boolean typeDefinitionResolved;
 	private boolean implementationResolved;
@@ -53,13 +54,13 @@ public class SymbolData {
 
 	synchronized public void generateMoniker(LsifService lsif, Range sourceRange, String kind,
 			String identifier) {
-		if (this.resultSet == null || this.moniker != null) {
+		if (this.resultSet == null || this.projectMoniker != null) {
 			return;
 		}
-		Moniker moniker = lsif.getVertexBuilder().moniker(kind, identifier);
+		Moniker moniker = lsif.getVertexBuilder().moniker(kind, "jdt", identifier, "project");
 		LsifEmitter.getInstance().emit(moniker);
-		this.moniker = moniker;
-		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().moniker(this.resultSet, this.moniker));
+		this.projectMoniker = moniker;
+		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().moniker(this.resultSet, this.projectMoniker));
 	}
 
 	synchronized public void resolveDefinition(LsifService lsif, Location definitionLocation) {

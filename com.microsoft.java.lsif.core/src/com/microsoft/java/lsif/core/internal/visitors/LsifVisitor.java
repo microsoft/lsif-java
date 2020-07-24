@@ -156,19 +156,35 @@ public class LsifVisitor extends ProtocolVisitor {
 			IJavaProject javaproject = element.getJavaProject();
 			ICompilationUnit compilationUnit = (ICompilationUnit) element.getAncestor(IJavaElement.COMPILATION_UNIT);
 			IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
-			if (compilationUnit == null && cf == null) {
-				return;
-			}
-			if (compilationUnit == null) {
+			boolean isFromMaven = false;
+			int mavenCount = 0;
+			String groupId;
+			String artifactId;
+			String version;
+			if (compilationUnit == null && cf != null) {
 				IPath path = cf.getPath();
 				IClasspathEntry entry = javaproject.getClasspathEntryFor(path);
 				IClasspathAttribute[] attrs = entry.getExtraAttributes();
-				int test = 1;
-			} else {
-				IPath path0 = javaproject.getProject().getFullPath();
-				IClasspathEntry entry = javaproject.getClasspathEntryFor(path0.append("/src/main/java/App.java"));
-				int test = 1;
-			}
+				for (IClasspathAttribute attr : attrs) {
+					if (attr.getName().equals("maven.pomderived")) {
+						if (attr.getValue().equals("true")) {
+							mavenCount++;
+						}
+					} else if (attr.getName().equals("maven.groupId")) {
+						groupId = attr.getValue();
+					} else if (attr.getName().equals("maven.artifactId")) {
+						artifactId = attr.getValue();
+					} else if (attr.getName().equals("maven.version")) {
+						version = attr.getValue();
+					}
+				}
+				if (mavenCount == 2) {
+					isFromMaven = true;
+				}
+			} /*
+				 * else { IPath path = compilationUnit.getPath(); IClasspathEntry entry =
+				 * javaproject.getClasspathEntryFor(path); int test = 1; }
+				 */
 
 			String id = createSymbolKey(definitionLocation);
 			Document definitionDocument = Repository.getInstance().enlistDocument(lsif, definitionLocation.getUri(),
