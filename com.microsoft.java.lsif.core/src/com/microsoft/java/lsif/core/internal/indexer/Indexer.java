@@ -107,7 +107,7 @@ public class Indexer {
 					String groupId = model.getGroupId();
 					String artifactId = model.getArtifactId();
 					String version = model.getVersion();
-					String url = model.getUrl();
+					String url = (model.getUrl() == null) ? "" : model.getUrl();
 					PackageInformation packageInformation = Repository.getInstance()
 							.enlistExportPackageInformation(lsif, javaProject.getPath()
 									.toString(),
