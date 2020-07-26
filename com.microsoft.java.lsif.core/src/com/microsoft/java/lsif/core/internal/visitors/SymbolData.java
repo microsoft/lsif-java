@@ -8,6 +8,8 @@ package com.microsoft.java.lsif.core.internal.visitors;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.apache.commons.codec.digest.DigestUtils;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.lsp4j.Hover;
 import org.eclipse.lsp4j.Location;
 
@@ -19,6 +21,7 @@ import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.ImplementationResult;
 import com.microsoft.java.lsif.core.internal.protocol.ItemEdge;
 import com.microsoft.java.lsif.core.internal.protocol.Moniker;
+import com.microsoft.java.lsif.core.internal.protocol.PackageInformation;
 import com.microsoft.java.lsif.core.internal.protocol.Project;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
 import com.microsoft.java.lsif.core.internal.protocol.ReferenceResult;
@@ -52,15 +55,60 @@ public class SymbolData {
 		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().next(sourceRange, this.resultSet));
 	}
 
-	synchronized public void generateMoniker(LsifService lsif, Range sourceRange, String kind,
-			String identifier) {
-		if (this.resultSet == null || this.projectMoniker != null) {
+	synchronized public void generateMonikerImport(LsifService lsif, Range sourceRange,
+			String identifier, String schemeMonikerName, String manager, String version) {
+		if (this.resultSet == null || this.projectMoniker != null || this.schemeMoniker != null) {
 			return;
 		}
-		Moniker moniker = lsif.getVertexBuilder().moniker(kind, "jdt", identifier, "project");
-		LsifEmitter.getInstance().emit(moniker);
-		this.projectMoniker = moniker;
+		Moniker projectMoniker = lsif.getVertexBuilder().moniker("import", "jdt", identifier, "project");
+		LsifEmitter.getInstance().emit(projectMoniker);
+		this.projectMoniker = projectMoniker;
 		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().moniker(this.resultSet, this.projectMoniker));
+		PackageInformation packageInformation = Repository.getInstance().enlistImportPackageInformation(lsif,
+				createMonikerKey(schemeMonikerName), schemeMonikerName, manager, version);
+		if (!Repository.getInstance().enlistPackageInformationEmitted(schemeMonikerName)) {
+				LsifEmitter.getInstance().emit(packageInformation);
+			}
+			Moniker schemeMoniker = manager.equals("maven")
+					? lsif.getVertexBuilder().moniker("import", manager,
+							packageInformation.getName() + "/" + identifier, "scheme")
+					: lsif.getVertexBuilder().moniker("import", manager, identifier, "scheme");
+			LsifEmitter.getInstance().emit(schemeMoniker);
+			this.schemeMoniker = schemeMoniker;
+			LsifEmitter.getInstance()
+					.emit(lsif.getEdgeBuilder().packageInformation(this.schemeMoniker, packageInformation));
+			LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().attach(this.schemeMoniker, this.projectMoniker));
+	}
+
+	synchronized public void generateMonikerLocal(LsifService lsif, Range sourceRange, String identifier) {
+		if (this.resultSet == null || this.projectMoniker != null || this.schemeMoniker != null) {
+			return;
+		}
+		Moniker projectMoniker = lsif.getVertexBuilder().moniker("local", "jdt", identifier, "project");
+		LsifEmitter.getInstance().emit(projectMoniker);
+		this.projectMoniker = projectMoniker;
+		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().moniker(this.resultSet, this.projectMoniker));
+	}
+
+	synchronized public void generateMonikerExport(LsifService lsif, Range sourceRange,
+			String identifier, String manager, IJavaProject javaproject) {
+		if (this.resultSet == null || this.projectMoniker != null || this.schemeMoniker != null) {
+			return;
+		}
+		Moniker projectMoniker = lsif.getVertexBuilder().moniker("export", "jdt", identifier, "project");
+		LsifEmitter.getInstance().emit(projectMoniker);
+		this.projectMoniker = projectMoniker;
+		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().moniker(this.resultSet, this.projectMoniker));
+		PackageInformation packageInformation = Repository.getInstance().enlistExportPackageInformation(lsif,
+				javaproject.getPath().toString(), "", manager, "", "");
+		Moniker schemeMoniker = lsif.getVertexBuilder().moniker("export", manager,
+				packageInformation.getName() + "/" + identifier,
+				"scheme");
+		LsifEmitter.getInstance().emit(schemeMoniker);
+		this.schemeMoniker = schemeMoniker;
+		LsifEmitter.getInstance()
+				.emit(lsif.getEdgeBuilder().packageInformation(this.schemeMoniker, packageInformation));
+		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().attach(this.schemeMoniker, this.projectMoniker));
 	}
 
 	synchronized public void resolveDefinition(LsifService lsif, Location definitionLocation) {
@@ -147,5 +195,9 @@ public class SymbolData {
 			VisitorUtils.emitHoverResult(hover, lsif, this.resultSet);
 		}
 		this.hoverResolved = true;
+	}
+
+	private String createMonikerKey(String name) {
+		return DigestUtils.md5Hex(name);
 	}
 }

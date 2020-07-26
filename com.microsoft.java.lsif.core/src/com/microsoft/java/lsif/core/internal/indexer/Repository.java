@@ -13,7 +13,7 @@ import com.microsoft.java.lsif.core.internal.LsifUtils;
 import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.Event;
-import com.microsoft.java.lsif.core.internal.protocol.PackageData;
+import com.microsoft.java.lsif.core.internal.protocol.PackageInformation;
 import com.microsoft.java.lsif.core.internal.protocol.Project;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
 import com.microsoft.java.lsif.core.internal.visitors.SymbolData;
@@ -38,9 +38,17 @@ public class Repository {
 	// Value: Document object
 	private Map<String, Document> beginededDocumentMap = new ConcurrentHashMap<>();
 
-	// Key: groupId + artifactId + version
-	// Value: PackageData
-	private Map<String, PackageData> packageDataMap = new ConcurrentHashMap<>();
+	// Key: groupId + artifactId
+	// Value: PackageInformation
+	private Map<String, PackageInformation> importPackageInformationMap = new ConcurrentHashMap<>();
+
+	// Key: IJavaProject.getPath()
+	// Value: PackageInformation
+	private Map<String, PackageInformation> exportPackageInformationMap = new ConcurrentHashMap<>();
+
+	// Key: groupId + artifactId
+	// Value: isEmitted or not
+	private Map<String, Boolean> packageInformationEmittedMap = new ConcurrentHashMap<>();
 
 	private Repository() {
 	}
@@ -95,13 +103,45 @@ public class Repository {
 		return symbolData;
 	}
 
-	public synchronized PackageData enlistPackageData(String id, String groupId, String artifactId, String version) {
-		PackageData packageData = findPackageDataById(id);
-		if (packageData == null) {
-			packageData = new PackageData(groupId, artifactId, version);
-			addPackageData(id, packageData);
+	public synchronized PackageInformation enlistImportPackageInformation(LsifService lsif, String id,
+			String name, String manager, String version) {
+		PackageInformation packageInformation = findImportPackageInformationById(id);
+		if (packageInformation == null) {
+			if (manager.equals("maven")) {
+				packageInformation = lsif.getVertexBuilder().packageInformation(name, manager, version, "https",
+						"https://mvnrepository.com/artifact/" + name + "/" + version);
+			} else if (manager.equals("jdk")) {
+				packageInformation = lsif.getVertexBuilder().packageInformation(name, manager);
+			} else {
+				return packageInformation;
+			}
+			addImportPackageInformation(id, packageInformation);
 		}
-		return packageData;
+		return packageInformation;
+	}
+
+	public synchronized PackageInformation enlistExportPackageInformation(LsifService lsif, String id, String name,
+			String manager, String version, String url) {
+		PackageInformation packageInformation = findExportPackageInformationById(id);
+		if (packageInformation == null) {
+			if (manager.equals("maven")) {
+				packageInformation = lsif.getVertexBuilder().packageInformation(name, manager, version, "https", url);
+			} else {
+				return packageInformation;
+			}
+			addExportPackageInformation(id, packageInformation);
+		}
+		return packageInformation;
+	}
+
+	public synchronized boolean enlistPackageInformationEmitted(String id) {
+		Boolean result = findPackageInformationEmittedById(id);
+		if (result == null) {
+			addPackageInformationEmitted(id);
+			return false;
+		} else {
+			return true;
+		}
 	}
 
 	public void addToBeginededDocuments(Document doc) {
@@ -146,11 +186,27 @@ public class Repository {
 		return this.symbolDataMap.getOrDefault(id, null);
 	}
 
-	private PackageData findPackageDataById(String id) {
-		return this.packageDataMap.getOrDefault(id, null);
+	private PackageInformation findImportPackageInformationById(String id) {
+		return this.importPackageInformationMap.getOrDefault(id, null);
 	}
 
-	private void addPackageData(String id, PackageData packageData) {
-		this.packageDataMap.put(id, packageData);
+	private void addImportPackageInformation(String id, PackageInformation packageInformation) {
+		this.importPackageInformationMap.put(id, packageInformation);
+	}
+
+	private PackageInformation findExportPackageInformationById(String id) {
+		return this.exportPackageInformationMap.getOrDefault(id, null);
+	}
+
+	private void addExportPackageInformation(String id, PackageInformation packageInformation) {
+		this.exportPackageInformationMap.put(id, packageInformation);
+	}
+
+	private Boolean findPackageInformationEmittedById(String id) {
+		return this.packageInformationEmittedMap.getOrDefault(id, null);
+	}
+
+	private void addPackageInformationEmitted(String id) {
+		this.packageInformationEmittedMap.put(id, new Boolean(true));
 	}
 }

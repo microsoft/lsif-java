@@ -47,7 +47,7 @@ public class Vertex extends Element {
 
 	public static final String MONIKER = "moniker";
 
-	public static final String PACKAGEINFORMATION = "packageInfomation";
+	public static final String PACKAGEINFORMATION = "packageInformation";
 
 	public Vertex(String id, String label) {
 		super(id, Element.VERTEX, label);

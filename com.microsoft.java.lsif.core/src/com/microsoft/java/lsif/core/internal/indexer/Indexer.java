@@ -5,18 +5,25 @@
 
 package com.microsoft.java.lsif.core.internal.indexer;
 
+import java.io.File;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.apache.maven.model.Model;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
@@ -30,10 +37,15 @@ import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.lsp4j.ClientCapabilities;
+import org.eclipse.m2e.core.MavenPlugin;
+import org.eclipse.m2e.core.embedder.MavenModelManager;
+import org.eclipse.m2e.core.project.LocalProjectScanner;
+import org.eclipse.m2e.core.project.MavenProjectInfo;
 
 import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.Event;
+import com.microsoft.java.lsif.core.internal.protocol.PackageInformation;
 import com.microsoft.java.lsif.core.internal.protocol.Project;
 import com.microsoft.java.lsif.core.internal.visitors.DiagnosticVisitor;
 import com.microsoft.java.lsif.core.internal.visitors.DocumentVisitor;
@@ -64,19 +76,20 @@ public class Indexer {
 		LsifEmitter.getInstance().start();
 		LsifEmitter.getInstance().emit(lsif.getVertexBuilder().metaData(ResourceUtils.fixURI(path.toFile().toURI())));
 
-		handler.importProject(path, monitor);
+		String buildTool = handler.importProject(path, monitor);
 		BuildWorkspaceStatus buildStatus = handler.buildProject(monitor);
 		if (buildStatus != BuildWorkspaceStatus.SUCCEED) {
 			return;
 
 		}
-		buildIndex(path, monitor, lsif);
+		buildIndex(path, monitor, lsif, buildTool);
 		handler.removeProject(monitor);
 
 		LsifEmitter.getInstance().end();
 	}
 
-	private void buildIndex(IPath path, IProgressMonitor monitor, LsifService lsif) throws JavaModelException {
+	private void buildIndex(IPath path, IProgressMonitor monitor, LsifService lsif, String buildTool)
+			throws JavaModelException {
 
 		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
 
@@ -87,6 +100,22 @@ public class Indexer {
 				return;
 			}
 			IJavaProject javaProject = JavaCore.create(proj);
+			if (buildTool.equals("maven")) {
+				Set<MavenProjectInfo> infoSet = collectMavenProjectInfo(monitor, path);
+				infoSet.forEach(mavenProjectInfo -> {
+					Model model = mavenProjectInfo.getModel();
+					String groupId = model.getGroupId();
+					String artifactId = model.getArtifactId();
+					String version = model.getVersion();
+					String url = model.getUrl();
+					PackageInformation packageInformation = Repository.getInstance()
+							.enlistExportPackageInformation(lsif, javaProject.getPath()
+									.toString(),
+							groupId + "/" + artifactId, "maven", version, url);
+					LsifEmitter.getInstance().emit(packageInformation);
+				});
+			}
+
 			if (!javaProject.exists()) {
 				continue;
 			}
@@ -160,5 +189,41 @@ public class Indexer {
 
 					return 0;
 				})).blockingSubscribe();
+	}
+
+	private Set<MavenProjectInfo> collectMavenProjectInfo(IProgressMonitor monitor,
+			IPath path)
+			throws OperationCanceledException {
+		MavenModelManager modelManager = MavenPlugin.getMavenModelManager();
+		return getMavenProjects(path.toFile(), modelManager, monitor);
+	}
+
+	private Set<MavenProjectInfo> getMavenProjects(File directory, MavenModelManager modelManager,
+			IProgressMonitor monitor) throws OperationCanceledException {
+		if (directory == null) {
+			return Collections.emptySet();
+		}
+		try {
+			LocalProjectScanner scanner = new LocalProjectScanner(directory.getParentFile(), directory.toString(),
+					false, modelManager);
+			scanner.run(monitor);
+			return collectProjects(scanner.getProjects());
+		} catch (InterruptedException e) {
+			throw new OperationCanceledException();
+		}
+	}
+
+	private Set<MavenProjectInfo> collectProjects(Collection<MavenProjectInfo> projects) {
+		return new LinkedHashSet<MavenProjectInfo>() {
+			private static final long serialVersionUID = 1L;
+
+			public Set<MavenProjectInfo> collectProjects(Collection<MavenProjectInfo> projects) {
+				for (MavenProjectInfo projectInfo : projects) {
+					add(projectInfo);
+					collectProjects(projectInfo.getProjects());
+				}
+				return this;
+			}
+		}.collectProjects(projects);
 	}
 }

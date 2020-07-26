@@ -40,6 +40,11 @@ public class Edge extends Element {
 	public final static String T_IMPLEMENTATION = "textDocument/implementation";
 
 	public final static String MONIKER = "moniker";
+
+	public final static String ATTACH = "attach";
+
+	public final static String PACKAGEINFORMATION = "packageInformation";
+
 	private String outV;
 
 	private String inV;

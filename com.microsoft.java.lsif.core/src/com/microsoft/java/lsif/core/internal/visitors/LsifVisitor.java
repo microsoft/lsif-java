@@ -28,6 +28,7 @@ import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.internal.core.BinaryType;
+import org.eclipse.jdt.internal.core.ClassFile;
 import org.eclipse.jdt.internal.core.LocalVariable;
 import org.eclipse.jdt.internal.core.ResolvedBinaryField;
 import org.eclipse.jdt.internal.core.ResolvedBinaryMethod;
@@ -157,10 +158,11 @@ public class LsifVisitor extends ProtocolVisitor {
 			ICompilationUnit compilationUnit = (ICompilationUnit) element.getAncestor(IJavaElement.COMPILATION_UNIT);
 			IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
 			boolean isFromMaven = false;
+			boolean isFromJdk = false;
 			int mavenCount = 0;
-			String groupId;
-			String artifactId;
-			String version;
+			String groupId = "";
+			String artifactId = "";
+			String version = "";
 			if (compilationUnit == null && cf != null) {
 				IPath path = cf.getPath();
 				IClasspathEntry entry = javaproject.getClasspathEntryFor(path);
@@ -180,11 +182,22 @@ public class LsifVisitor extends ProtocolVisitor {
 				}
 				if (mavenCount == 2) {
 					isFromMaven = true;
+				} else if (mavenCount == 1) {
+					isFromJdk = true;
 				}
-			} /*
-				 * else { IPath path = compilationUnit.getPath(); IClasspathEntry entry =
-				 * javaproject.getClasspathEntryFor(path); int test = 1; }
-				 */
+			}
+
+			String schemeMonikerName = "";
+			String manager = (monikerKind.equals("export") || isFromMaven) ? "maven" : isFromJdk ? "jdk" : "";
+			if (isFromMaven) {
+				schemeMonikerName = groupId + "/" + artifactId;
+			} else if (isFromJdk) {
+				if (cf instanceof ClassFile) {
+					schemeMonikerName = cf.getParent().getElementName() + "." + ((ClassFile) cf).getName();
+				} else {
+					schemeMonikerName = cf.getParent().getElementName() + "." + cf.getElementName();
+				}
+			}
 
 			String id = createSymbolKey(definitionLocation);
 			Document definitionDocument = Repository.getInstance().enlistDocument(lsif, definitionLocation.getUri(),
@@ -200,13 +213,15 @@ public class LsifVisitor extends ProtocolVisitor {
 				} catch (JavaModelException e) {
 
 				}
+
 			/* Generate Moniker */
 				if (monikerKind.equals("export")) {
-					symbolData.generateMoniker(lsif, sourceRange, "export", identifier);
+					symbolData.generateMonikerExport(lsif, sourceRange, identifier, manager, javaproject);
 				} else if (monikerKind.equals("local")) {
-					symbolData.generateMoniker(lsif, sourceRange, "local", identifier);
+					symbolData.generateMonikerLocal(lsif, sourceRange, identifier);
 				} else if (definitionLocation.getUri().startsWith("jdt")) {
-					symbolData.generateMoniker(lsif, sourceRange, "import", identifier);
+					symbolData.generateMonikerImport(lsif, sourceRange, identifier, schemeMonikerName, manager,
+							version);
 				}
 				return;
 			}

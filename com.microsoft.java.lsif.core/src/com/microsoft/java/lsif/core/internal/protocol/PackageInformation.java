@@ -16,11 +16,17 @@ public class PackageInformation extends Vertex {
 	private Repo repository;
 
 	public PackageInformation(String id, String name, String manager, String version, String type, String url) {
-		super(id, Vertex.MONIKER);
+		super(id, Vertex.PACKAGEINFORMATION);
 		this.name = name;
 		this.manager = manager;
 		this.version = version;
 		this.repository = new Repo(type, url);
+	}
+
+	public PackageInformation(String id, String name, String manager) {
+		super(id, Vertex.PACKAGEINFORMATION);
+		this.name = name;
+		this.manager = manager;
 	}
 
 	public class Repo {
@@ -33,5 +39,9 @@ public class PackageInformation extends Vertex {
 			this.type = type;
 			this.url = url;
 		}
+	}
+
+	public String getName() {
+		return this.name;
 	}
 }

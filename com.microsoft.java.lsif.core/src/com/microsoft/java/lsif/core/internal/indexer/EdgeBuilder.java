@@ -66,6 +66,14 @@ public class EdgeBuilder {
 		return new Edge(generator.next(), Edge.MONIKER, from.getId(), to.getId());
 	}
 
+	public Edge attach(Vertex from, Vertex to) {
+		return new Edge(generator.next(), Edge.ATTACH, from.getId(), to.getId());
+	}
+
+	public Edge packageInformation(Vertex from, Vertex to) {
+		return new Edge(generator.next(), Edge.PACKAGEINFORMATION, from.getId(), to.getId());
+	}
+
 	public Edge diagnostic(Vertex from, Vertex to) {
 		return new Edge(generator.next(), Edge.T_DIAGNOSTIC, from.getId(), to.getId());
 	}
