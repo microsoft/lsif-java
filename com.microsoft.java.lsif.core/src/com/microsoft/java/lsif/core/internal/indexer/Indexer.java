@@ -191,8 +191,7 @@ public class Indexer {
 				})).blockingSubscribe();
 	}
 
-	private Set<MavenProjectInfo> collectMavenProjectInfo(IProgressMonitor monitor,
-			IPath path)
+	private Set<MavenProjectInfo> collectMavenProjectInfo(IProgressMonitor monitor, IPath path)
 			throws OperationCanceledException {
 		MavenModelManager modelManager = MavenPlugin.getMavenModelManager();
 		return getMavenProjects(path.toFile(), modelManager, monitor);

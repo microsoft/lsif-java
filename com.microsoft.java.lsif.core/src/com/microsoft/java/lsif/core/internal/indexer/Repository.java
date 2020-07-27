@@ -207,6 +207,6 @@ public class Repository {
 	}
 
 	private void addPackageInformationEmitted(String id) {
-		this.packageInformationEmittedMap.put(id, new Boolean(true));
+		this.packageInformationEmittedMap.put(id, Boolean.valueOf(true));
 	}
 }

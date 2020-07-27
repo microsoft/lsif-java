@@ -102,13 +102,10 @@ public class LsifVisitor extends ProtocolVisitor {
 	public boolean visit(VariableDeclarationFragment node) {
 		ASTNode parent = node.getParent();
 		if (parent instanceof VariableDeclarationStatement) {
-			String monikerKind = (((VariableDeclarationStatement) parent).getModifiers() & Modifier.PUBLIC) > 0
-					? "export"
-					: "local";
+			String monikerKind = (((VariableDeclarationStatement) parent).getModifiers() & Modifier.PUBLIC) > 0 ? "export" : "local";
 			resolve(node.getName().getStartPosition(), node.getName().getLength(), false, true, monikerKind);
 		} else if (parent instanceof FieldDeclaration) {
-			String monikerKind = (((FieldDeclaration) parent).getModifiers() & Modifier.PUBLIC) > 0 ? "export"
-					: "local";
+			String monikerKind = (((FieldDeclaration) parent).getModifiers() & Modifier.PUBLIC) > 0 ? "export" : "local";
 			resolve(node.getName().getStartPosition(), node.getName().getLength(), false, true, monikerKind);
 		}
 		return true;
@@ -132,8 +129,6 @@ public class LsifVisitor extends ProtocolVisitor {
 			if (element == null) {
 				return;
 			}
-
-
 			LsifService lsif = this.getLsif();
 			Document docVertex = this.getContext().getDocVertex();
 			Project projVertex = this.getContext().getProjVertex();
@@ -147,13 +142,11 @@ public class LsifVisitor extends ProtocolVisitor {
 				if (VisitorUtils.isEmptyHover(hover)) {
 					return;
 				}
-
 				ResultSet resultSet = VisitorUtils.ensureResultSet(lsif, sourceRange);
 				VisitorUtils.emitHoverResult(hover, lsif, resultSet);
 				// emit hover
 				return;
 			}
-
 			IJavaProject javaproject = element.getJavaProject();
 			ICompilationUnit compilationUnit = (ICompilationUnit) element.getAncestor(IJavaElement.COMPILATION_UNIT);
 			IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
@@ -186,7 +179,6 @@ public class LsifVisitor extends ProtocolVisitor {
 					isFromJdk = true;
 				}
 			}
-
 			String schemeMonikerName = "";
 			String manager = (monikerKind.equals("export") || isFromMaven) ? "maven" : isFromJdk ? "jdk" : "";
 			if (isFromMaven) {
@@ -198,12 +190,10 @@ public class LsifVisitor extends ProtocolVisitor {
 					schemeMonikerName = cf.getParent().getElementName() + "." + cf.getElementName();
 				}
 			}
-
 			String id = createSymbolKey(definitionLocation);
 			Document definitionDocument = Repository.getInstance().enlistDocument(lsif, definitionLocation.getUri(),
 					projVertex);
 			SymbolData symbolData = Repository.getInstance().enlistSymbolData(id, definitionDocument, projVertex);
-
 			/* Ensure resultSet */
 			symbolData.ensureResultSet(lsif, sourceRange);
 			if (hasMoniker) {
@@ -213,7 +203,6 @@ public class LsifVisitor extends ProtocolVisitor {
 				} catch (JavaModelException e) {
 
 				}
-
 			/* Generate Moniker */
 				if (monikerKind.equals("export")) {
 					symbolData.generateMonikerExport(lsif, sourceRange, identifier, manager, javaproject);
