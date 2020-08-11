@@ -7,6 +7,21 @@ package com.microsoft.java.lsif.core.internal.protocol;
 
 public class PackageInformation extends Vertex {
 
+	public enum PackageManager {
+		MAVEN("maven"), GRADLE("gradle"), JDK("jdk");
+
+		private final String manager;
+
+		private PackageManager(String manager) {
+			this.manager = manager;
+		}
+
+		@Override
+		public String toString() {
+			return this.manager;
+		}
+	}
+
 	private String name;
 
 	private String manager;
@@ -15,18 +30,21 @@ public class PackageInformation extends Vertex {
 
 	private Repo repository;
 
-	public PackageInformation(String id, String name, String manager, String version, String type, String url) {
+	public PackageInformation(String id, String name, PackageManager manager, String version, String type, String url) {
 		super(id, Vertex.PACKAGEINFORMATION);
 		this.name = name;
-		this.manager = manager;
+		this.manager = manager.toString();
 		this.version = version;
-		this.repository = new Repo(type, url);
+		if (!url.equals("")) {
+			this.repository = new Repo(type, url);
+		}
 	}
 
-	public PackageInformation(String id, String name, String manager) {
+	public PackageInformation(String id, String name, PackageManager manager, String version) {
 		super(id, Vertex.PACKAGEINFORMATION);
 		this.name = name;
-		this.manager = manager;
+		this.manager = manager.toString();
+		this.version = version;
 	}
 
 	public class Repo {

@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -163,5 +164,14 @@ public class VisitorUtils {
 		for (Document doc : Repository.getInstance().getAllBeginededDocuments()) {
 			endDocument(lsif, doc);
 		}
+	}
+
+	public static String createSymbolKey(Location definitionLocation) {
+		String rawKeyString = definitionLocation.toString();
+		return DigestUtils.md5Hex(rawKeyString);
+	}
+
+	public static String createSymbolKey(String key) {
+		return DigestUtils.md5Hex(key);
 	}
 }

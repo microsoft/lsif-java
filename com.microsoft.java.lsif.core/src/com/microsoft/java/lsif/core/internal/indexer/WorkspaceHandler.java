@@ -30,7 +30,6 @@ import org.eclipse.jdt.ls.core.internal.IProjectImporter;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.managers.GradleBuildSupport;
-import org.eclipse.jdt.ls.core.internal.managers.MavenProjectImporter;
 
 import com.microsoft.java.lsif.core.internal.LanguageServerIndexerPlugin;
 
@@ -62,23 +61,18 @@ public class WorkspaceHandler {
 		return getProjectPathIfValid(projectDir);
 	}
 
-	public String importProject(IPath path, IProgressMonitor monitor) {
-		String buildTool = "invisible";
+	public void importProject(IPath path, IProgressMonitor monitor) {
 		SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
 		File rootFolder = path.toFile();
 		IProjectImporter importer;
 		try {
 			importer = getImporter(rootFolder, subMonitor.split(30));
-			if (importer instanceof MavenProjectImporter) {
-				buildTool = "maven";
-			}
 			if (importer != null) {
 				importer.importToWorkspace(subMonitor.split(70));
 			}
 		} catch (OperationCanceledException | CoreException e) {
 			e.printStackTrace();
 		}
-		return buildTool;
 	}
 
 	public BuildWorkspaceStatus buildProject(IProgressMonitor monitor) {

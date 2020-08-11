@@ -18,8 +18,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.maven.model.Model;
+import org.apache.maven.model.Scm;
+import org.eclipse.buildship.core.GradleBuild;
+import org.eclipse.buildship.core.GradleCore;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -34,19 +38,27 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
+import org.eclipse.jdt.ls.core.internal.IProjectImporter;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
+import org.eclipse.jdt.ls.core.internal.managers.EclipseProjectImporter;
+import org.eclipse.jdt.ls.core.internal.managers.GradleProjectImporter;
+import org.eclipse.jdt.ls.core.internal.managers.MavenProjectImporter;
 import org.eclipse.lsp4j.ClientCapabilities;
 import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.embedder.MavenModelManager;
 import org.eclipse.m2e.core.project.LocalProjectScanner;
 import org.eclipse.m2e.core.project.MavenProjectInfo;
+import org.gradle.tooling.model.GradleModuleVersion;
+import org.gradle.tooling.model.gradle.GradlePublication;
+import org.gradle.tooling.model.gradle.ProjectPublications;
 
 import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.Event;
 import com.microsoft.java.lsif.core.internal.protocol.PackageInformation;
 import com.microsoft.java.lsif.core.internal.protocol.Project;
+import com.microsoft.java.lsif.core.internal.protocol.PackageInformation.PackageManager;
 import com.microsoft.java.lsif.core.internal.visitors.DiagnosticVisitor;
 import com.microsoft.java.lsif.core.internal.visitors.DocumentVisitor;
 import com.microsoft.java.lsif.core.internal.visitors.LsifVisitor;
@@ -58,6 +70,10 @@ import io.reactivex.schedulers.Schedulers;
 public class Indexer {
 
 	private WorkspaceHandler handler;
+
+	public enum ProjectBuildTool {
+		MAVEN, GRADLE, ECLIPSE, INVISIBLE;
+	}
 
 	public Indexer() {
 		String repoPath = System.getProperty("repo.path");
@@ -76,20 +92,19 @@ public class Indexer {
 		LsifEmitter.getInstance().start();
 		LsifEmitter.getInstance().emit(lsif.getVertexBuilder().metaData(ResourceUtils.fixURI(path.toFile().toURI())));
 
-		String buildTool = handler.importProject(path, monitor);
+		handler.importProject(path, monitor);
 		BuildWorkspaceStatus buildStatus = handler.buildProject(monitor);
 		if (buildStatus != BuildWorkspaceStatus.SUCCEED) {
 			return;
 
 		}
-		buildIndex(path, monitor, lsif, buildTool);
+		buildIndex(path, monitor, lsif);
 		handler.removeProject(monitor);
 
 		LsifEmitter.getInstance().end();
 	}
 
-	private void buildIndex(IPath path, IProgressMonitor monitor, LsifService lsif, String buildTool)
-			throws JavaModelException {
+	private void buildIndex(IPath path, IProgressMonitor monitor, LsifService lsif) throws JavaModelException {
 
 		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
 
@@ -100,35 +115,78 @@ public class Indexer {
 				return;
 			}
 			IJavaProject javaProject = JavaCore.create(proj);
-			if (buildTool.equals("maven")) {
+			if (!javaProject.exists()) {
+				continue;
+			}
+			ProjectBuildTool builder = null;
+			try {
+				IPath folderPath = proj.getLocation();
+				if (folderPath == null) {
+					continue;
+				}
+				IProjectImporter importer = this.handler.getImporter(folderPath.toFile(), monitor);
+				if (importer instanceof MavenProjectImporter) {
+					builder = ProjectBuildTool.MAVEN;
+				} else if (importer instanceof GradleProjectImporter) {
+					builder = ProjectBuildTool.GRADLE;
+				} else if (importer instanceof EclipseProjectImporter) {
+					builder = ProjectBuildTool.ECLIPSE;
+				} else {
+					builder = ProjectBuildTool.INVISIBLE;
+				}
+			} catch (CoreException e) {
+				e.printStackTrace();
+			}
+			boolean isPublish = false;
+			if (builder == ProjectBuildTool.MAVEN) {
 				Set<MavenProjectInfo> infoSet = collectMavenProjectInfo(monitor, path);
-				infoSet.forEach(mavenProjectInfo -> {
+				for (MavenProjectInfo mavenProjectInfo : infoSet) {
 					Model model = mavenProjectInfo.getModel();
 					String groupId = model.getGroupId();
 					String artifactId = model.getArtifactId();
 					String version = model.getVersion();
-					String url = (model.getUrl() == null) ? "" : model.getUrl();
-					PackageInformation packageInformation = Repository.getInstance()
-							.enlistExportPackageInformation(lsif, javaProject.getPath()
-									.toString(),
-							groupId + "/" + artifactId, "maven", version, url);
-					LsifEmitter.getInstance().emit(packageInformation);
-				});
+					Scm scm = model.getScm();
+					String url = "";
+					if (scm != null) {
+						url = scm.getUrl();
+					}
+					if (!groupId.equals("") && !artifactId.equals("") && !version.equals("")) {
+						isPublish = true;
+						PackageInformation packageInformation = Repository.getInstance().enlistExportPackageInformation(
+							lsif, javaProject.getPath().toString(), groupId + "/" + artifactId, PackageManager.MAVEN, version, url);
+						LsifEmitter.getInstance().emit(packageInformation);
+					}
+				}
+			} else if (builder == ProjectBuildTool.GRADLE) {
+				if (proj.isOpen()) {
+					GradleBuild build = GradleCore.getWorkspace().getBuild(proj).get();
+					ProjectPublications model;
+					try {
+						model = build.withConnection(connection -> connection.getModel(ProjectPublications.class), monitor);
+						List<? extends GradlePublication> publications = model.getPublications().getAll();
+						if (publications.size() > 0) {
+							GradleModuleVersion gradleModuleVersion = publications.get(0).getId();
+							String groupId = gradleModuleVersion.getGroup();
+							String artifactId = gradleModuleVersion.getName();
+							String version = gradleModuleVersion.getVersion();
+							isPublish = true;
+							PackageInformation packageInformation = Repository.getInstance().enlistExportPackageInformation(
+								lsif, javaProject.getPath().toString(), groupId + "/" + artifactId, PackageManager.GRADLE, version, "url");
+							LsifEmitter.getInstance().emit(packageInformation);
+						}
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
 			}
-
-			if (!javaProject.exists()) {
-				continue;
-			}
-
 			Project projVertex = lsif.getVertexBuilder().project();
 			LsifEmitter.getInstance().emit(projVertex);
-			LsifEmitter.getInstance()
-					.emit(lsif.getVertexBuilder().event(Event.EventScope.Project, Event.EventKind.BEGIN,
-							projVertex.getId()));
+			LsifEmitter.getInstance().emit(
+					lsif.getVertexBuilder().event(Event.EventScope.Project, Event.EventKind.BEGIN, projVertex.getId()));
 
 			List<ICompilationUnit> sourceList = getAllSourceFiles(javaProject);
 
-			dumpParallely(sourceList, threadPool, projVertex, lsif, monitor);
+			dumpParallely(sourceList, threadPool, projVertex, lsif, builder, isPublish, monitor);
 
 			VisitorUtils.endAllDocument(lsif);
 			LsifEmitter.getInstance().emit(
@@ -169,7 +227,7 @@ public class Indexer {
 	}
 
 	private void dumpParallely(List<ICompilationUnit> sourceList, ExecutorService threadPool, Project projVertex,
-			LsifService lsif, IProgressMonitor monitor) {
+			LsifService lsif, ProjectBuildTool builder, boolean isPublish, IProgressMonitor monitor) {
 		Observable.fromIterable(sourceList)
 				.flatMap(item -> Observable.just(item).observeOn(Schedulers.from(threadPool)).map(sourceFile -> {
 					CompilationUnit cu = ASTUtil.createAST(sourceFile, monitor);
@@ -179,7 +237,7 @@ public class Indexer {
 					}
 					IndexerContext context = new IndexerContext(docVertex, cu, projVertex);
 
-					LsifVisitor lsifVisitor = new LsifVisitor(lsif, context);
+					LsifVisitor lsifVisitor = new LsifVisitor(lsif, context, builder, isPublish);
 					cu.accept(lsifVisitor);
 
 					DiagnosticVisitor diagnosticVisitor = new DiagnosticVisitor(lsif, context);

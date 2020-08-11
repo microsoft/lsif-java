@@ -16,6 +16,7 @@ import com.microsoft.java.lsif.core.internal.protocol.Event;
 import com.microsoft.java.lsif.core.internal.protocol.PackageInformation;
 import com.microsoft.java.lsif.core.internal.protocol.Project;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
+import com.microsoft.java.lsif.core.internal.protocol.PackageInformation.PackageManager;
 import com.microsoft.java.lsif.core.internal.visitors.SymbolData;
 
 public class Repository {
@@ -104,14 +105,13 @@ public class Repository {
 	}
 
 	public synchronized PackageInformation enlistImportPackageInformation(LsifService lsif, String id,
-			String name, String manager, String version) {
+			String name, PackageManager manager, String version, String url) {
 		PackageInformation packageInformation = findImportPackageInformationById(id);
 		if (packageInformation == null) {
-			if (manager.equals("maven")) {
-				packageInformation = lsif.getVertexBuilder().packageInformation(name, manager, version, "https",
-						"https://mvnrepository.com/artifact/" + name + "/" + version);
-			} else if (manager.equals("jdk")) {
-				packageInformation = lsif.getVertexBuilder().packageInformation(name, manager);
+			if (manager == PackageManager.MAVEN || manager == PackageManager.GRADLE) {
+				packageInformation = lsif.getVertexBuilder().packageInformation(name, manager, version, "git", url);
+			} else if (manager == PackageManager.JDK) {
+				packageInformation = lsif.getVertexBuilder().packageInformation(name, manager, version);
 			} else {
 				return packageInformation;
 			}
@@ -121,11 +121,11 @@ public class Repository {
 	}
 
 	public synchronized PackageInformation enlistExportPackageInformation(LsifService lsif, String id, String name,
-			String manager, String version, String url) {
+			PackageManager manager, String version, String url) {
 		PackageInformation packageInformation = findExportPackageInformationById(id);
 		if (packageInformation == null) {
-			if (manager.equals("maven")) {
-				packageInformation = lsif.getVertexBuilder().packageInformation(name, manager, version, "https", url);
+			if (manager == PackageManager.MAVEN || manager == PackageManager.GRADLE) {
+				packageInformation = lsif.getVertexBuilder().packageInformation(name, manager, version, "git", url);
 			} else {
 				return packageInformation;
 			}
