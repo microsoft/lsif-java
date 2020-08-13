@@ -124,8 +124,10 @@ public class Repository {
 			PackageManager manager, String version, String url) {
 		PackageInformation packageInformation = findExportPackageInformationById(id);
 		if (packageInformation == null) {
-			if (manager == PackageManager.MAVEN || manager == PackageManager.GRADLE) {
+			if (manager == PackageManager.MAVEN) {
 				packageInformation = lsif.getVertexBuilder().packageInformation(name, manager, version, "git", url);
+			} else if (manager == PackageManager.GRADLE) {
+				packageInformation = lsif.getVertexBuilder().packageInformation(name, manager, version);
 			} else {
 				return packageInformation;
 			}
