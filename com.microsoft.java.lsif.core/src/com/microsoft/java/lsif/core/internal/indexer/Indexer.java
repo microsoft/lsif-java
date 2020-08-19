@@ -19,6 +19,7 @@ import java.util.concurrent.Executors;
 
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Scm;
+import org.apache.maven.scm.provider.ScmUrlUtils;
 import org.eclipse.buildship.core.GradleBuild;
 import org.eclipse.buildship.core.GradleCore;
 import org.eclipse.core.resources.IProject;
@@ -56,7 +57,6 @@ import org.gradle.tooling.model.gradle.ProjectPublications;
 import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.Event;
-import com.microsoft.java.lsif.core.internal.protocol.PackageInformation;
 import com.microsoft.java.lsif.core.internal.protocol.Project;
 import com.microsoft.java.lsif.core.internal.protocol.PackageInformation.PackageManager;
 import com.microsoft.java.lsif.core.internal.visitors.DiagnosticVisitor;
@@ -147,36 +147,32 @@ public class Indexer {
 					String version = model.getVersion();
 					Scm scm = model.getScm();
 					String url = "";
+					String type = "";
 					if (scm != null) {
 						url = scm.getUrl();
+						type = ScmUrlUtils.getProvider(scm.getConnection());
 					}
 					if (!groupId.equals("") && !artifactId.equals("") && !version.equals("")) {
 						isPublish = true;
-						PackageInformation packageInformation = Repository.getInstance().enlistExportPackageInformation(
-							lsif, javaProject.getPath().toString(), groupId + "/" + artifactId, PackageManager.MAVEN, version, url);
-						LsifEmitter.getInstance().emit(packageInformation);
+						Repository.getInstance().enlistPackageInformation(lsif, javaProject.getPath().toString(), groupId + "/" + artifactId, PackageManager.MAVEN, version, type, url);
 					}
 				}
 			} else if (builder == ProjectBuildTool.GRADLE) {
-				if (proj.isOpen()) {
-					GradleBuild build = GradleCore.getWorkspace().getBuild(proj).get();
-					ProjectPublications model;
-					try {
-						model = build.withConnection(connection -> connection.getModel(ProjectPublications.class), monitor);
-						List<? extends GradlePublication> publications = model.getPublications().getAll();
-						if (publications.size() > 0) {
-							GradleModuleVersion gradleModuleVersion = publications.get(0).getId();
-							String groupId = gradleModuleVersion.getGroup();
-							String artifactId = gradleModuleVersion.getName();
-							String version = gradleModuleVersion.getVersion();
-							isPublish = true;
-							PackageInformation packageInformation = Repository.getInstance().enlistExportPackageInformation(
-								lsif, javaProject.getPath().toString(), groupId + "/" + artifactId, PackageManager.GRADLE, version, "url");
-							LsifEmitter.getInstance().emit(packageInformation);
-						}
-					} catch (Exception e) {
-						e.printStackTrace();
+				GradleBuild build = GradleCore.getWorkspace().getBuild(proj).get();
+				ProjectPublications model;
+				try {
+					model = build.withConnection(connection -> connection.getModel(ProjectPublications.class), monitor);
+					List<? extends GradlePublication> publications = model.getPublications().getAll();
+					if (publications.size() > 0) {
+						GradleModuleVersion gradleModuleVersion = publications.get(0).getId();
+						String groupId = gradleModuleVersion.getGroup();
+						String artifactId = gradleModuleVersion.getName();
+						String version = gradleModuleVersion.getVersion();
+						isPublish = true;
+						Repository.getInstance().enlistPackageInformation(lsif, javaProject.getPath().toString(), groupId + "/" + artifactId, PackageManager.GRADLE, version);
 					}
+				} catch (Exception e) {
+					e.printStackTrace();
 				}
 			}
 			Project projVertex = lsif.getVertexBuilder().project();

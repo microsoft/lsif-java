@@ -36,7 +36,7 @@ public class SymbolData {
 	private Document document;
 	private ResultSet resultSet;
 	private ReferenceResult referenceResult;
-	private Moniker projectMoniker;
+	private Moniker groupMoniker;
 	private Moniker schemeMoniker;
 	private boolean definitionResolved;
 	private boolean typeDefinitionResolved;
@@ -57,55 +57,52 @@ public class SymbolData {
 		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().next(sourceRange, this.resultSet));
 	}
 
-	synchronized public void generateMonikerImport(LsifService lsif, Range sourceRange, String identifier, String schemeId, PackageManager manager, String version, String url) {
-		if (this.resultSet == null || this.projectMoniker != null || this.schemeMoniker != null) {
+	synchronized public void generateMonikerImport(LsifService lsif, Range sourceRange, String identifier, String schemeId, PackageManager manager, String version, String type, String url) {
+		if (this.resultSet == null || this.groupMoniker != null || this.schemeMoniker != null) {
 			return;
 		}
-		Moniker projectMoniker = lsif.getVertexBuilder().moniker(MonikerKind.IMPORT, "jdt", identifier, MonikerUnique.PROJECT);
-		LsifEmitter.getInstance().emit(projectMoniker);
-		this.projectMoniker = projectMoniker;
-		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().moniker(this.resultSet, this.projectMoniker));
+		Moniker groupMoniker = lsif.getVertexBuilder().moniker(MonikerKind.IMPORT, "jdt", identifier, MonikerUnique.GROUP);
+		LsifEmitter.getInstance().emit(groupMoniker);
+		this.groupMoniker = groupMoniker;
+		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().moniker(this.resultSet, this.groupMoniker));
 		if (manager == null) {
 			return;
 		}
-		PackageInformation packageInformation = Repository.getInstance().enlistImportPackageInformation(lsif, schemeId, schemeId, manager, version, url);
+		PackageInformation packageInformation = (manager == PackageManager.JDK)
+			? Repository.getInstance().enlistPackageInformation(lsif, schemeId, schemeId, manager, version)
+			: Repository.getInstance().enlistPackageInformation(lsif, schemeId, schemeId, manager, version, type, url);
 		if (packageInformation == null) {
 			return;
 		}
-		if (!Repository.getInstance().enlistPackageInformationEmitted(schemeId)) {
-			LsifEmitter.getInstance().emit(packageInformation);
-		}
-		Moniker schemeMoniker = (manager == PackageManager.JDK)
-				? lsif.getVertexBuilder().moniker(MonikerKind.IMPORT, manager.toString(), identifier, MonikerUnique.SCHEME)
-				: lsif.getVertexBuilder().moniker(MonikerKind.IMPORT, manager.toString(), packageInformation.getName() + "/" + identifier, MonikerUnique.SCHEME);
+		Moniker schemeMoniker = lsif.getVertexBuilder().moniker(MonikerKind.IMPORT, manager.toString(), packageInformation.getName() + "/" + identifier, MonikerUnique.SCHEME);
 		LsifEmitter.getInstance().emit(schemeMoniker);
 		this.schemeMoniker = schemeMoniker;
 		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().packageInformation(this.schemeMoniker, packageInformation));
-		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().attach(this.schemeMoniker, this.projectMoniker));
+		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().attach(this.schemeMoniker, this.groupMoniker));
 	}
 
 	synchronized public void generateMonikerLocal(LsifService lsif, Range sourceRange, String identifier) {
-		if (this.resultSet == null || this.projectMoniker != null || this.schemeMoniker != null) {
+		if (this.resultSet == null || this.groupMoniker != null || this.schemeMoniker != null) {
 			return;
 		}
-		Moniker projectMoniker = lsif.getVertexBuilder().moniker(MonikerKind.LOCAL, "jdt", identifier, MonikerUnique.PROJECT);
-		LsifEmitter.getInstance().emit(projectMoniker);
-		this.projectMoniker = projectMoniker;
-		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().moniker(this.resultSet, this.projectMoniker));
+		Moniker groupMoniker = lsif.getVertexBuilder().moniker(MonikerKind.LOCAL, "jdt", identifier, MonikerUnique.GROUP);
+		LsifEmitter.getInstance().emit(groupMoniker);
+		this.groupMoniker = groupMoniker;
+		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().moniker(this.resultSet, this.groupMoniker));
 	}
 
 	synchronized public void generateMonikerExport(LsifService lsif, Range sourceRange, String identifier, PackageManager manager, IJavaProject javaproject) {
-		if (this.resultSet == null || this.projectMoniker != null || this.schemeMoniker != null) {
+		if (this.resultSet == null || this.groupMoniker != null || this.schemeMoniker != null) {
 			return;
 		}
-		Moniker projectMoniker = lsif.getVertexBuilder().moniker(MonikerKind.EXPORT, "jdt", identifier, MonikerUnique.PROJECT);
-		LsifEmitter.getInstance().emit(projectMoniker);
-		this.projectMoniker = projectMoniker;
-		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().moniker(this.resultSet, this.projectMoniker));
+		Moniker groupMoniker = lsif.getVertexBuilder().moniker(MonikerKind.EXPORT, "jdt", identifier, MonikerUnique.GROUP);
+		LsifEmitter.getInstance().emit(groupMoniker);
+		this.groupMoniker = groupMoniker;
+		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().moniker(this.resultSet, this.groupMoniker));
 		if (manager == null) {
 			return;
 		}
-		PackageInformation packageInformation = Repository.getInstance().enlistExportPackageInformation(lsif, javaproject.getPath().toString(), "", manager, "", "");
+		PackageInformation packageInformation = Repository.getInstance().enlistPackageInformation(lsif, javaproject.getPath().toString(), "", manager, "", "", "");
 		if (packageInformation == null) {
 			return;
 		}
@@ -113,7 +110,7 @@ public class SymbolData {
 		LsifEmitter.getInstance().emit(schemeMoniker);
 		this.schemeMoniker = schemeMoniker;
 		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().packageInformation(this.schemeMoniker, packageInformation));
-		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().attach(this.schemeMoniker, this.projectMoniker));
+		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().attach(this.schemeMoniker, this.groupMoniker));
 	}
 
 	synchronized public void resolveDefinition(LsifService lsif, Location definitionLocation) {

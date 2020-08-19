@@ -33,6 +33,11 @@
 							<artifactId>reactive-streams</artifactId>
 							<version>1.0.0</version>
 						</artifactItem>
+						<artifactItem>
+    						<groupId>org.apache.maven.scm</groupId>
+    						<artifactId>maven-scm-api</artifactId>
+    						<version>1.11.2</version>
+						</artifactItem>
 					</artifactItems>
 				</configuration>
 			</plugin>

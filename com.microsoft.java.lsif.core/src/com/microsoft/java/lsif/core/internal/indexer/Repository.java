@@ -41,15 +41,7 @@ public class Repository {
 
 	// Key: groupId + artifactId
 	// Value: PackageInformation
-	private Map<String, PackageInformation> importPackageInformationMap = new ConcurrentHashMap<>();
-
-	// Key: IJavaProject.getPath()
-	// Value: PackageInformation
-	private Map<String, PackageInformation> exportPackageInformationMap = new ConcurrentHashMap<>();
-
-	// Key: groupId + artifactId
-	// Value: isEmitted or not
-	private Map<String, Boolean> packageInformationEmittedMap = new ConcurrentHashMap<>();
+	private Map<String, PackageInformation> packageInformationMap = new ConcurrentHashMap<>();
 
 	private Repository() {
 	}
@@ -70,17 +62,15 @@ public class Repository {
 			addDocument(targetDocument);
 			LsifEmitter.getInstance().emit(targetDocument);
 			addToBeginededDocuments(targetDocument);
-			LsifEmitter.getInstance()
-					.emit(service.getVertexBuilder().event(Event.EventScope.DOCUMENT, Event.EventKind.BEGIN,
-							targetDocument.getId()));
+			LsifEmitter.getInstance().emit(service.getVertexBuilder().event(Event.EventScope.DOCUMENT,
+					Event.EventKind.BEGIN, targetDocument.getId()));
 			LsifEmitter.getInstance().emit(service.getEdgeBuilder().contains(projVertex, targetDocument));
 		}
 
 		return targetDocument;
 	}
 
-	public synchronized Range enlistRange(LsifService service, Document docVertex,
-			org.eclipse.lsp4j.Range lspRange) {
+	public synchronized Range enlistRange(LsifService service, Document docVertex, org.eclipse.lsp4j.Range lspRange) {
 		Range range = findRange(docVertex.getUri(), lspRange);
 		if (range == null) {
 			range = service.getVertexBuilder().range(lspRange);
@@ -104,46 +94,29 @@ public class Repository {
 		return symbolData;
 	}
 
-	public synchronized PackageInformation enlistImportPackageInformation(LsifService lsif, String id,
-			String name, PackageManager manager, String version, String url) {
-		PackageInformation packageInformation = findImportPackageInformationById(id);
+	public synchronized PackageInformation enlistPackageInformation(LsifService lsif, String id, String name,
+			PackageManager manager, String version, String type, String url) {
+		PackageInformation packageInformation = findPackageInformationById(id);
 		if (packageInformation == null) {
-			if (manager == PackageManager.MAVEN || manager == PackageManager.GRADLE) {
-				packageInformation = lsif.getVertexBuilder().packageInformation(name, manager, version, "git", url);
-			} else if (manager == PackageManager.JDK) {
-				packageInformation = lsif.getVertexBuilder().packageInformation(name, manager, version);
-			} else {
-				return packageInformation;
+			if (name.equals("")) {
+				return null;
 			}
-			addImportPackageInformation(id, packageInformation);
+			packageInformation = lsif.getVertexBuilder().packageInformation(name, manager, version, type, url);
+			addPackageInformation(id, packageInformation);
+			LsifEmitter.getInstance().emit(packageInformation);
 		}
 		return packageInformation;
 	}
 
-	public synchronized PackageInformation enlistExportPackageInformation(LsifService lsif, String id, String name,
-			PackageManager manager, String version, String url) {
-		PackageInformation packageInformation = findExportPackageInformationById(id);
+	public synchronized PackageInformation enlistPackageInformation(LsifService lsif, String id, String name,
+			PackageManager manager, String version) {
+		PackageInformation packageInformation = findPackageInformationById(id);
 		if (packageInformation == null) {
-			if (manager == PackageManager.MAVEN) {
-				packageInformation = lsif.getVertexBuilder().packageInformation(name, manager, version, "git", url);
-			} else if (manager == PackageManager.GRADLE) {
-				packageInformation = lsif.getVertexBuilder().packageInformation(name, manager, version);
-			} else {
-				return packageInformation;
-			}
-			addExportPackageInformation(id, packageInformation);
+			packageInformation = lsif.getVertexBuilder().packageInformation(name, manager, version);
+			addPackageInformation(id, packageInformation);
+			LsifEmitter.getInstance().emit(packageInformation);
 		}
 		return packageInformation;
-	}
-
-	public synchronized boolean enlistPackageInformationEmitted(String id) {
-		Boolean result = findPackageInformationEmittedById(id);
-		if (result == null) {
-			addPackageInformationEmitted(id);
-			return false;
-		} else {
-			return true;
-		}
 	}
 
 	public void addToBeginededDocuments(Document doc) {
@@ -188,27 +161,12 @@ public class Repository {
 		return this.symbolDataMap.getOrDefault(id, null);
 	}
 
-	private PackageInformation findImportPackageInformationById(String id) {
-		return this.importPackageInformationMap.getOrDefault(id, null);
+	private PackageInformation findPackageInformationById(String id) {
+		return this.packageInformationMap.getOrDefault(id, null);
 	}
 
-	private void addImportPackageInformation(String id, PackageInformation packageInformation) {
-		this.importPackageInformationMap.put(id, packageInformation);
+	private void addPackageInformation(String id, PackageInformation packageInformation) {
+		this.packageInformationMap.put(id, packageInformation);
 	}
 
-	private PackageInformation findExportPackageInformationById(String id) {
-		return this.exportPackageInformationMap.getOrDefault(id, null);
-	}
-
-	private void addExportPackageInformation(String id, PackageInformation packageInformation) {
-		this.exportPackageInformationMap.put(id, packageInformation);
-	}
-
-	private Boolean findPackageInformationEmittedById(String id) {
-		return this.packageInformationEmittedMap.getOrDefault(id, null);
-	}
-
-	private void addPackageInformationEmitted(String id) {
-		this.packageInformationEmittedMap.put(id, Boolean.valueOf(true));
-	}
 }

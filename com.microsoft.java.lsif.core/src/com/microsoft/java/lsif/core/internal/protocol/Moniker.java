@@ -23,7 +23,7 @@ public class Moniker extends Vertex {
 	}
 
 	public enum MonikerUnique {
-		PROJECT("project"), SCHEME("scheme");
+		GROUP("group"), SCHEME("scheme");
 
 		private final String unique;
 
