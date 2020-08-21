@@ -35,16 +35,9 @@ public class PackageInformation extends Vertex {
 		this.name = name;
 		this.manager = manager.toString();
 		this.version = version;
-		if (!url.equals("")) {
+		if (type != null && type != "" && url != null && url != "") {
 			this.repository = new Repo(type, url);
 		}
-	}
-
-	public PackageInformation(String id, String name, PackageManager manager, String version) {
-		super(id, Vertex.PACKAGEINFORMATION);
-		this.name = name;
-		this.manager = manager.toString();
-		this.version = version;
 	}
 
 	public class Repo {

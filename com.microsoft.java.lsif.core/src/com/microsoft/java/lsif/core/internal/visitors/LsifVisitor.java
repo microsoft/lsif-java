@@ -6,22 +6,17 @@
 package com.microsoft.java.lsif.core.internal.visitors;
 
 import java.io.File;
-import java.io.FileReader;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
 import org.apache.maven.model.Model;
-import org.apache.maven.model.Parent;
 import org.apache.maven.model.Scm;
-import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
+import org.apache.maven.project.MavenProject;
 import org.apache.maven.scm.provider.ScmUrlUtils;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.IClasspathEntry;
-import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
@@ -45,7 +40,8 @@ import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.internal.core.JarPackageFragmentRoot;
-import org.eclipse.jdt.internal.core.JrtPackageFragmentRoot;
+import org.eclipse.jdt.internal.core.PackageFragmentRoot;
+import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.Hover;
@@ -53,9 +49,9 @@ import org.eclipse.lsp4j.Location;
 
 import com.microsoft.java.lsif.core.internal.JdtlsUtils;
 import com.microsoft.java.lsif.core.internal.LanguageServerIndexerPlugin;
-import com.microsoft.java.lsif.core.internal.indexer.Indexer.ProjectBuildTool;
 import com.microsoft.java.lsif.core.internal.indexer.IndexerContext;
 import com.microsoft.java.lsif.core.internal.indexer.LsifService;
+import com.microsoft.java.lsif.core.internal.indexer.ProjectBuildTool;
 import com.microsoft.java.lsif.core.internal.indexer.Repository;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.Moniker.MonikerKind;
@@ -121,10 +117,10 @@ public class LsifVisitor extends ProtocolVisitor {
 	public boolean visit(VariableDeclarationFragment node) {
 		ASTNode parent = node.getParent();
 		if (parent instanceof VariableDeclarationStatement) {
-			MonikerKind monikerKind = getMonikerKind((VariableDeclarationStatement)parent);
+			MonikerKind monikerKind = getMonikerKind((VariableDeclarationStatement) parent);
 			resolve(node.getName().getStartPosition(), node.getName().getLength(), false, monikerKind);
 		} else if (parent instanceof FieldDeclaration) {
-			MonikerKind monikerKind = getMonikerKind((FieldDeclaration)parent);
+			MonikerKind monikerKind = getMonikerKind((FieldDeclaration) parent);
 			resolve(node.getName().getStartPosition(), node.getName().getLength(), false, monikerKind);
 		}
 		return true;
@@ -168,79 +164,60 @@ public class LsifVisitor extends ProtocolVisitor {
 
 			// Import Monikers
 			IJavaProject javaproject = element.getJavaProject();
-			ICompilationUnit compilationUnit = (ICompilationUnit) element.getAncestor(IJavaElement.COMPILATION_UNIT);
 			IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
 			PackageManager manager = null;
-			String groupId = "";
-			String artifactId = "";
+			String schemeId = "";
 			String version = "";
 			String type = "";
 			String url = "";
-			if (compilationUnit == null && cf != null) {
+			if (cf != null) {
 				IPath path = cf.getPath();
 				IPackageFragmentRoot root = javaproject.findPackageFragmentRoot(path);
 				IClasspathEntry container = root.getRawClasspathEntry();
 				IPath containerPath = container.getPath();
 				String pathName = containerPath.toString();
-				if (pathName.startsWith("org.eclipse.jdt.launching.JRE_CONTAINER")) {
+				if (pathName.startsWith(JavaRuntime.JRE_CONTAINER)) {
 					// JDK Library
 					manager = PackageManager.JDK;
 					Manifest manifest = new Manifest();
-					if (root instanceof JrtPackageFragmentRoot) {
-						// For JDK 9+
-						manifest = ((JrtPackageFragmentRoot) root).getManifest();
-						IModuleDescription moduleDescription = ((JrtPackageFragmentRoot) root).getAutomaticModuleDescription();
-						groupId = moduleDescription.getElementName();
-					} else if (root instanceof JarPackageFragmentRoot) {
-						// For JDK 8-
+					if (root instanceof JarPackageFragmentRoot) {
 						manifest = ((JarPackageFragmentRoot) root).getManifest();
-						IModuleDescription moduleDescription = ((JarPackageFragmentRoot) root).getAutomaticModuleDescription();
-						groupId = moduleDescription.getElementName();
+						if (manifest != null) {
+							Attributes attributes = manifest.getMainAttributes();
+							version = attributes.getValue("Implementation-Version");
+						}
 					}
-					if (manifest != null) {
-						Attributes attributes = manifest.getMainAttributes();
-						version = attributes.getValue("Implementation-Version");
+					PackageFragmentRoot packageFragmentRoot = (PackageFragmentRoot) cf.getAncestor(IJavaElement.PACKAGE_FRAGMENT_ROOT);
+					if (packageFragmentRoot != null) {
+						IModuleDescription moduleDescription = packageFragmentRoot.getAutomaticModuleDescription();
+						schemeId = moduleDescription.getElementName();
 					}
 				} else {
-					List<File> fileList = new ArrayList<>();
+					File pomFile = null;
 					if (builder == ProjectBuildTool.MAVEN) {
-						findPomFile(path.removeLastSegments(1).toFile(), fileList);
+						pomFile = findPomFile(path.removeLastSegments(1).toFile());
 					} else if (builder == ProjectBuildTool.GRADLE) {
-						findPomFile(path.removeLastSegments(2).toFile(), fileList);
+						pomFile = findPomFile(path.removeLastSegments(2).toFile());
 					}
-					if (fileList.size() > 0) {
+					if (pomFile != null) {
 						manager = (builder == ProjectBuildTool.MAVEN) ? PackageManager.MAVEN : PackageManager.GRADLE;
-						File file = fileList.get(0);
-						MavenXpp3Reader reader = new MavenXpp3Reader();
-						Model model = reader.read(new FileReader(file.getAbsolutePath()));
-						groupId = model.getGroupId();
-						artifactId = model.getArtifactId();
-						version = model.getVersion();
-						Parent parent = model.getParent();
-						if (parent != null) {
-							if (groupId == null) {
-								groupId = parent.getGroupId();
+						MavenProject mavenProject = Repository.getInstance().enlistMavenProject(lsif, pomFile);
+						if (mavenProject != null) {
+							Model model = mavenProject.getModel();
+							String groupId = model.getGroupId();
+							String artifactId = model.getArtifactId();
+							if (groupId != null && artifactId != null) {
+								schemeId = groupId + "/" + artifactId;
 							}
-							if (artifactId == null) {
-								artifactId = parent.getArtifactId();
+							version = model.getVersion();
+							Scm scm = model.getScm();
+							if (scm != null) {
+								url = scm.getUrl();
+								type = ScmUrlUtils.getProvider(scm.getConnection());
 							}
-							if (version == null) {
-								version = parent.getVersion();
-							}
-						}
-						Scm scm = model.getScm();
-						if (scm != null) {
-							url = scm.getUrl();
-							type = ScmUrlUtils.getProvider(scm.getConnection());
 						}
 					}
 				}
-			}
-			String schemeId = "";
-			if (manager == PackageManager.MAVEN || manager == PackageManager.GRADLE) {
-				schemeId = groupId + "/" + artifactId;
-			} else if (manager == PackageManager.JDK) {
-				schemeId = groupId;
 			}
 
 			// Export Monikers
@@ -265,7 +242,7 @@ public class LsifVisitor extends ProtocolVisitor {
 				// Do nothing
 			}
 			/* Generate Moniker */
-			if (identifier != null && groupId != null && artifactId != null && version != null) {
+			if (identifier != null && schemeId != null && version != null) {
 				if (monikerKind == MonikerKind.EXPORT) {
 					symbolData.generateMonikerExport(lsif, sourceRange, identifier, manager, javaproject);
 				} else if (monikerKind == MonikerKind.LOCAL) {
@@ -299,11 +276,12 @@ public class LsifVisitor extends ProtocolVisitor {
 	private String getMonikerIdentifier(IJavaElement element) throws JavaModelException {
 		String identifier = element.getElementName();
 		if (element instanceof IType) {
-			return ((IType)element).getFullyQualifiedName();
+			return ((IType) element).getFullyQualifiedName();
 		} else if (element instanceof IField || element instanceof ILocalVariable) {
 			return getMonikerIdentifier(element.getParent()) + "/" + identifier;
 		} else if (element instanceof IMethod) {
-			return getMonikerIdentifier(element.getParent()) + "/" + identifier + ":" + ((IMethod) element).getSignature();
+			return getMonikerIdentifier(element.getParent()) + "/" + identifier + ":"
+					+ ((IMethod) element).getSignature();
 		}
 		return identifier;
 	}
@@ -324,14 +302,17 @@ public class LsifVisitor extends ProtocolVisitor {
 		return node.getParent() instanceof TypeDeclaration || node.getParent() instanceof MethodDeclaration;
 	}
 
-	private static void findPomFile(File file, List<File> fileList) {
-		File[] files = file.listFiles();
-		for (File subfile : files) {
-			if (subfile.isDirectory()) {
-				findPomFile(subfile, fileList);
-			} else if (subfile.getName().endsWith(".pom")) {
-				fileList.add(subfile);
+	private static File findPomFile(File folder) {
+		for (File file : folder.listFiles()) {
+			if (file.getName().endsWith(".pom")) {
+				return file;
+			} else if (file.isDirectory()) {
+				File subFile = findPomFile(file);
+				if (subFile != null) {
+					return subFile;
+				}
 			}
 		}
+		return null;
 	}
 }

@@ -5,8 +5,10 @@
 
 package com.microsoft.java.lsif.core.internal.indexer;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.microsoft.java.lsif.core.internal.LsifUtils;
@@ -18,6 +20,12 @@ import com.microsoft.java.lsif.core.internal.protocol.Project;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
 import com.microsoft.java.lsif.core.internal.protocol.PackageInformation.PackageManager;
 import com.microsoft.java.lsif.core.internal.visitors.SymbolData;
+
+import org.apache.maven.project.MavenProject;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.m2e.core.MavenPlugin;
+import org.eclipse.m2e.core.embedder.IMaven;
 
 public class Repository {
 
@@ -42,6 +50,10 @@ public class Repository {
 	// Key: groupId + artifactId
 	// Value: PackageInformation
 	private Map<String, PackageInformation> packageInformationMap = new ConcurrentHashMap<>();
+
+	// Key: pomFile path
+	// Value: PackageInformation
+	private Map<String, MavenProject> mavenProjectMap = new ConcurrentHashMap<>();
 
 	private Repository() {
 	}
@@ -98,7 +110,7 @@ public class Repository {
 			PackageManager manager, String version, String type, String url) {
 		PackageInformation packageInformation = findPackageInformationById(id);
 		if (packageInformation == null) {
-			if (name.equals("")) {
+			if (Objects.equals(name, "")) {
 				return null;
 			}
 			packageInformation = lsif.getVertexBuilder().packageInformation(name, manager, version, type, url);
@@ -110,13 +122,22 @@ public class Repository {
 
 	public synchronized PackageInformation enlistPackageInformation(LsifService lsif, String id, String name,
 			PackageManager manager, String version) {
-		PackageInformation packageInformation = findPackageInformationById(id);
-		if (packageInformation == null) {
-			packageInformation = lsif.getVertexBuilder().packageInformation(name, manager, version);
-			addPackageInformation(id, packageInformation);
-			LsifEmitter.getInstance().emit(packageInformation);
+		return enlistPackageInformation(lsif, id, name, manager, version, null, null);
+	}
+
+	public synchronized MavenProject enlistMavenProject(LsifService lsif, File pomFile) {
+		MavenProject mavenProject = findMavenProjectByPath(pomFile.getAbsolutePath());
+		if (mavenProject == null) {
+			IMaven maven = MavenPlugin.getMaven();
+			NullProgressMonitor monitor = new NullProgressMonitor();
+			try {
+				mavenProject = maven.readProject(pomFile, monitor);
+				addMavenProject(pomFile.getAbsolutePath(), mavenProject);
+			} catch (CoreException ce) {
+				ce.printStackTrace();
+			}
 		}
-		return packageInformation;
+		return mavenProject;
 	}
 
 	public void addToBeginededDocuments(Document doc) {
@@ -167,6 +188,14 @@ public class Repository {
 
 	private void addPackageInformation(String id, PackageInformation packageInformation) {
 		this.packageInformationMap.put(id, packageInformation);
+	}
+
+	private MavenProject findMavenProjectByPath(String path) {
+		return this.mavenProjectMap.getOrDefault(path, null);
+	}
+
+	private void addMavenProject(String id, MavenProject mavenProject) {
+		this.mavenProjectMap.put(id, mavenProject);
 	}
 
 }

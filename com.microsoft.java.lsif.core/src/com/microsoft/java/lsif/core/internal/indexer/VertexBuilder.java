@@ -103,8 +103,4 @@ public final class VertexBuilder {
 	public PackageInformation packageInformation(String name, PackageManager manager, String version, String type, String url) {
 		return new PackageInformation(generator.next(), name, manager, version, type, url);
 	}
-
-	public PackageInformation packageInformation(String name, PackageManager manager, String version) {
-		return new PackageInformation(generator.next(), name, manager, version);
-	}
 }
