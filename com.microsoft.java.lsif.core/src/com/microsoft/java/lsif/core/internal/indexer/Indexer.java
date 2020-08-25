@@ -6,15 +6,10 @@
 package com.microsoft.java.lsif.core.internal.indexer;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -22,6 +17,7 @@ import org.apache.maven.model.Model;
 import org.apache.maven.model.Scm;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.scm.provider.ScmUrlUtils;
+import org.apache.maven.shared.utils.StringUtils;
 import org.eclipse.buildship.core.GradleBuild;
 import org.eclipse.buildship.core.GradleCore;
 import org.eclipse.core.resources.IProject;
@@ -30,7 +26,6 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
@@ -47,10 +42,6 @@ import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.managers.GradleProjectImporter;
 import org.eclipse.jdt.ls.core.internal.managers.MavenProjectImporter;
 import org.eclipse.lsp4j.ClientCapabilities;
-import org.eclipse.m2e.core.MavenPlugin;
-import org.eclipse.m2e.core.embedder.MavenModelManager;
-import org.eclipse.m2e.core.project.LocalProjectScanner;
-import org.eclipse.m2e.core.project.MavenProjectInfo;
 import org.gradle.tooling.model.GradleModuleVersion;
 import org.gradle.tooling.model.gradle.GradlePublication;
 import org.gradle.tooling.model.gradle.ProjectPublications;
@@ -115,7 +106,7 @@ public class Indexer {
 			if (!javaProject.exists()) {
 				continue;
 			}
-			ProjectBuildTool builder = null;
+			boolean isPublish = false;
 			try {
 				IPath folderPath = proj.getLocation();
 				if (folderPath == null) {
@@ -123,20 +114,8 @@ public class Indexer {
 				}
 				IProjectImporter importer = this.handler.getImporter(folderPath.toFile(), monitor);
 				if (importer instanceof MavenProjectImporter) {
-					builder = ProjectBuildTool.MAVEN;
-				} else if (importer instanceof GradleProjectImporter) {
-					builder = ProjectBuildTool.GRADLE;
-				} else {
-					break;
-				}
-			} catch (CoreException e) {
-				e.printStackTrace();
-			}
-			boolean isPublish = false;
-			if (builder == ProjectBuildTool.MAVEN) {
-				Set<MavenProjectInfo> infoSet = collectMavenProjectInfo(monitor, path);
-				for (MavenProjectInfo mavenProjectInfo : infoSet) {
-					MavenProject mavenProject = Repository.getInstance().enlistMavenProject(lsif, mavenProjectInfo.getPomFile());
+					File pomfile = LsifVisitor.findPom(proj.getLocation(), 0);
+					MavenProject mavenProject = Repository.getInstance().enlistMavenProject(lsif, pomfile);
 					if (mavenProject != null) {
 						Model model = mavenProject.getModel();
 						String groupId = model.getGroupId();
@@ -149,35 +128,41 @@ public class Indexer {
 							url = scm.getUrl();
 							type = ScmUrlUtils.getProvider(scm.getConnection());
 						}
-						if (!Objects.equals(groupId, "") && !Objects.equals(artifactId, "")
-								&& !Objects.equals(version, "")) {
+						if (StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(artifactId)
+								&& StringUtils.isNotEmpty(version)) {
 							isPublish = true;
 							Repository.getInstance().enlistPackageInformation(lsif, javaProject.getPath().toString(),
 									groupId + "/" + artifactId, PackageManager.MAVEN, version, type, url);
 						}
 					}
-				}
-			} else if (builder == ProjectBuildTool.GRADLE) {
-				GradleBuild build = GradleCore.getWorkspace().getBuild(proj).get();
-				ProjectPublications model;
-				try {
-					model = build.withConnection(connection -> connection.getModel(ProjectPublications.class), monitor);
-					List<? extends GradlePublication> publications = model.getPublications().getAll();
-					if (publications.size() > 0) {
-						GradleModuleVersion gradleModuleVersion = publications.get(0).getId();
-						String groupId = gradleModuleVersion.getGroup();
-						String artifactId = gradleModuleVersion.getName();
-						String version = gradleModuleVersion.getVersion();
-						if (!Objects.equals(groupId, "") && !Objects.equals(artifactId, "")
-								&& !Objects.equals(version, "")) {
-							isPublish = true;
-							Repository.getInstance().enlistPackageInformation(lsif, javaProject.getPath().toString(),
-									groupId + "/" + artifactId, PackageManager.GRADLE, version);
+				} else if (importer instanceof GradleProjectImporter) {
+					GradleBuild build = GradleCore.getWorkspace().getBuild(proj).get();
+					ProjectPublications model;
+					try {
+						model = build.withConnection(connection -> connection.getModel(ProjectPublications.class),
+								monitor);
+						List<? extends GradlePublication> publications = model.getPublications().getAll();
+						if (publications.size() > 0) {
+							GradleModuleVersion gradleModuleVersion = publications.get(0).getId();
+							String groupId = gradleModuleVersion.getGroup();
+							String artifactId = gradleModuleVersion.getName();
+							String version = gradleModuleVersion.getVersion();
+							if (StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(artifactId)
+									&& StringUtils.isNotEmpty(version)) {
+								isPublish = true;
+								Repository.getInstance().enlistPackageInformation(lsif,
+										javaProject.getPath().toString(), groupId + "/" + artifactId,
+										PackageManager.GRADLE, version);
+							}
 						}
+					} catch (Exception e) {
+						JavaLanguageServerPlugin.logException(e.getMessage(), e);
 					}
-				} catch (Exception e) {
-					e.printStackTrace();
+				} else {
+					break;
 				}
+			} catch (CoreException e) {
+				// Do nothing
 			}
 			Project projVertex = lsif.getVertexBuilder().project();
 			LsifEmitter.getInstance().emit(projVertex);
@@ -186,7 +171,7 @@ public class Indexer {
 
 			List<ICompilationUnit> sourceList = getAllSourceFiles(javaProject);
 
-			dumpParallelly(sourceList, threadPool, projVertex, lsif, builder, isPublish, monitor);
+			dumpParallelly(sourceList, threadPool, projVertex, lsif, isPublish, monitor);
 
 			VisitorUtils.endAllDocument(lsif);
 			LsifEmitter.getInstance().emit(
@@ -227,7 +212,7 @@ public class Indexer {
 	}
 
 	private void dumpParallelly(List<ICompilationUnit> sourceList, ExecutorService threadPool, Project projVertex,
-			LsifService lsif, ProjectBuildTool builder, boolean isPublish, IProgressMonitor monitor) {
+			LsifService lsif, boolean isPublish, IProgressMonitor monitor) {
 		Observable.fromIterable(sourceList)
 				.flatMap(item -> Observable.just(item).observeOn(Schedulers.from(threadPool)).map(sourceFile -> {
 					CompilationUnit cu = ASTUtil.createAST(sourceFile, monitor);
@@ -237,7 +222,7 @@ public class Indexer {
 					}
 					IndexerContext context = new IndexerContext(docVertex, cu, projVertex);
 
-					LsifVisitor lsifVisitor = new LsifVisitor(lsif, context, builder, isPublish);
+					LsifVisitor lsifVisitor = new LsifVisitor(lsif, context, isPublish);
 					cu.accept(lsifVisitor);
 
 					DiagnosticVisitor diagnosticVisitor = new DiagnosticVisitor(lsif, context);
@@ -249,38 +234,4 @@ public class Indexer {
 				})).blockingSubscribe();
 	}
 
-	private Set<MavenProjectInfo> collectMavenProjectInfo(IProgressMonitor monitor, IPath path)
-			throws OperationCanceledException {
-		MavenModelManager modelManager = MavenPlugin.getMavenModelManager();
-		return getMavenProjects(path.toFile(), modelManager, monitor);
-	}
-
-	private Set<MavenProjectInfo> getMavenProjects(File directory, MavenModelManager modelManager,
-			IProgressMonitor monitor) throws OperationCanceledException {
-		if (directory == null) {
-			return Collections.emptySet();
-		}
-		try {
-			LocalProjectScanner scanner = new LocalProjectScanner(directory.getParentFile(), directory.toString(),
-					false, modelManager);
-			scanner.run(monitor);
-			return collectProjects(scanner.getProjects());
-		} catch (InterruptedException e) {
-			throw new OperationCanceledException();
-		}
-	}
-
-	private Set<MavenProjectInfo> collectProjects(Collection<MavenProjectInfo> projects) {
-		return new LinkedHashSet<MavenProjectInfo>() {
-			private static final long serialVersionUID = 1L;
-
-			public Set<MavenProjectInfo> collectProjects(Collection<MavenProjectInfo> projects) {
-				for (MavenProjectInfo projectInfo : projects) {
-					add(projectInfo);
-					collectProjects(projectInfo.getProjects());
-				}
-				return this;
-			}
-		}.collectProjects(projects);
-	}
 }

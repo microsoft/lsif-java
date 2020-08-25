@@ -5,6 +5,8 @@
 
 package com.microsoft.java.lsif.core.internal.protocol;
 
+import org.apache.commons.lang3.StringUtils;
+
 public class PackageInformation extends Vertex {
 
 	public enum PackageManager {
@@ -35,7 +37,7 @@ public class PackageInformation extends Vertex {
 		this.name = name;
 		this.manager = manager.toString();
 		this.version = version;
-		if (type != null && type != "" && url != null && url != "") {
+		if (StringUtils.isNotEmpty(type) && StringUtils.isNotEmpty(url)) {
 			this.repository = new Repo(type, url);
 		}
 	}

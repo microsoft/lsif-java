@@ -57,7 +57,7 @@ public class SymbolData {
 		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().next(sourceRange, this.resultSet));
 	}
 
-	synchronized public void generateMonikerImport(LsifService lsif, Range sourceRange, String identifier, String schemeId, PackageManager manager, String version, String type, String url) {
+	synchronized public void generateMonikerImport(LsifService lsif, Range sourceRange, String identifier, String packageName, PackageManager manager, String version, String type, String url) {
 		if (this.resultSet == null || this.groupMoniker != null || this.schemeMoniker != null) {
 			return;
 		}
@@ -69,8 +69,8 @@ public class SymbolData {
 			return;
 		}
 		PackageInformation packageInformation = (manager == PackageManager.JDK)
-			? Repository.getInstance().enlistPackageInformation(lsif, schemeId, schemeId, manager, version)
-			: Repository.getInstance().enlistPackageInformation(lsif, schemeId, schemeId, manager, version, type, url);
+			? Repository.getInstance().enlistPackageInformation(lsif, packageName, packageName, manager, version)
+			: Repository.getInstance().enlistPackageInformation(lsif, packageName, packageName, manager, version, type, url);
 		if (packageInformation == null) {
 			return;
 		}

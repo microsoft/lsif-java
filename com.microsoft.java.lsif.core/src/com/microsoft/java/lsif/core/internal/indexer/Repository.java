@@ -8,7 +8,6 @@ package com.microsoft.java.lsif.core.internal.indexer;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.microsoft.java.lsif.core.internal.LsifUtils;
@@ -19,11 +18,15 @@ import com.microsoft.java.lsif.core.internal.protocol.PackageInformation;
 import com.microsoft.java.lsif.core.internal.protocol.Project;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
 import com.microsoft.java.lsif.core.internal.protocol.PackageInformation.PackageManager;
+import com.microsoft.java.lsif.core.internal.visitors.LsifVisitor;
 import com.microsoft.java.lsif.core.internal.visitors.SymbolData;
 
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.shared.utils.StringUtils;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.embedder.IMaven;
 
@@ -110,7 +113,7 @@ public class Repository {
 			PackageManager manager, String version, String type, String url) {
 		PackageInformation packageInformation = findPackageInformationById(id);
 		if (packageInformation == null) {
-			if (Objects.equals(name, "")) {
+			if (StringUtils.isEmpty(name)) {
 				return null;
 			}
 			packageInformation = lsif.getVertexBuilder().packageInformation(name, manager, version, type, url);
@@ -129,15 +132,23 @@ public class Repository {
 		MavenProject mavenProject = findMavenProjectByPath(pomFile.getAbsolutePath());
 		if (mavenProject == null) {
 			IMaven maven = MavenPlugin.getMaven();
-			NullProgressMonitor monitor = new NullProgressMonitor();
 			try {
-				mavenProject = maven.readProject(pomFile, monitor);
+				mavenProject = maven.readProject(pomFile, new NullProgressMonitor());
 				addMavenProject(pomFile.getAbsolutePath(), mavenProject);
 			} catch (CoreException ce) {
-				ce.printStackTrace();
+				JavaLanguageServerPlugin.logException(ce.getMessage(), ce);
 			}
 		}
 		return mavenProject;
+	}
+
+	public synchronized MavenProject enlistMavenProject(LsifService lsif, IPath path) {
+		// For Maven, use findPom(path, 1). For Gradle, use findPom(path, 2).
+		File pomFile = LsifVisitor.findPom(path, 2);
+		if (pomFile == null) {
+			return null;
+		}
+		return enlistMavenProject(lsif, pomFile);
 	}
 
 	public void addToBeginededDocuments(Document doc) {
