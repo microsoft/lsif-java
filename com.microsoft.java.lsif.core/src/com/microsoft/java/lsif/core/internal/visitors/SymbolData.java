@@ -68,9 +68,7 @@ public class SymbolData {
 		if (manager == null) {
 			return;
 		}
-		PackageInformation packageInformation = (manager == PackageManager.JDK)
-			? Repository.getInstance().enlistPackageInformation(lsif, packageName, packageName, manager, version)
-			: Repository.getInstance().enlistPackageInformation(lsif, packageName, packageName, manager, version, type, url);
+		PackageInformation packageInformation = Repository.getInstance().enlistPackageInformation(lsif, packageName, packageName, manager, version, type, url);
 		if (packageInformation == null) {
 			return;
 		}

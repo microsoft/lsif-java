@@ -10,7 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 public class PackageInformation extends Vertex {
 
 	public enum PackageManager {
-		MAVEN("maven"), GRADLE("gradle"), JDK("jdk");
+		MAVEN("maven"), JDK("jdk");
 
 		private final String manager;
 

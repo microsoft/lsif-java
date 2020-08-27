@@ -18,8 +18,8 @@ import com.microsoft.java.lsif.core.internal.protocol.PackageInformation;
 import com.microsoft.java.lsif.core.internal.protocol.Project;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
 import com.microsoft.java.lsif.core.internal.protocol.PackageInformation.PackageManager;
-import com.microsoft.java.lsif.core.internal.visitors.LsifVisitor;
 import com.microsoft.java.lsif.core.internal.visitors.SymbolData;
+import com.microsoft.java.lsif.core.internal.visitors.VisitorUtils;
 
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.shared.utils.StringUtils;
@@ -123,11 +123,6 @@ public class Repository {
 		return packageInformation;
 	}
 
-	public synchronized PackageInformation enlistPackageInformation(LsifService lsif, String id, String name,
-			PackageManager manager, String version) {
-		return enlistPackageInformation(lsif, id, name, manager, version, null, null);
-	}
-
 	public synchronized MavenProject enlistMavenProject(LsifService lsif, File pomFile) {
 		MavenProject mavenProject = findMavenProjectByPath(pomFile.getAbsolutePath());
 		if (mavenProject == null) {
@@ -144,7 +139,7 @@ public class Repository {
 
 	public synchronized MavenProject enlistMavenProject(LsifService lsif, IPath path) {
 		// For Maven, use findPom(path, 1). For Gradle, use findPom(path, 2).
-		File pomFile = LsifVisitor.findPom(path, 2);
+		File pomFile = VisitorUtils.findPom(path, 2);
 		if (pomFile == null) {
 			return null;
 		}

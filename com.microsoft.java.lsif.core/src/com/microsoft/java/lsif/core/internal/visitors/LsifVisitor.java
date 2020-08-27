@@ -5,11 +5,6 @@
 
 package com.microsoft.java.lsif.core.internal.visitors;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -32,18 +27,13 @@ import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.ASTNode;
-import org.eclipse.jdt.core.dom.BodyDeclaration;
 import org.eclipse.jdt.core.dom.EnumConstantDeclaration;
-import org.eclipse.jdt.core.dom.EnumDeclaration;
-import org.eclipse.jdt.core.dom.FieldDeclaration;
+import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
-import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
-import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
-import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.internal.core.JarPackageFragmentRoot;
 import org.eclipse.jdt.internal.core.PackageFragmentRoot;
 import org.eclipse.jdt.launching.JavaRuntime;
@@ -75,56 +65,14 @@ public class LsifVisitor extends ProtocolVisitor {
 
 	@Override
 	public boolean visit(SimpleName node) {
-		resolve(node.getStartPosition(), node.getLength(), isTypeOrMethodDeclaration(node), MonikerKind.IMPORT);
-		return false;
-	}
-
-	@Override
-	public boolean visit(SingleVariableDeclaration node) {
-		MonikerKind monikerKind = getMonikerKind(node);
-		resolve(node.getName().getStartPosition(), node.getName().getLength(), false, monikerKind);
-		return true;
-	}
-
-	@Override
-	public boolean visit(EnumDeclaration node) {
-		MonikerKind monikerKind = getMonikerKind(node);
-		resolve(node.getName().getStartPosition(), node.getName().getLength(), false, monikerKind);
-		return true;
-	}
-
-	@Override
-	public boolean visit(EnumConstantDeclaration node) {
-		MonikerKind monikerKind = MonikerKind.EXPORT; // All the enum values are modified by `public static final`
-		resolve(node.getName().getStartPosition(), node.getName().getLength(), false, monikerKind);
-		return true;
-	}
-
-	@Override
-	public boolean visit(TypeDeclaration node) {
-		MonikerKind monikerKind = getMonikerKind(node);
-		resolve(node.getName().getStartPosition(), node.getName().getLength(), false, monikerKind);
-		return true;
-	}
-
-	@Override
-	public boolean visit(MethodDeclaration node) {
-		MonikerKind monikerKind = getMonikerKind(node);
-		resolve(node.getName().getStartPosition(), node.getName().getLength(), false, monikerKind);
-		return true;
-	}
-
-	@Override
-	public boolean visit(VariableDeclarationFragment node) {
-		ASTNode parent = node.getParent();
-		if (parent instanceof VariableDeclarationStatement) {
-			MonikerKind monikerKind = getMonikerKind((VariableDeclarationStatement) parent);
-			resolve(node.getName().getStartPosition(), node.getName().getLength(), false, monikerKind);
-		} else if (parent instanceof FieldDeclaration) {
-			MonikerKind monikerKind = getMonikerKind((FieldDeclaration) parent);
-			resolve(node.getName().getStartPosition(), node.getName().getLength(), false, monikerKind);
+		IBinding binding = node.resolveBinding();
+		if (binding != null) {
+			ASTNode parent = node.getParent();
+			int modifier = (parent instanceof EnumConstantDeclaration) ? ((EnumConstantDeclaration) parent).getModifiers() : binding.getModifiers();
+			MonikerKind monikerKind = Modifier.isPublic(modifier) ? MonikerKind.EXPORT : MonikerKind.LOCAL;
+			resolve(node.getStartPosition(), node.getLength(), isTypeOrMethodDeclaration(node), monikerKind);
 		}
-		return true;
+		return false;
 	}
 
 	@Override
@@ -193,9 +141,10 @@ public class LsifVisitor extends ProtocolVisitor {
 		}
 	}
 
-	private void resolveMoniker(IJavaElement element, MonikerKind monikerKind, SymbolData symbolData, Location definitionLocation, Range sourceRange) throws JavaModelException {
+	private void resolveMoniker(IJavaElement element, MonikerKind monikerKind, SymbolData symbolData,
+			Location definitionLocation, Range sourceRange) throws JavaModelException {
 		LsifService lsif = this.getLsif();
-		// Import Monikers
+
 		IJavaProject javaProject = element.getJavaProject();
 		IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
 		PackageManager manager = null;
@@ -203,7 +152,13 @@ public class LsifVisitor extends ProtocolVisitor {
 		String version = "";
 		String type = "";
 		String url = "";
-		if (cf != null) {
+
+		// Export Monikers
+		if (cf == null) {
+			if (monikerKind == MonikerKind.EXPORT && this.isPublish) {
+				manager = PackageManager.MAVEN;
+			}
+		} else {
 			IPath path = cf.getPath();
 			IPackageFragmentRoot root = javaProject.findPackageFragmentRoot(path);
 			IClasspathEntry container = root.getRawClasspathEntry();
@@ -246,91 +201,40 @@ public class LsifVisitor extends ProtocolVisitor {
 			}
 		}
 
-		// Export Monikers
-		if (monikerKind == MonikerKind.EXPORT && this.isPublish) {
-			manager = PackageManager.MAVEN;
-		}
-
-		String identifier = "";
-		try {
-			identifier = this.getMonikerIdentifier(element);
-		} catch (JavaModelException e) {
-			// Do nothing
-		}
+		String identifier = this.getMonikerIdentifier(element);
 		/* Generate Moniker */
-		if (StringUtils.isNotEmpty(identifier) && StringUtils.isNotEmpty(packageName)
-				&& StringUtils.isNotEmpty(version)) {
-			if (monikerKind == MonikerKind.EXPORT) {
+		if (StringUtils.isNotEmpty(identifier)) {
+			if (definitionLocation.getUri().startsWith("jdt")) {
+				if (StringUtils.isNotEmpty(packageName) && StringUtils.isNotEmpty(version)) {
+					symbolData.generateMonikerImport(lsif, sourceRange, identifier, packageName, manager, version, type, url);
+				}
+			} else if (monikerKind == MonikerKind.EXPORT) {
 				symbolData.generateMonikerExport(lsif, sourceRange, identifier, manager, javaProject);
 			} else if (monikerKind == MonikerKind.LOCAL) {
 				symbolData.generateMonikerLocal(lsif, sourceRange, identifier);
-			} else if (definitionLocation.getUri().startsWith("jdt")) {
-				symbolData.generateMonikerImport(lsif, sourceRange, identifier, packageName, manager, version, type, url);
 			}
 		}
 	}
 
-	private String getMonikerIdentifier(IJavaElement element) throws JavaModelException {
+	private String getMonikerIdentifier(IJavaElement element) {
 		String identifier = element.getElementName();
-		if (element instanceof IType) {
-			return ((IType) element).getFullyQualifiedName();
-		} else if (element instanceof IField || element instanceof ILocalVariable) {
-			return getMonikerIdentifier(element.getParent()) + "/" + identifier;
-		} else if (element instanceof IMethod) {
-			return getMonikerIdentifier(element.getParent()) + "/" + identifier + ":"
-					+ ((IMethod) element).getSignature();
+		try {
+			if (element instanceof IType) {
+				return ((IType) element).getFullyQualifiedName();
+			} else if (element instanceof IField || element instanceof ILocalVariable) {
+				return getMonikerIdentifier(element.getParent()) + "/" + identifier;
+			} else if (element instanceof IMethod) {
+				return getMonikerIdentifier(element.getParent()) + "/" + identifier + ":"
+						+ ((IMethod) element).getSignature();
+			}
+		} catch (JavaModelException e) {
+			return "";
 		}
 		return identifier;
-	}
-
-	private MonikerKind getMonikerKind(BodyDeclaration node) {
-		return (node.getModifiers() & Modifier.PUBLIC) > 0 ? MonikerKind.EXPORT : MonikerKind.LOCAL;
-	}
-
-	private MonikerKind getMonikerKind(SingleVariableDeclaration node) {
-		return (node.getModifiers() & Modifier.PUBLIC) > 0 ? MonikerKind.EXPORT : MonikerKind.LOCAL;
-	}
-
-	private MonikerKind getMonikerKind(VariableDeclarationStatement node) {
-		return (node.getModifiers() & Modifier.PUBLIC) > 0 ? MonikerKind.EXPORT : MonikerKind.LOCAL;
 	}
 
 	private boolean isTypeOrMethodDeclaration(ASTNode node) {
 		return node.getParent() instanceof TypeDeclaration || node.getParent() instanceof MethodDeclaration;
 	}
 
-	public static File findPom(IPath jarPath, int length) {
-		int current = 0;
-		Set<File> exclude = new HashSet<>();
-		while (current <= length) {
-			File pomFile = findPomFromFolder(jarPath.removeLastSegments(current).toFile(), exclude);
-			if (pomFile != null) {
-				return pomFile;
-			}
-			current++;
-		}
-		return null;
-	}
-
-	public static File findPomFromFolder(File folder, Set<File> exclude) {
-		if (!folder.isDirectory() || exclude.contains(folder)) {
-			return null;
-		}
-		exclude.add(folder);
-		List<File> subFolders = new ArrayList<>();
-		for (File file : folder.listFiles()) {
-			if (file.getName().endsWith(".pom") || StringUtils.equals(file.getName(), "pom.xml")) {
-				return file;
-			} else if (file.isDirectory()) {
-				subFolders.add(file);
-			}
-		}
-		for (File subFolder : subFolders) {
-			File pomFile = findPomFromFolder(subFolder, exclude);
-			if (pomFile != null) {
-				return pomFile;
-			}
-		}
-		return null;
-	}
 }

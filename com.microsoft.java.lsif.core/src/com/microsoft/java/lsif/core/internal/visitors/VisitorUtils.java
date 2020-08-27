@@ -5,12 +5,17 @@
 
 package com.microsoft.java.lsif.core.internal.visitors;
 
+import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.handlers.HoverHandler;
@@ -173,5 +178,40 @@ public class VisitorUtils {
 
 	public static String createSymbolKey(String key) {
 		return DigestUtils.md5Hex(key);
+	}
+
+	public static File findPom(IPath jarPath, int length) {
+		int current = 0;
+		Set<File> exclude = new HashSet<>();
+		while (current <= length) {
+			File pomFile = findPomFromFolder(jarPath.removeLastSegments(current).toFile(), exclude);
+			if (pomFile != null) {
+				return pomFile;
+			}
+			current++;
+		}
+		return null;
+	}
+
+	public static File findPomFromFolder(File folder, Set<File> exclude) {
+		if (!folder.isDirectory() || exclude.contains(folder)) {
+			return null;
+		}
+		exclude.add(folder);
+		List<File> subFolders = new ArrayList<>();
+		for (File file : folder.listFiles()) {
+			if (file.getName().endsWith(".pom") || StringUtils.equals(file.getName(), "pom.xml")) {
+				return file;
+			} else if (file.isDirectory()) {
+				subFolders.add(file);
+			}
+		}
+		for (File subFolder : subFolders) {
+			File pomFile = findPomFromFolder(subFolder, exclude);
+			if (pomFile != null) {
+				return pomFile;
+			}
+		}
+		return null;
 	}
 }
