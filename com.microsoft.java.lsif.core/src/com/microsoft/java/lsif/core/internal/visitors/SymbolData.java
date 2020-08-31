@@ -100,7 +100,7 @@ public class SymbolData {
 		if (manager == null) {
 			return;
 		}
-		PackageInformation packageInformation = Repository.getInstance().enlistPackageInformation(lsif, javaproject.getPath().toString(), "", manager, "", "", "");
+		PackageInformation packageInformation = Repository.getInstance().findPackageInformationById(javaproject.getPath().toString());
 		if (packageInformation == null) {
 			return;
 		}

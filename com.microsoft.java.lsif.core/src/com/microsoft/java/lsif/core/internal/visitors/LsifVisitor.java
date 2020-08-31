@@ -28,9 +28,12 @@ import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.EnumConstantDeclaration;
+import org.eclipse.jdt.core.dom.EnumDeclaration;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.Modifier;
+import org.eclipse.jdt.core.dom.NameQualifiedType;
+import org.eclipse.jdt.core.dom.QualifiedType;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
@@ -68,7 +71,13 @@ public class LsifVisitor extends ProtocolVisitor {
 		IBinding binding = node.resolveBinding();
 		if (binding != null) {
 			ASTNode parent = node.getParent();
-			int modifier = (parent instanceof EnumConstantDeclaration) ? ((EnumConstantDeclaration) parent).getModifiers() : binding.getModifiers();
+			int modifier = binding.getModifiers();
+			if (parent instanceof EnumConstantDeclaration) {
+				ASTNode enumDeclaration = parent.getParent();
+				if (enumDeclaration instanceof EnumDeclaration) {
+					modifier = ((EnumDeclaration) enumDeclaration).getModifiers();
+				}
+			}
 			MonikerKind monikerKind = Modifier.isPublic(modifier) ? MonikerKind.EXPORT : MonikerKind.LOCAL;
 			resolve(node.getStartPosition(), node.getLength(), isTypeOrMethodDeclaration(node), monikerKind);
 		}
@@ -77,7 +86,12 @@ public class LsifVisitor extends ProtocolVisitor {
 
 	@Override
 	public boolean visit(SimpleType node) {
-		resolve(node.getStartPosition(), node.getLength(), isTypeOrMethodDeclaration(node), MonikerKind.IMPORT);
+		IBinding binding = node.resolveBinding();
+		if (binding != null) {
+			int modifier = binding.getModifiers();
+			MonikerKind monikerKind = Modifier.isPublic(modifier) ? MonikerKind.EXPORT : MonikerKind.LOCAL;
+			resolve(node.getStartPosition(), node.getLength(), isTypeOrMethodDeclaration(node), monikerKind);
+		}
 		return false;
 	}
 
@@ -167,9 +181,8 @@ public class LsifVisitor extends ProtocolVisitor {
 			if (pathName.startsWith(JavaRuntime.JRE_CONTAINER)) {
 				// JDK Library
 				manager = PackageManager.JDK;
-				Manifest manifest = new Manifest();
 				if (root instanceof JarPackageFragmentRoot) {
-					manifest = ((JarPackageFragmentRoot) root).getManifest();
+					Manifest manifest = ((JarPackageFragmentRoot) root).getManifest();
 					if (manifest != null) {
 						Attributes attributes = manifest.getMainAttributes();
 						version = attributes.getValue("Implementation-Version");
@@ -195,7 +208,10 @@ public class LsifVisitor extends ProtocolVisitor {
 					Scm scm = model.getScm();
 					if (scm != null) {
 						url = scm.getUrl();
-						type = ScmUrlUtils.getProvider(scm.getConnection());
+						String connect = scm.getConnection();
+						if (StringUtils.isNotEmpty(connect)) {
+							type = ScmUrlUtils.getProvider(connect);
+						}
 					}
 				}
 			}

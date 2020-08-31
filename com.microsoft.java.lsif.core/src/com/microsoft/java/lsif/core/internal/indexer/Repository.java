@@ -138,7 +138,7 @@ public class Repository {
 	}
 
 	public synchronized MavenProject enlistMavenProject(LsifService lsif, IPath path) {
-		// For Maven, use findPom(path, 1). For Gradle, use findPom(path, 2).
+		// For Maven dependency, use findPom(path, 1). For Gradle dependency, use findPom(path, 2).
 		File pomFile = VisitorUtils.findPom(path, 2);
 		if (pomFile == null) {
 			return null;
@@ -188,7 +188,7 @@ public class Repository {
 		return this.symbolDataMap.getOrDefault(id, null);
 	}
 
-	private PackageInformation findPackageInformationById(String id) {
+	public PackageInformation findPackageInformationById(String id) {
 		return this.packageInformationMap.getOrDefault(id, null);
 	}
 

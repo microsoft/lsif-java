@@ -46,7 +46,6 @@ public final class ASTUtil {
 				final ASTParser parser = newASTParser();
 				parser.setSource(input);
 				parser.setResolveBindings(true);
-				parser.setBindingsRecovery(true);
 				root[0] = (CompilationUnit) parser.createAST(progressMonitor);
 			}
 			// mark as unmodifiable
