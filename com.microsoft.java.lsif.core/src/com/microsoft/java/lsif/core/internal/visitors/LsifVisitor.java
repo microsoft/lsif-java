@@ -66,112 +66,111 @@ public class LsifVisitor extends ProtocolVisitor {
 
 	@Override
 	public boolean visit(SimpleName node) {
-		return visitNode(node);
+		IBinding binding = node.resolveBinding();
+		if (binding == null) {
+			return false;
+		}
+		int modifier = binding.getModifiers();
+		ASTNode parent = node.getParent();
+		if (parent instanceof EnumConstantDeclaration) {
+			ASTNode enumDeclaration = parent.getParent();
+			if (enumDeclaration instanceof EnumDeclaration) {
+				modifier = ((EnumDeclaration) enumDeclaration).getModifiers();
+			}
+		}
+		resolve(node.getStartPosition(), node.getLength(), isTypeOrMethodDeclaration(node), modifier);
+		return false;
 	}
 
 	@Override
 	public boolean visit(SimpleType node) {
-		return visitNode(node);
-	}
-
-	private boolean visitNode(ASTNode node) {
-		org.eclipse.lsp4j.Range sourceLspRange = new org.eclipse.lsp4j.Range();
-		IJavaElement element = null;
-		try {
-			sourceLspRange = JDTUtils.toRange(this.getContext().getCompilationUnit().getTypeRoot(),
-					node.getStartPosition(), node.getLength());
-			element = JDTUtils.findElementAtSelection(this.getContext().getCompilationUnit().getTypeRoot(),
-					sourceLspRange.getStart().getLine(), sourceLspRange.getStart().getCharacter(),
-					new PreferenceManager(), new NullProgressMonitor());
-		} catch (JavaModelException e) {
-			JavaLanguageServerPlugin.logException(e.getMessage(), e);
-		}
-		if (element == null) {
+		IBinding binding = node.resolveBinding();
+		if (binding == null) {
 			return false;
 		}
-		IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
-		if (cf != null) {
-			resolve(isTypeOrMethodDeclaration(node), MonikerKind.IMPORT, element, sourceLspRange, cf);
-		} else {
-			IBinding binding;
-			if (node instanceof SimpleName) {
-				binding = ((SimpleName) node).resolveBinding();
-			} else {
-				binding = ((SimpleType) node).resolveBinding();
-			}
-			if (binding == null) {
-				return false;
-			}
-			ASTNode parent = node.getParent();
-			int modifier = binding.getModifiers();
-			if (node instanceof SimpleName && parent instanceof EnumConstantDeclaration) {
-				ASTNode enumDeclaration = parent.getParent();
-				if (enumDeclaration instanceof EnumDeclaration) {
-					modifier = ((EnumDeclaration) enumDeclaration).getModifiers();
-				}
-			}
-			MonikerKind monikerKind = Modifier.isPublic(modifier) ? MonikerKind.EXPORT : MonikerKind.LOCAL;
-			resolve(isTypeOrMethodDeclaration(node), monikerKind, element, sourceLspRange, cf);
-		}
+		int modifier = binding.getModifiers();
+		resolve(node.getStartPosition(), node.getLength(), isTypeOrMethodDeclaration(node), modifier);
 		return false;
 	}
 
-	private void resolve(boolean needResolveImpl, MonikerKind monikerKind, IJavaElement element,
-			org.eclipse.lsp4j.Range sourceLspRange, IClassFile cf) {
-		LsifService lsif = this.getLsif();
-		Document docVertex = this.getContext().getDocVertex();
-		Project projVertex = this.getContext().getProjVertex();
-		Range sourceRange = Repository.getInstance().enlistRange(lsif, docVertex, sourceLspRange);
-
-		Location definitionLocation = JdtlsUtils.getElementLocation(element);
-		if (definitionLocation == null) {
-			// no target location, only resolve hover.
-			Hover hover = VisitorUtils.resolveHoverInformation(docVertex, sourceRange.getStart().getLine(),
-					sourceRange.getStart().getCharacter());
-			if (VisitorUtils.isEmptyHover(hover)) {
+	private void resolve(int startPosition, int length, boolean needResolveImpl, int modifier) {
+		try {
+			org.eclipse.lsp4j.Range sourceLspRange = JDTUtils
+					.toRange(this.getContext().getCompilationUnit().getTypeRoot(), startPosition, length);
+			IJavaElement element = JDTUtils.findElementAtSelection(this.getContext().getCompilationUnit().getTypeRoot(),
+					sourceLspRange.getStart().getLine(), sourceLspRange.getStart().getCharacter(),
+					new PreferenceManager(), new NullProgressMonitor());
+			if (element == null) {
 				return;
 			}
-			ResultSet resultSet = VisitorUtils.ensureResultSet(lsif, sourceRange);
-			VisitorUtils.emitHoverResult(hover, lsif, resultSet);
-			return;
-		}
+			LsifService lsif = this.getLsif();
+			Document docVertex = this.getContext().getDocVertex();
+			Project projVertex = this.getContext().getProjVertex();
+			Range sourceRange = Repository.getInstance().enlistRange(lsif, docVertex, sourceLspRange);
 
-		String id = VisitorUtils.createSymbolKey(definitionLocation);
-		Document definitionDocument = Repository.getInstance().enlistDocument(lsif, definitionLocation.getUri(),
-				projVertex);
-		SymbolData symbolData = Repository.getInstance().enlistSymbolData(id, definitionDocument, projVertex);
-		/* Ensure resultSet */
-		symbolData.ensureResultSet(lsif, sourceRange);
+			Location definitionLocation = JdtlsUtils.getElementLocation(element);
+			if (definitionLocation == null) {
+				// no target location, only resolve hover.
+				Hover hover = VisitorUtils.resolveHoverInformation(docVertex, sourceRange.getStart().getLine(),
+						sourceRange.getStart().getCharacter());
+				if (VisitorUtils.isEmptyHover(hover)) {
+					return;
+				}
+				ResultSet resultSet = VisitorUtils.ensureResultSet(lsif, sourceRange);
+				VisitorUtils.emitHoverResult(hover, lsif, resultSet);
+				return;
+			}
 
-		try {
-			resolveMoniker(element, monikerKind, symbolData, definitionLocation, sourceRange, cf);
-		} catch (JavaModelException e) {
+			String id = VisitorUtils.createSymbolKey(definitionLocation);
+			Document definitionDocument = Repository.getInstance().enlistDocument(lsif, definitionLocation.getUri(),
+					projVertex);
+			SymbolData symbolData = Repository.getInstance().enlistSymbolData(id, definitionDocument, projVertex);
+			/* Ensure resultSet */
+			symbolData.ensureResultSet(lsif, sourceRange);
+
+			resolveMoniker(element, modifier, symbolData, definitionLocation, sourceRange);
+
+			/* Resolve definition */
+			symbolData.resolveDefinition(lsif, definitionLocation);
+
+			/* Resolve typeDefinition */
+			symbolData.resolveTypeDefinition(lsif, docVertex, sourceLspRange);
+
+			/* Resolve implementation */
+			if (needResolveImpl) {
+				symbolData.resolveImplementation(lsif, docVertex, sourceLspRange);
+			}
+
+			/* Resolve reference */
+			symbolData.resolveReference(lsif, docVertex, definitionLocation, sourceRange);
+
+			/* Resolve hover */
+			symbolData.resolveHover(lsif, docVertex, sourceLspRange);
+		} catch (Exception e) {
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 		}
 
-		/* Resolve definition */
-		symbolData.resolveDefinition(lsif, definitionLocation);
-
-		/* Resolve typeDefinition */
-		symbolData.resolveTypeDefinition(lsif, docVertex, sourceLspRange);
-
-		/* Resolve implementation */
-		if (needResolveImpl) {
-			symbolData.resolveImplementation(lsif, docVertex, sourceLspRange);
-		}
-
-		/* Resolve reference */
-		symbolData.resolveReference(lsif, docVertex, definitionLocation, sourceRange);
-
-		/* Resolve hover */
-		symbolData.resolveHover(lsif, docVertex, sourceLspRange);
 	}
 
-	private void resolveMoniker(IJavaElement element, MonikerKind monikerKind, SymbolData symbolData,
-			Location definitionLocation, Range sourceRange, IClassFile cf) throws JavaModelException {
-		LsifService lsif = this.getLsif();
+	private MonikerKind resolveMonikerKind(IClassFile cf, int modifier) {
+		if (cf != null) {
+			return MonikerKind.IMPORT;
+		} else {
+			if (Modifier.isPublic(modifier)) {
+				return MonikerKind.EXPORT;
+			} else {
+				return MonikerKind.LOCAL;
+			}
+		}
+	}
 
+	private void resolveMoniker(IJavaElement element, int modifier, SymbolData symbolData,
+			Location definitionLocation, Range sourceRange) throws JavaModelException {
+
+		LsifService lsif = this.getLsif();
 		IJavaProject javaProject = element.getJavaProject();
+		IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
+		MonikerKind monikerKind = resolveMonikerKind(cf, modifier);
 		PackageManager manager = resolveManager(cf, monikerKind, javaProject);
 		String packageName = "";
 		String version = "";
@@ -226,7 +225,8 @@ public class LsifVisitor extends ProtocolVisitor {
 		/* Generate Moniker */
 		switch (monikerKind) {
 			case IMPORT:
-				symbolData.generateMonikerImport(lsif, sourceRange, identifier, packageName, manager, version, type, url);
+				symbolData.generateMonikerImport(lsif, sourceRange, identifier, packageName, manager, version, type,
+						url);
 				break;
 			case EXPORT:
 				symbolData.generateMonikerExport(lsif, sourceRange, identifier, manager, javaProject);
