@@ -110,7 +110,8 @@ public class Indexer {
 				hasPackageInformation = generateExportPackageInformation(proj, monitor, lsif, javaProject);
 			} catch (Exception e) {
 				// OperationCanceledException, CoreException from WorkspaceHandler.getImporter
-				// GradleConnectionException, IllegalStateException from ProjectConnection.getModel
+				// GradleConnectionException, IllegalStateException from
+				// ProjectConnection.getModel
 				JavaLanguageServerPlugin.logException(e.getMessage(), e);
 			}
 
@@ -162,14 +163,14 @@ public class Indexer {
 	}
 
 	/**
-	 * Generate and emit the package information of the given project and
-	 * return if the project is published.
+	 * Generate and emit the package information of the given project and return if
+	 * the project is published.
 	 *
-	 * @param	proj the project
-	 * @param	monitor the IProgressMonitor
-	 * @param	lsif the lsif instance
-	 * @param	javaProject the javaProject of proj
-	 * @return	<code>true</code> if the given project is published
+	 * @param proj        the project
+	 * @param monitor     the IProgressMonitor
+	 * @param lsif        the lsif instance
+	 * @param javaProject the javaProject of proj
+	 * @return <code>true</code> if the given project is published
 	 */
 	private boolean generateExportPackageInformation(IProject proj, IProgressMonitor monitor, LsifService lsif,
 			IJavaProject javaProject) throws Exception {

@@ -66,43 +66,15 @@ public class LsifVisitor extends ProtocolVisitor {
 
 	@Override
 	public boolean visit(SimpleName node) {
-		org.eclipse.lsp4j.Range sourceLspRange = new org.eclipse.lsp4j.Range();
-		IJavaElement element = null;
-		try {
-			sourceLspRange = JDTUtils.toRange(this.getContext().getCompilationUnit().getTypeRoot(),
-					node.getStartPosition(), node.getLength());
-			element = JDTUtils.findElementAtSelection(this.getContext().getCompilationUnit().getTypeRoot(),
-					sourceLspRange.getStart().getLine(), sourceLspRange.getStart().getCharacter(),
-					new PreferenceManager(), new NullProgressMonitor());
-		} catch (JavaModelException e) {
-			JavaLanguageServerPlugin.logException(e.getMessage(), e);
-		}
-		if (element == null) {
-			return false;
-		}
-		IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
-		if (cf != null) {
-			resolve(isTypeOrMethodDeclaration(node), MonikerKind.IMPORT, element, sourceLspRange, cf);
-		} else {
-			IBinding binding = node.resolveBinding();
-			if (binding != null) {
-				ASTNode parent = node.getParent();
-				int modifier = binding.getModifiers();
-				if (parent instanceof EnumConstantDeclaration) {
-					ASTNode enumDeclaration = parent.getParent();
-					if (enumDeclaration instanceof EnumDeclaration) {
-						modifier = ((EnumDeclaration) enumDeclaration).getModifiers();
-					}
-				}
-				MonikerKind monikerKind = Modifier.isPublic(modifier) ? MonikerKind.EXPORT : MonikerKind.LOCAL;
-				resolve(isTypeOrMethodDeclaration(node), monikerKind, element, sourceLspRange, cf);
-			}
-		}
-		return false;
+		return visitNode(node);
 	}
 
 	@Override
 	public boolean visit(SimpleType node) {
+		return visitNode(node);
+	}
+
+	private boolean visitNode(ASTNode node) {
 		org.eclipse.lsp4j.Range sourceLspRange = new org.eclipse.lsp4j.Range();
 		IJavaElement element = null;
 		try {
@@ -121,12 +93,25 @@ public class LsifVisitor extends ProtocolVisitor {
 		if (cf != null) {
 			resolve(isTypeOrMethodDeclaration(node), MonikerKind.IMPORT, element, sourceLspRange, cf);
 		} else {
-			IBinding binding = node.resolveBinding();
-			if (binding != null) {
-				int modifier = binding.getModifiers();
-				MonikerKind monikerKind = Modifier.isPublic(modifier) ? MonikerKind.EXPORT : MonikerKind.LOCAL;
-				resolve(isTypeOrMethodDeclaration(node), monikerKind, element, sourceLspRange, cf);
+			IBinding binding;
+			if (node instanceof SimpleName) {
+				binding = ((SimpleName) node).resolveBinding();
+			} else {
+				binding = ((SimpleType) node).resolveBinding();
 			}
+			if (binding == null) {
+				return false;
+			}
+			ASTNode parent = node.getParent();
+			int modifier = binding.getModifiers();
+			if (node instanceof SimpleName && parent instanceof EnumConstantDeclaration) {
+				ASTNode enumDeclaration = parent.getParent();
+				if (enumDeclaration instanceof EnumDeclaration) {
+					modifier = ((EnumDeclaration) enumDeclaration).getModifiers();
+				}
+			}
+			MonikerKind monikerKind = Modifier.isPublic(modifier) ? MonikerKind.EXPORT : MonikerKind.LOCAL;
+			resolve(isTypeOrMethodDeclaration(node), monikerKind, element, sourceLspRange, cf);
 		}
 		return false;
 	}
@@ -187,26 +172,17 @@ public class LsifVisitor extends ProtocolVisitor {
 		LsifService lsif = this.getLsif();
 
 		IJavaProject javaProject = element.getJavaProject();
-		PackageManager manager = null;
+		PackageManager manager = resolveManager(cf, monikerKind, javaProject);
 		String packageName = "";
 		String version = "";
 		String type = "";
 		String url = "";
 
-		// Export Monikers
-		if (cf == null) {
-			if (monikerKind == MonikerKind.EXPORT && this.hasPackageInformation) {
-				manager = PackageManager.MAVEN;
-			}
-		} else {
+		// Import Monikers
+		if (cf != null) {
 			IPath path = cf.getPath();
-			IPackageFragmentRoot root = javaProject.findPackageFragmentRoot(path);
-			IClasspathEntry container = root.getRawClasspathEntry();
-			IPath containerPath = container.getPath();
-			String pathName = containerPath.toString();
-			if (pathName.startsWith(JavaRuntime.JRE_CONTAINER)) {
-				// JDK Library
-				manager = PackageManager.JDK;
+			if (manager == PackageManager.JDK) {
+				IPackageFragmentRoot root = javaProject.findPackageFragmentRoot(path);
 				if (root instanceof JarPackageFragmentRoot) {
 					Manifest manifest = ((JarPackageFragmentRoot) root).getManifest();
 					if (manifest != null) {
@@ -220,8 +196,7 @@ public class LsifVisitor extends ProtocolVisitor {
 					IModuleDescription moduleDescription = packageFragmentRoot.getAutomaticModuleDescription();
 					packageName = moduleDescription.getElementName();
 				}
-			} else {
-				manager = PackageManager.MAVEN;
+			} else if (manager == PackageManager.MAVEN && cf != null) {
 				MavenProject mavenProject = Repository.getInstance().enlistMavenProject(lsif, path);
 				if (mavenProject != null) {
 					Model model = mavenProject.getModel();
@@ -243,28 +218,58 @@ public class LsifVisitor extends ProtocolVisitor {
 			}
 		}
 
-		String identifier = this.getMonikerIdentifier(element);
+		String identifier = this.getJDTMonikerIdentifier(element);
+		if (StringUtils.isEmpty(identifier)) {
+			return;
+		}
+
 		/* Generate Moniker */
-		if (StringUtils.isNotEmpty(identifier)) {
-			if (monikerKind == MonikerKind.IMPORT) {
+		switch (monikerKind) {
+			case IMPORT:
 				symbolData.generateMonikerImport(lsif, sourceRange, identifier, packageName, manager, version, type, url);
-			} else if (monikerKind == MonikerKind.EXPORT) {
+				break;
+			case EXPORT:
 				symbolData.generateMonikerExport(lsif, sourceRange, identifier, manager, javaProject);
-			} else if (monikerKind == MonikerKind.LOCAL) {
+				break;
+			case LOCAL:
 				symbolData.generateMonikerLocal(lsif, sourceRange, identifier);
-			}
+				break;
+			default:
 		}
 	}
 
-	private String getMonikerIdentifier(IJavaElement element) {
+	private PackageManager resolveManager(IClassFile cf, MonikerKind monikerKind, IJavaProject javaProject) {
+		if (cf != null) {
+			try {
+				IPath path = cf.getPath();
+				IPackageFragmentRoot root = javaProject.findPackageFragmentRoot(path);
+				IClasspathEntry container = root.getRawClasspathEntry();
+				IPath containerPath = container.getPath();
+				String pathName = containerPath.toString();
+				if (pathName.startsWith(JavaRuntime.JRE_CONTAINER)) {
+					return PackageManager.JDK;
+				} else {
+					return PackageManager.MAVEN;
+				}
+			} catch (JavaModelException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+				return null;
+			}
+		} else if (monikerKind == MonikerKind.EXPORT && this.hasPackageInformation) {
+			return PackageManager.MAVEN;
+		}
+		return null;
+	}
+
+	private String getJDTMonikerIdentifier(IJavaElement element) {
 		String identifier = element.getElementName();
 		try {
 			if (element instanceof IType) {
 				return ((IType) element).getFullyQualifiedName();
 			} else if (element instanceof IField || element instanceof ILocalVariable) {
-				return getMonikerIdentifier(element.getParent()) + "/" + identifier;
+				return getJDTMonikerIdentifier(element.getParent()) + "/" + identifier;
 			} else if (element instanceof IMethod) {
-				return getMonikerIdentifier(element.getParent()) + "/" + identifier + ":"
+				return getJDTMonikerIdentifier(element.getParent()) + "/" + identifier + ":"
 						+ ((IMethod) element).getSignature();
 			}
 		} catch (JavaModelException e) {
