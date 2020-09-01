@@ -32,8 +32,6 @@ import org.eclipse.jdt.core.dom.EnumDeclaration;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.Modifier;
-import org.eclipse.jdt.core.dom.NameQualifiedType;
-import org.eclipse.jdt.core.dom.QualifiedType;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
@@ -41,12 +39,12 @@ import org.eclipse.jdt.internal.core.JarPackageFragmentRoot;
 import org.eclipse.jdt.internal.core.PackageFragmentRoot;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.Hover;
 import org.eclipse.lsp4j.Location;
 
 import com.microsoft.java.lsif.core.internal.JdtlsUtils;
-import com.microsoft.java.lsif.core.internal.LanguageServerIndexerPlugin;
 import com.microsoft.java.lsif.core.internal.indexer.IndexerContext;
 import com.microsoft.java.lsif.core.internal.indexer.LsifService;
 import com.microsoft.java.lsif.core.internal.indexer.Repository;
@@ -59,108 +57,136 @@ import com.microsoft.java.lsif.core.internal.protocol.ResultSet;
 
 public class LsifVisitor extends ProtocolVisitor {
 
-	private boolean isPublish;
+	private boolean hasPackageInformation;
 
-	public LsifVisitor(LsifService lsif, IndexerContext context, boolean isPublish) {
+	public LsifVisitor(LsifService lsif, IndexerContext context, boolean hasPackageInformation) {
 		super(lsif, context);
-		this.isPublish = isPublish;
+		this.hasPackageInformation = hasPackageInformation;
 	}
 
 	@Override
 	public boolean visit(SimpleName node) {
-		IBinding binding = node.resolveBinding();
-		if (binding != null) {
-			ASTNode parent = node.getParent();
-			int modifier = binding.getModifiers();
-			if (parent instanceof EnumConstantDeclaration) {
-				ASTNode enumDeclaration = parent.getParent();
-				if (enumDeclaration instanceof EnumDeclaration) {
-					modifier = ((EnumDeclaration) enumDeclaration).getModifiers();
+		org.eclipse.lsp4j.Range sourceLspRange = new org.eclipse.lsp4j.Range();
+		IJavaElement element = null;
+		try {
+			sourceLspRange = JDTUtils.toRange(this.getContext().getCompilationUnit().getTypeRoot(),
+					node.getStartPosition(), node.getLength());
+			element = JDTUtils.findElementAtSelection(this.getContext().getCompilationUnit().getTypeRoot(),
+					sourceLspRange.getStart().getLine(), sourceLspRange.getStart().getCharacter(),
+					new PreferenceManager(), new NullProgressMonitor());
+		} catch (JavaModelException e) {
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+		}
+		if (element == null) {
+			return false;
+		}
+		IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
+		if (cf != null) {
+			resolve(isTypeOrMethodDeclaration(node), MonikerKind.IMPORT, element, sourceLspRange, cf);
+		} else {
+			IBinding binding = node.resolveBinding();
+			if (binding != null) {
+				ASTNode parent = node.getParent();
+				int modifier = binding.getModifiers();
+				if (parent instanceof EnumConstantDeclaration) {
+					ASTNode enumDeclaration = parent.getParent();
+					if (enumDeclaration instanceof EnumDeclaration) {
+						modifier = ((EnumDeclaration) enumDeclaration).getModifiers();
+					}
 				}
+				MonikerKind monikerKind = Modifier.isPublic(modifier) ? MonikerKind.EXPORT : MonikerKind.LOCAL;
+				resolve(isTypeOrMethodDeclaration(node), monikerKind, element, sourceLspRange, cf);
 			}
-			MonikerKind monikerKind = Modifier.isPublic(modifier) ? MonikerKind.EXPORT : MonikerKind.LOCAL;
-			resolve(node.getStartPosition(), node.getLength(), isTypeOrMethodDeclaration(node), monikerKind);
 		}
 		return false;
 	}
 
 	@Override
 	public boolean visit(SimpleType node) {
-		IBinding binding = node.resolveBinding();
-		if (binding != null) {
-			int modifier = binding.getModifiers();
-			MonikerKind monikerKind = Modifier.isPublic(modifier) ? MonikerKind.EXPORT : MonikerKind.LOCAL;
-			resolve(node.getStartPosition(), node.getLength(), isTypeOrMethodDeclaration(node), monikerKind);
+		org.eclipse.lsp4j.Range sourceLspRange = new org.eclipse.lsp4j.Range();
+		IJavaElement element = null;
+		try {
+			sourceLspRange = JDTUtils.toRange(this.getContext().getCompilationUnit().getTypeRoot(),
+					node.getStartPosition(), node.getLength());
+			element = JDTUtils.findElementAtSelection(this.getContext().getCompilationUnit().getTypeRoot(),
+					sourceLspRange.getStart().getLine(), sourceLspRange.getStart().getCharacter(),
+					new PreferenceManager(), new NullProgressMonitor());
+		} catch (JavaModelException e) {
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+		}
+		if (element == null) {
+			return false;
+		}
+		IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
+		if (cf != null) {
+			resolve(isTypeOrMethodDeclaration(node), MonikerKind.IMPORT, element, sourceLspRange, cf);
+		} else {
+			IBinding binding = node.resolveBinding();
+			if (binding != null) {
+				int modifier = binding.getModifiers();
+				MonikerKind monikerKind = Modifier.isPublic(modifier) ? MonikerKind.EXPORT : MonikerKind.LOCAL;
+				resolve(isTypeOrMethodDeclaration(node), monikerKind, element, sourceLspRange, cf);
+			}
 		}
 		return false;
 	}
 
-	private void resolve(int startPosition, int length, boolean needResolveImpl, MonikerKind monikerKind) {
-		try {
-			org.eclipse.lsp4j.Range sourceLspRange = JDTUtils
-					.toRange(this.getContext().getCompilationUnit().getTypeRoot(), startPosition, length);
+	private void resolve(boolean needResolveImpl, MonikerKind monikerKind, IJavaElement element,
+			org.eclipse.lsp4j.Range sourceLspRange, IClassFile cf) {
+		LsifService lsif = this.getLsif();
+		Document docVertex = this.getContext().getDocVertex();
+		Project projVertex = this.getContext().getProjVertex();
+		Range sourceRange = Repository.getInstance().enlistRange(lsif, docVertex, sourceLspRange);
 
-			IJavaElement element = JDTUtils.findElementAtSelection(this.getContext().getCompilationUnit().getTypeRoot(),
-					sourceLspRange.getStart().getLine(), sourceLspRange.getStart().getCharacter(),
-					new PreferenceManager(), new NullProgressMonitor());
-			if (element == null) {
+		Location definitionLocation = JdtlsUtils.getElementLocation(element);
+		if (definitionLocation == null) {
+			// no target location, only resolve hover.
+			Hover hover = VisitorUtils.resolveHoverInformation(docVertex, sourceRange.getStart().getLine(),
+					sourceRange.getStart().getCharacter());
+			if (VisitorUtils.isEmptyHover(hover)) {
 				return;
 			}
-
-			LsifService lsif = this.getLsif();
-			Document docVertex = this.getContext().getDocVertex();
-			Project projVertex = this.getContext().getProjVertex();
-			Range sourceRange = Repository.getInstance().enlistRange(lsif, docVertex, sourceLspRange);
-
-			Location definitionLocation = JdtlsUtils.getElementLocation(element);
-			if (definitionLocation == null) {
-				// no target location, only resolve hover.
-				Hover hover = VisitorUtils.resolveHoverInformation(docVertex, sourceRange.getStart().getLine(),
-						sourceRange.getStart().getCharacter());
-				if (VisitorUtils.isEmptyHover(hover)) {
-					return;
-				}
-				ResultSet resultSet = VisitorUtils.ensureResultSet(lsif, sourceRange);
-				VisitorUtils.emitHoverResult(hover, lsif, resultSet);
-				return;
-			}
-
-			String id = VisitorUtils.createSymbolKey(definitionLocation);
-			Document definitionDocument = Repository.getInstance().enlistDocument(lsif, definitionLocation.getUri(),
-					projVertex);
-			SymbolData symbolData = Repository.getInstance().enlistSymbolData(id, definitionDocument, projVertex);
-			/* Ensure resultSet */
-			symbolData.ensureResultSet(lsif, sourceRange);
-
-			resolveMoniker(element, monikerKind, symbolData, definitionLocation, sourceRange);
-
-			/* Resolve definition */
-			symbolData.resolveDefinition(lsif, definitionLocation);
-
-			/* Resolve typeDefinition */
-			symbolData.resolveTypeDefinition(lsif, docVertex, sourceLspRange);
-
-			/* Resolve implementation */
-			if (needResolveImpl) {
-				symbolData.resolveImplementation(lsif, docVertex, sourceLspRange);
-			}
-
-			/* Resolve reference */
-			symbolData.resolveReference(lsif, docVertex, definitionLocation, sourceRange);
-
-			/* Resolve hover */
-			symbolData.resolveHover(lsif, docVertex, sourceLspRange);
-		} catch (Throwable ex) {
-			LanguageServerIndexerPlugin.logException("Exception when dumping definition information ", ex);
+			ResultSet resultSet = VisitorUtils.ensureResultSet(lsif, sourceRange);
+			VisitorUtils.emitHoverResult(hover, lsif, resultSet);
+			return;
 		}
+
+		String id = VisitorUtils.createSymbolKey(definitionLocation);
+		Document definitionDocument = Repository.getInstance().enlistDocument(lsif, definitionLocation.getUri(),
+				projVertex);
+		SymbolData symbolData = Repository.getInstance().enlistSymbolData(id, definitionDocument, projVertex);
+		/* Ensure resultSet */
+		symbolData.ensureResultSet(lsif, sourceRange);
+
+		try {
+			resolveMoniker(element, monikerKind, symbolData, definitionLocation, sourceRange, cf);
+		} catch (JavaModelException e) {
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+		}
+
+		/* Resolve definition */
+		symbolData.resolveDefinition(lsif, definitionLocation);
+
+		/* Resolve typeDefinition */
+		symbolData.resolveTypeDefinition(lsif, docVertex, sourceLspRange);
+
+		/* Resolve implementation */
+		if (needResolveImpl) {
+			symbolData.resolveImplementation(lsif, docVertex, sourceLspRange);
+		}
+
+		/* Resolve reference */
+		symbolData.resolveReference(lsif, docVertex, definitionLocation, sourceRange);
+
+		/* Resolve hover */
+		symbolData.resolveHover(lsif, docVertex, sourceLspRange);
 	}
 
 	private void resolveMoniker(IJavaElement element, MonikerKind monikerKind, SymbolData symbolData,
-			Location definitionLocation, Range sourceRange) throws JavaModelException {
+			Location definitionLocation, Range sourceRange, IClassFile cf) throws JavaModelException {
 		LsifService lsif = this.getLsif();
 
 		IJavaProject javaProject = element.getJavaProject();
-		IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
 		PackageManager manager = null;
 		String packageName = "";
 		String version = "";
@@ -169,7 +195,7 @@ public class LsifVisitor extends ProtocolVisitor {
 
 		// Export Monikers
 		if (cf == null) {
-			if (monikerKind == MonikerKind.EXPORT && this.isPublish) {
+			if (monikerKind == MonikerKind.EXPORT && this.hasPackageInformation) {
 				manager = PackageManager.MAVEN;
 			}
 		} else {
@@ -220,10 +246,8 @@ public class LsifVisitor extends ProtocolVisitor {
 		String identifier = this.getMonikerIdentifier(element);
 		/* Generate Moniker */
 		if (StringUtils.isNotEmpty(identifier)) {
-			if (definitionLocation.getUri().startsWith("jdt")) {
-				if (StringUtils.isNotEmpty(packageName) && StringUtils.isNotEmpty(version)) {
-					symbolData.generateMonikerImport(lsif, sourceRange, identifier, packageName, manager, version, type, url);
-				}
+			if (monikerKind == MonikerKind.IMPORT) {
+				symbolData.generateMonikerImport(lsif, sourceRange, identifier, packageName, manager, version, type, url);
 			} else if (monikerKind == MonikerKind.EXPORT) {
 				symbolData.generateMonikerExport(lsif, sourceRange, identifier, manager, javaProject);
 			} else if (monikerKind == MonikerKind.LOCAL) {

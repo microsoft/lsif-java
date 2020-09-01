@@ -8,6 +8,8 @@ package com.microsoft.java.lsif.core.internal.visitors;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.apache.maven.shared.utils.StringUtils;
+
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.lsp4j.Hover;
 import org.eclipse.lsp4j.Location;
@@ -65,7 +67,7 @@ public class SymbolData {
 		LsifEmitter.getInstance().emit(groupMoniker);
 		this.groupMoniker = groupMoniker;
 		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().moniker(this.resultSet, this.groupMoniker));
-		if (manager == null) {
+		if (manager == null || StringUtils.isEmpty(packageName) || StringUtils.isEmpty(version)) {
 			return;
 		}
 		PackageInformation packageInformation = Repository.getInstance().enlistPackageInformation(lsif, packageName, packageName, manager, version, type, url);

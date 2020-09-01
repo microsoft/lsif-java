@@ -105,10 +105,12 @@ public class Indexer {
 			if (!javaProject.exists()) {
 				continue;
 			}
-			boolean isPublish = false;
+			boolean hasPackageInformation = false;
 			try {
-				isPublish = generateExportPackageInformation(proj, monitor, lsif, javaProject);
+				hasPackageInformation = generateExportPackageInformation(proj, monitor, lsif, javaProject);
 			} catch (Exception e) {
+				// OperationCanceledException, CoreException from WorkspaceHandler.getImporter
+				// GradleConnectionException, IllegalStateException from ProjectConnection.getModel
 				JavaLanguageServerPlugin.logException(e.getMessage(), e);
 			}
 
@@ -119,7 +121,7 @@ public class Indexer {
 
 			List<ICompilationUnit> sourceList = getAllSourceFiles(javaProject);
 
-			dumpParallelly(sourceList, threadPool, projVertex, lsif, isPublish, monitor);
+			dumpParallelly(sourceList, threadPool, projVertex, lsif, hasPackageInformation, monitor);
 
 			VisitorUtils.endAllDocument(lsif);
 			LsifEmitter.getInstance().emit(
@@ -159,9 +161,18 @@ public class Indexer {
 		return res;
 	}
 
+	/**
+	 * Generate and emit the package information of the given project and
+	 * return if the project is published.
+	 *
+	 * @param	proj the project
+	 * @param	monitor the IProgressMonitor
+	 * @param	lsif the lsif instance
+	 * @param	javaProject the javaProject of proj
+	 * @return	<code>true</code> if the given project is published
+	 */
 	private boolean generateExportPackageInformation(IProject proj, IProgressMonitor monitor, LsifService lsif,
 			IJavaProject javaProject) throws Exception {
-		boolean isPublish = false;
 		IPath folderPath = proj.getLocation();
 		if (folderPath == null) {
 			return false;
@@ -184,9 +195,9 @@ public class Indexer {
 				}
 				if (StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(artifactId)
 						&& StringUtils.isNotEmpty(version)) {
-					isPublish = true;
 					Repository.getInstance().enlistPackageInformation(lsif, javaProject.getPath().toString(),
 							groupId + "/" + artifactId, PackageManager.MAVEN, version, type, url);
+					return true;
 				}
 			}
 		} else if (importer instanceof GradleProjectImporter) {
@@ -201,13 +212,13 @@ public class Indexer {
 				String version = gradleModuleVersion.getVersion();
 				if (StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(artifactId)
 						&& StringUtils.isNotEmpty(version)) {
-					isPublish = true;
 					Repository.getInstance().enlistPackageInformation(lsif, javaProject.getPath().toString(),
 							groupId + "/" + artifactId, PackageManager.MAVEN, version, null, null);
+					return true;
 				}
 			}
 		}
-		return isPublish;
+		return false;
 	}
 
 	private void dumpParallelly(List<ICompilationUnit> sourceList, ExecutorService threadPool, Project projVertex,
