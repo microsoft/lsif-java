@@ -66,6 +66,7 @@ public class SymbolData {
 	private boolean typeDefinitionResolved;
 	private boolean implementationResolved;
 	private boolean hoverResolved;
+	private boolean monikerResolved;
 
 	public SymbolData(Project project, Document document) {
 		this.project = project;
@@ -83,7 +84,7 @@ public class SymbolData {
 
 	synchronized public void generateImportMoniker(LsifService lsif, String identifier, PackageManager manager,
 			String packageName, String version, String type, String url) {
-		if (this.resultSet == null || this.groupMoniker != null || this.schemeMoniker != null) {
+		if (this.resultSet == null) {
 			return;
 		}
 		this.groupMoniker = lsif.getVertexBuilder().moniker(MonikerKind.IMPORT, "jdt", identifier, MonikerUnique.GROUP);
@@ -104,7 +105,7 @@ public class SymbolData {
 	}
 
 	synchronized public void generateLocalMoniker(LsifService lsif, String identifier) {
-		if (this.resultSet == null || this.groupMoniker != null || this.schemeMoniker != null) {
+		if (this.resultSet == null) {
 			return;
 		}
 		this.groupMoniker = lsif.getVertexBuilder().moniker(MonikerKind.LOCAL, "jdt", identifier, MonikerUnique.GROUP);
@@ -114,7 +115,7 @@ public class SymbolData {
 
 	synchronized public void generateExportMoniker(LsifService lsif, String identifier, PackageManager manager,
 			String projectPath) {
-		if (this.resultSet == null || this.groupMoniker != null || this.schemeMoniker != null) {
+		if (this.resultSet == null) {
 			return;
 		}
 		this.groupMoniker = lsif.getVertexBuilder().moniker(MonikerKind.EXPORT, "jdt", identifier, MonikerUnique.GROUP);
@@ -220,8 +221,11 @@ public class SymbolData {
 		this.hoverResolved = true;
 	}
 
-	public void resolveMoniker(LsifService lsif, IJavaElement element, int modifier,
+	synchronized public void resolveMoniker(LsifService lsif, IJavaElement element, int modifier,
 			boolean hasPackageInformation) throws JavaModelException {
+		if (this.monikerResolved) {
+			return;
+		}
 
 		IJavaProject javaProject = element.getJavaProject();
 		IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
@@ -249,6 +253,8 @@ public class SymbolData {
 				break;
 			default:
 		}
+
+		this.monikerResolved = true;
 	}
 
 	private MonikerKind resolveMonikerKind(IClassFile cf, int modifier) {
