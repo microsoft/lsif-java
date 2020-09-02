@@ -10,25 +10,24 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.microsoft.java.lsif.core.internal.LsifUtils;
-import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
-import com.microsoft.java.lsif.core.internal.protocol.Document;
-import com.microsoft.java.lsif.core.internal.protocol.Event;
-import com.microsoft.java.lsif.core.internal.protocol.PackageInformation;
-import com.microsoft.java.lsif.core.internal.protocol.Project;
-import com.microsoft.java.lsif.core.internal.protocol.Range;
-import com.microsoft.java.lsif.core.internal.protocol.PackageInformation.PackageManager;
-import com.microsoft.java.lsif.core.internal.visitors.SymbolData;
-import com.microsoft.java.lsif.core.internal.visitors.VisitorUtils;
-
 import org.apache.maven.project.MavenProject;
-import org.apache.maven.shared.utils.StringUtils;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.embedder.IMaven;
+
+import com.microsoft.java.lsif.core.internal.LsifUtils;
+import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
+import com.microsoft.java.lsif.core.internal.protocol.Document;
+import com.microsoft.java.lsif.core.internal.protocol.Event;
+import com.microsoft.java.lsif.core.internal.protocol.PackageInformation;
+import com.microsoft.java.lsif.core.internal.protocol.PackageInformation.PackageManager;
+import com.microsoft.java.lsif.core.internal.protocol.Project;
+import com.microsoft.java.lsif.core.internal.protocol.Range;
+import com.microsoft.java.lsif.core.internal.visitors.SymbolData;
+import com.microsoft.java.lsif.core.internal.visitors.VisitorUtils;
 
 public class Repository {
 
@@ -113,9 +112,6 @@ public class Repository {
 			PackageManager manager, String version, String type, String url) {
 		PackageInformation packageInformation = findPackageInformationById(id);
 		if (packageInformation == null) {
-			if (StringUtils.isEmpty(name)) {
-				return null;
-			}
 			packageInformation = lsif.getVertexBuilder().packageInformation(name, manager, version, type, url);
 			addPackageInformation(id, packageInformation);
 			LsifEmitter.getInstance().emit(packageInformation);

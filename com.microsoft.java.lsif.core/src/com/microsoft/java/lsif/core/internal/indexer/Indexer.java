@@ -48,8 +48,8 @@ import org.gradle.tooling.model.gradle.ProjectPublications;
 import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.Event;
-import com.microsoft.java.lsif.core.internal.protocol.Project;
 import com.microsoft.java.lsif.core.internal.protocol.PackageInformation.PackageManager;
+import com.microsoft.java.lsif.core.internal.protocol.Project;
 import com.microsoft.java.lsif.core.internal.visitors.DiagnosticVisitor;
 import com.microsoft.java.lsif.core.internal.visitors.DocumentVisitor;
 import com.microsoft.java.lsif.core.internal.visitors.LsifVisitor;
@@ -181,49 +181,70 @@ public class Indexer {
 		IProjectImporter importer = this.handler.getImporter(folderPath.toFile(), monitor);
 		if (importer instanceof MavenProjectImporter) {
 			File pomfile = VisitorUtils.findPom(proj.getLocation(), 0);
+			if (pomfile == null) {
+				return false;
+			}
 			MavenProject mavenProject = Repository.getInstance().enlistMavenProject(lsif, pomfile);
-			if (mavenProject != null) {
-				Model model = mavenProject.getModel();
-				String groupId = model.getGroupId();
-				String artifactId = model.getArtifactId();
-				String version = model.getVersion();
-				Scm scm = model.getScm();
-				String url = null;
-				String type = null;
-				if (scm != null) {
-					url = scm.getUrl();
-					type = ScmUrlUtils.getProvider(scm.getConnection());
-				}
-				if (StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(artifactId)
-						&& StringUtils.isNotEmpty(version)) {
-					Repository.getInstance().enlistPackageInformation(lsif, javaProject.getPath().toString(),
-							groupId + "/" + artifactId, PackageManager.MAVEN, version, type, url);
-					return true;
+			if (mavenProject == null) {
+				return false;
+			}
+			Model model = mavenProject.getModel();
+			String groupId = model.getGroupId();
+			if (groupId == null) {
+				return false;
+			}
+			String artifactId = model.getArtifactId();
+			if (artifactId == null) {
+				return false;
+			}
+			String version = model.getVersion();
+			if (version == null) {
+				return false;
+			}
+			Scm scm = model.getScm();
+			String url = null;
+			String type = null;
+			// scm is optional
+			if (scm != null) {
+				url = scm.getUrl();
+				String connect = scm.getConnection();
+				if (connect != null) {
+					type = ScmUrlUtils.getProvider(connect);
 				}
 			}
+			Repository.getInstance().enlistPackageInformation(lsif, javaProject.getPath().toString(),
+					groupId + "/" + artifactId, PackageManager.MAVEN, version, type, url);
+			return true;
 		} else if (importer instanceof GradleProjectImporter) {
 			GradleBuild build = GradleCore.getWorkspace().getBuild(proj).get();
 			ProjectPublications model = build
 					.withConnection(connection -> connection.getModel(ProjectPublications.class), monitor);
 			List<? extends GradlePublication> publications = model.getPublications().getAll();
-			if (publications.size() > 0) {
-				GradleModuleVersion gradleModuleVersion = publications.get(0).getId();
-				String groupId = gradleModuleVersion.getGroup();
-				String artifactId = gradleModuleVersion.getName();
-				String version = gradleModuleVersion.getVersion();
-				if (StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(artifactId)
-						&& StringUtils.isNotEmpty(version)) {
-					Repository.getInstance().enlistPackageInformation(lsif, javaProject.getPath().toString(),
-							groupId + "/" + artifactId, PackageManager.MAVEN, version, null, null);
-					return true;
-				}
+			if (publications.size() == 0) {
+				return false;
 			}
+			GradleModuleVersion gradleModuleVersion = publications.get(0).getId();
+			String groupId = gradleModuleVersion.getGroup();
+			if (StringUtils.isEmpty(groupId)) {
+				return false;
+			}
+			String artifactId = gradleModuleVersion.getName();
+			if (StringUtils.isEmpty(artifactId)) {
+				return false;
+			}
+			String version = gradleModuleVersion.getVersion();
+			if (StringUtils.isEmpty(version)) {
+				return false;
+			}
+			Repository.getInstance().enlistPackageInformation(lsif, javaProject.getPath().toString(),
+					groupId + "/" + artifactId, PackageManager.MAVEN, version, null, null);
+			return true;
 		}
 		return false;
 	}
 
 	private void dumpParallelly(List<ICompilationUnit> sourceList, ExecutorService threadPool, Project projVertex,
-			LsifService lsif, boolean isPublish, IProgressMonitor monitor) {
+			LsifService lsif, boolean hasPackageInformation, IProgressMonitor monitor) {
 		Observable.fromIterable(sourceList)
 				.flatMap(item -> Observable.just(item).observeOn(Schedulers.from(threadPool)).map(sourceFile -> {
 					CompilationUnit cu = ASTUtil.createAST(sourceFile, monitor);
@@ -233,7 +254,7 @@ public class Indexer {
 					}
 					IndexerContext context = new IndexerContext(docVertex, cu, projVertex);
 
-					LsifVisitor lsifVisitor = new LsifVisitor(lsif, context, isPublish);
+					LsifVisitor lsifVisitor = new LsifVisitor(lsif, context, hasPackageInformation);
 					cu.accept(lsifVisitor);
 
 					DiagnosticVisitor diagnosticVisitor = new DiagnosticVisitor(lsif, context);

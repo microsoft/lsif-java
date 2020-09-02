@@ -10,6 +10,8 @@ import org.apache.commons.lang3.StringUtils;
 public class PackageInformation extends Vertex {
 
 	public enum PackageManager {
+		// Both Gradle and Maven projects will publish with a pom file.
+		// So Manager has only two kinds, "jdk" and "maven". "maven" is likely "pom".
 		MAVEN("maven"), JDK("jdk");
 
 		private final String manager;
