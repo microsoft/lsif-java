@@ -5,17 +5,29 @@
 
 package com.microsoft.java.lsif.core.internal.indexer;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.apache.maven.project.MavenProject;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.m2e.core.MavenPlugin;
+import org.eclipse.m2e.core.embedder.IMaven;
 
 import com.microsoft.java.lsif.core.internal.LsifUtils;
 import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.Event;
+import com.microsoft.java.lsif.core.internal.protocol.PackageInformation;
+import com.microsoft.java.lsif.core.internal.protocol.PackageInformation.PackageManager;
 import com.microsoft.java.lsif.core.internal.protocol.Project;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
 import com.microsoft.java.lsif.core.internal.visitors.SymbolData;
+import com.microsoft.java.lsif.core.internal.visitors.VisitorUtils;
 
 public class Repository {
 
@@ -37,6 +49,14 @@ public class Repository {
 	// Value: Document object
 	private Map<String, Document> beginededDocumentMap = new ConcurrentHashMap<>();
 
+	// Key: groupId + artifactId
+	// Value: PackageInformation
+	private Map<String, PackageInformation> packageInformationMap = new ConcurrentHashMap<>();
+
+	// Key: pomFile path
+	// Value: PackageInformation
+	private Map<String, MavenProject> mavenProjectMap = new ConcurrentHashMap<>();
+
 	private Repository() {
 	}
 
@@ -56,17 +76,15 @@ public class Repository {
 			addDocument(targetDocument);
 			LsifEmitter.getInstance().emit(targetDocument);
 			addToBeginededDocuments(targetDocument);
-			LsifEmitter.getInstance()
-					.emit(service.getVertexBuilder().event(Event.EventScope.DOCUMENT, Event.EventKind.BEGIN,
-							targetDocument.getId()));
+			LsifEmitter.getInstance().emit(service.getVertexBuilder().event(Event.EventScope.DOCUMENT,
+					Event.EventKind.BEGIN, targetDocument.getId()));
 			LsifEmitter.getInstance().emit(service.getEdgeBuilder().contains(projVertex, targetDocument));
 		}
 
 		return targetDocument;
 	}
 
-	public synchronized Range enlistRange(LsifService service, Document docVertex,
-			org.eclipse.lsp4j.Range lspRange) {
+	public synchronized Range enlistRange(LsifService service, Document docVertex, org.eclipse.lsp4j.Range lspRange) {
 		Range range = findRange(docVertex.getUri(), lspRange);
 		if (range == null) {
 			range = service.getVertexBuilder().range(lspRange);
@@ -88,6 +106,40 @@ public class Repository {
 			addSymbolData(id, symbolData);
 		}
 		return symbolData;
+	}
+
+	public synchronized PackageInformation enlistPackageInformation(LsifService lsif, String id, String name,
+			PackageManager manager, String version, String type, String url) {
+		PackageInformation packageInformation = findPackageInformationById(id);
+		if (packageInformation == null) {
+			packageInformation = lsif.getVertexBuilder().packageInformation(name, manager, version, type, url);
+			addPackageInformation(id, packageInformation);
+			LsifEmitter.getInstance().emit(packageInformation);
+		}
+		return packageInformation;
+	}
+
+	public synchronized MavenProject enlistMavenProject(LsifService lsif, File pomFile) {
+		MavenProject mavenProject = findMavenProjectByPath(pomFile.getAbsolutePath());
+		if (mavenProject == null) {
+			IMaven maven = MavenPlugin.getMaven();
+			try {
+				mavenProject = maven.readProject(pomFile, new NullProgressMonitor());
+				addMavenProject(pomFile.getAbsolutePath(), mavenProject);
+			} catch (CoreException ce) {
+				JavaLanguageServerPlugin.logException(ce.getMessage(), ce);
+			}
+		}
+		return mavenProject;
+	}
+
+	public synchronized MavenProject enlistMavenProject(LsifService lsif, IPath path) {
+		// For Maven dependency, use findPom(path, 1). For Gradle dependency, use findPom(path, 2).
+		File pomFile = VisitorUtils.findPom(path, 2);
+		if (pomFile == null) {
+			return null;
+		}
+		return enlistMavenProject(lsif, pomFile);
 	}
 
 	public void addToBeginededDocuments(Document doc) {
@@ -131,4 +183,21 @@ public class Repository {
 	private SymbolData findSymbolDataById(String id) {
 		return this.symbolDataMap.getOrDefault(id, null);
 	}
+
+	public PackageInformation findPackageInformationById(String id) {
+		return this.packageInformationMap.getOrDefault(id, null);
+	}
+
+	private void addPackageInformation(String id, PackageInformation packageInformation) {
+		this.packageInformationMap.put(id, packageInformation);
+	}
+
+	private MavenProject findMavenProjectByPath(String path) {
+		return this.mavenProjectMap.getOrDefault(path, null);
+	}
+
+	private void addMavenProject(String id, MavenProject mavenProject) {
+		this.mavenProjectMap.put(id, mavenProject);
+	}
+
 }
