@@ -47,7 +47,7 @@ import com.microsoft.java.lsif.core.internal.protocol.Moniker;
 import com.microsoft.java.lsif.core.internal.protocol.Moniker.MonikerKind;
 import com.microsoft.java.lsif.core.internal.protocol.Moniker.MonikerUnique;
 import com.microsoft.java.lsif.core.internal.protocol.PackageInformation;
-import com.microsoft.java.lsif.core.internal.protocol.PackageInformation.PackageManager;
+import com.microsoft.java.lsif.core.internal.protocol.PackageManager;
 import com.microsoft.java.lsif.core.internal.protocol.Project;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
 import com.microsoft.java.lsif.core.internal.protocol.ReferenceResult;
@@ -82,7 +82,7 @@ public class SymbolData {
 		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().next(sourceRange, this.resultSet));
 	}
 
-	synchronized public void generateImportMoniker(LsifService lsif, String identifier, PackageManager manager,
+	synchronized public void generateImportMoniker(LsifService lsif, String identifier, String manager,
 			String packageName, String version, String type, String url) {
 		if (this.resultSet == null) {
 			return;
@@ -90,17 +90,19 @@ public class SymbolData {
 		this.groupMoniker = lsif.getVertexBuilder().moniker(MonikerKind.IMPORT, "jdt", identifier, MonikerUnique.GROUP);
 		LsifEmitter.getInstance().emit(this.groupMoniker);
 		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().moniker(this.resultSet, this.groupMoniker));
-		if (manager == null) {
+		if (StringUtils.isEmpty(manager)) {
 			return;
 		}
-		PackageInformation packageInformation = Repository.getInstance().enlistPackageInformation(lsif, packageName, packageName, manager, version, type, url);
+		PackageInformation packageInformation = Repository.getInstance().enlistPackageInformation(lsif, packageName,
+				packageName, manager, version, type, url);
 		if (packageInformation == null) {
 			return;
 		}
 		this.schemeMoniker = lsif.getVertexBuilder().moniker(MonikerKind.IMPORT, manager.toString(),
 				packageInformation.getName() + "/" + identifier, MonikerUnique.SCHEME);
 		LsifEmitter.getInstance().emit(this.schemeMoniker);
-		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().packageInformation(this.schemeMoniker, packageInformation));
+		LsifEmitter.getInstance()
+				.emit(lsif.getEdgeBuilder().packageInformation(this.schemeMoniker, packageInformation));
 		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().attach(this.schemeMoniker, this.groupMoniker));
 	}
 
@@ -113,7 +115,7 @@ public class SymbolData {
 		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().moniker(this.resultSet, this.groupMoniker));
 	}
 
-	synchronized public void generateExportMoniker(LsifService lsif, String identifier, PackageManager manager,
+	synchronized public void generateExportMoniker(LsifService lsif, String identifier, String manager,
 			String projectPath) {
 		if (this.resultSet == null) {
 			return;
@@ -121,17 +123,18 @@ public class SymbolData {
 		this.groupMoniker = lsif.getVertexBuilder().moniker(MonikerKind.EXPORT, "jdt", identifier, MonikerUnique.GROUP);
 		LsifEmitter.getInstance().emit(this.groupMoniker);
 		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().moniker(this.resultSet, this.groupMoniker));
-		if (manager == null) {
+		if (StringUtils.isEmpty(manager)) {
 			return;
 		}
 		PackageInformation packageInformation = Repository.getInstance().findPackageInformationById(projectPath);
 		if (packageInformation == null) {
 			return;
 		}
-		this.schemeMoniker = lsif.getVertexBuilder().moniker(MonikerKind.EXPORT, manager.toString(),
+		this.schemeMoniker = lsif.getVertexBuilder().moniker(MonikerKind.EXPORT, manager,
 				packageInformation.getName() + "/" + identifier, MonikerUnique.SCHEME);
 		LsifEmitter.getInstance().emit(this.schemeMoniker);
-		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().packageInformation(this.schemeMoniker, packageInformation));
+		LsifEmitter.getInstance()
+				.emit(lsif.getEdgeBuilder().packageInformation(this.schemeMoniker, packageInformation));
 		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().attach(this.schemeMoniker, this.groupMoniker));
 	}
 
@@ -155,8 +158,7 @@ public class SymbolData {
 			return;
 		}
 		Location typeDefinitionLocation = VisitorUtils.resolveTypeDefinitionLocation(docVertex,
-				sourceLspRange.getStart().getLine(),
-				sourceLspRange.getStart().getCharacter());
+				sourceLspRange.getStart().getLine(), sourceLspRange.getStart().getCharacter());
 		if (typeDefinitionLocation != null) {
 			org.eclipse.lsp4j.Range typeDefinitionLspRange = typeDefinitionLocation.getRange();
 			Document typeDefinitionDocument = Repository.getInstance().enlistDocument(lsif,
@@ -177,8 +179,7 @@ public class SymbolData {
 			return;
 		}
 		List<Range> implementationRanges = VisitorUtils.getImplementationRanges(lsif, project, docVertex,
-				sourceLspRange.getStart().getLine(),
-				sourceLspRange.getStart().getCharacter());
+				sourceLspRange.getStart().getLine(), sourceLspRange.getStart().getCharacter());
 		if (implementationRanges != null && implementationRanges.size() > 0) {
 
 			// ImplementationResult
@@ -242,11 +243,11 @@ public class SymbolData {
 				if (metaData == null) {
 					return;
 				}
-				generateImportMoniker(lsif, identifier, manager, metaData.packageName, metaData.version, metaData.type,
+				generateImportMoniker(lsif, identifier, metaData.manager, metaData.packageName, metaData.version, metaData.type,
 						metaData.url);
 				break;
 			case EXPORT:
-				generateExportMoniker(lsif, identifier, manager, javaProject.getPath().toString());
+				generateExportMoniker(lsif, identifier, manager.toString(), javaProject.getPath().toString());
 				break;
 			case LOCAL:
 				generateLocalMoniker(lsif, identifier);
@@ -289,7 +290,7 @@ public class SymbolData {
 		} else if (monikerKind == MonikerKind.EXPORT && hasPackageInformation) {
 			return PackageManager.MAVEN;
 		}
-		return null;
+		return PackageManager.NULL;
 	}
 
 	private String getJDTMonikerIdentifier(IJavaElement element) {
@@ -316,17 +317,23 @@ public class SymbolData {
 			IPath path = cf.getPath();
 			if (manager == PackageManager.JDK) {
 				IPackageFragmentRoot root = javaProject.findPackageFragmentRoot(path);
-				if (root instanceof JarPackageFragmentRoot) {
-					Manifest manifest = ((JarPackageFragmentRoot) root).getManifest();
-					if (manifest == null) {
-						return null;
-					}
-					Attributes attributes = manifest.getMainAttributes();
-					importPackageMetaData.version = attributes.getValue("Implementation-Version");
-					if (StringUtils.isEmpty(importPackageMetaData.version)) {
-						return null;
-					}
+				if (!(root instanceof JarPackageFragmentRoot)) {
+					return null;
 				}
+				Manifest manifest = ((JarPackageFragmentRoot) root).getManifest();
+				if (manifest == null) {
+					return null;
+				}
+				Attributes attributes = manifest.getMainAttributes();
+				importPackageMetaData.version = attributes.getValue("Implementation-Version");
+				if (StringUtils.isEmpty(importPackageMetaData.version)) {
+					return null;
+				}
+				String vendor = attributes.getValue("Implementation-Vendor");
+				if (StringUtils.isEmpty(vendor)) {
+					return null;
+				}
+				importPackageMetaData.manager = manager.toString() + "(" + vendor + ")";
 				PackageFragmentRoot packageFragmentRoot = (PackageFragmentRoot) cf
 						.getAncestor(IJavaElement.PACKAGE_FRAGMENT_ROOT);
 				if (packageFragmentRoot == null) {
@@ -349,6 +356,7 @@ public class SymbolData {
 					return null;
 				}
 				importPackageMetaData.packageName = groupId + "/" + artifactId;
+				importPackageMetaData.manager = manager.toString();
 				importPackageMetaData.version = model.getVersion();
 				if (StringUtils.isEmpty(importPackageMetaData.version)) {
 					return null;

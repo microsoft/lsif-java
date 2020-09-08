@@ -5,19 +5,19 @@
 
 package com.microsoft.java.lsif.core.internal.protocol;
 
-public class ImportPackageMetaData {
+public enum PackageManager {
+	// Both Gradle and Maven projects will publish with a pom file.
+	// So Manager has only two kinds, "jdk" and "maven". "maven" is likely "pom".
+	MAVEN("maven"), JDK("jdk"), NULL("");
 
-	public String packageName;
-	public String version;
-	public String manager;
-	public String type;
-	public String url;
+	private final String manager;
 
-	public ImportPackageMetaData() {
-		this.packageName = "";
-		this.version = "";
-		this.manager = "";
-		this.type = "";
-		this.url = "";
+	private PackageManager(String manager) {
+		this.manager = manager;
+	}
+
+	@Override
+	public String toString() {
+		return this.manager;
 	}
 }

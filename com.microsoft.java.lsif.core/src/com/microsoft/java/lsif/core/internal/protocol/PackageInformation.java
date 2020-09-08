@@ -9,23 +9,6 @@ import org.apache.commons.lang3.StringUtils;
 
 public class PackageInformation extends Vertex {
 
-	public enum PackageManager {
-		// Both Gradle and Maven projects will publish with a pom file.
-		// So Manager has only two kinds, "jdk" and "maven". "maven" is likely "pom".
-		MAVEN("maven"), JDK("jdk");
-
-		private final String manager;
-
-		private PackageManager(String manager) {
-			this.manager = manager;
-		}
-
-		@Override
-		public String toString() {
-			return this.manager;
-		}
-	}
-
 	private String name;
 
 	private String manager;
@@ -34,17 +17,17 @@ public class PackageInformation extends Vertex {
 
 	private Repo repository;
 
-	public PackageInformation(String id, String name, PackageManager manager, String version, String type, String url) {
+	public PackageInformation(String id, String name, String manager, String version, String type, String url) {
 		super(id, Vertex.PACKAGEINFORMATION);
 		this.name = name;
-		this.manager = manager.toString();
+		this.manager = manager;
 		this.version = version;
 		if (StringUtils.isNotEmpty(type) && StringUtils.isNotEmpty(url)) {
 			this.repository = new Repo(type, url);
 		}
 	}
 
-	public class Repo {
+	private class Repo {
 
 		private String type;
 
