@@ -291,15 +291,15 @@ public class SymbolData {
 					if (StringUtils.isEmpty(vendor)) {
 						return "";
 					}
-					return "jdk(" + vendor + ")";
+					return String.format(PackageInformation.JDK + "(%1$s)", vendor);
 				} else {
-					return "maven";
+					return PackageInformation.MAVEN;
 				}
 			} catch (JavaModelException e) {
 				JavaLanguageServerPlugin.logException(e.getMessage(), e);
 			}
 		} else if (monikerKind == MonikerKind.EXPORT && hasPackageInformation) {
-			return "maven";
+			return PackageInformation.MAVEN;
 		}
 		return "";
 	}
@@ -326,7 +326,7 @@ public class SymbolData {
 		ImportPackageMetaData importPackageMetaData = new ImportPackageMetaData();
 		if (cf != null) {
 			IPath path = cf.getPath();
-			if (manager.startsWith("jdk")) {
+			if (manager.startsWith(PackageInformation.JDK)) {
 				IPackageFragmentRoot root = javaProject.findPackageFragmentRoot(path);
 				if (!(root instanceof JarPackageFragmentRoot)) {
 					return null;
@@ -347,7 +347,7 @@ public class SymbolData {
 				}
 				IModuleDescription moduleDescription = packageFragmentRoot.getAutomaticModuleDescription();
 				importPackageMetaData.packageName = moduleDescription.getElementName();
-			} else if (StringUtils.equals(manager, "maven")) {
+			} else if (StringUtils.equals(manager, PackageInformation.MAVEN)) {
 				MavenProject mavenProject = Repository.getInstance().enlistMavenProject(lsif, path);
 				if (mavenProject == null) {
 					return null;

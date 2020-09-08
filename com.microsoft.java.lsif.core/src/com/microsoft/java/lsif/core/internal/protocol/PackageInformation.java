@@ -17,6 +17,11 @@ public class PackageInformation extends Vertex {
 
 	private Repo repository;
 
+	// Manager: maven
+	public static final String MAVEN = "maven";
+	// Manager: jdk
+	public static final String JDK = "jdk";
+
 	public PackageInformation(String id, String name, String manager, String version, String type, String url) {
 		super(id, Vertex.PACKAGEINFORMATION);
 		this.name = name;
