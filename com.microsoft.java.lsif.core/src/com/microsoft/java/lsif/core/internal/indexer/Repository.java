@@ -23,7 +23,6 @@ import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.Event;
 import com.microsoft.java.lsif.core.internal.protocol.PackageInformation;
-import com.microsoft.java.lsif.core.internal.protocol.PackageInformation.PackageManager;
 import com.microsoft.java.lsif.core.internal.protocol.Project;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
 import com.microsoft.java.lsif.core.internal.visitors.SymbolData;
@@ -109,7 +108,7 @@ public class Repository {
 	}
 
 	public synchronized PackageInformation enlistPackageInformation(LsifService lsif, String id, String name,
-			PackageManager manager, String version, String type, String url) {
+			String manager, String version, String type, String url) {
 		PackageInformation packageInformation = findPackageInformationById(id);
 		if (packageInformation == null) {
 			packageInformation = lsif.getVertexBuilder().packageInformation(name, manager, version, type, url);

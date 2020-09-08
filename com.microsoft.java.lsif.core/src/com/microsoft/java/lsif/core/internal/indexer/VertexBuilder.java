@@ -24,7 +24,6 @@ import com.microsoft.java.lsif.core.internal.protocol.MetaData;
 import com.microsoft.java.lsif.core.internal.protocol.Moniker;
 import com.microsoft.java.lsif.core.internal.protocol.Moniker.MonikerKind;
 import com.microsoft.java.lsif.core.internal.protocol.Moniker.MonikerUnique;
-import com.microsoft.java.lsif.core.internal.protocol.PackageInformation.PackageManager;
 import com.microsoft.java.lsif.core.internal.protocol.PackageInformation;
 import com.microsoft.java.lsif.core.internal.protocol.Project;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
@@ -100,7 +99,7 @@ public final class VertexBuilder {
 		return new Moniker(generator.next(), kind, scheme, identifier, unique);
 	}
 
-	public PackageInformation packageInformation(String name, PackageManager manager, String version, String type, String url) {
+	public PackageInformation packageInformation(String name, String manager, String version, String type, String url) {
 		return new PackageInformation(generator.next(), name, manager, version, type, url);
 	}
 }
