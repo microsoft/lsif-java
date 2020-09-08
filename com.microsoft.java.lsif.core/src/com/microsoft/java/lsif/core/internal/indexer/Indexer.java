@@ -48,7 +48,6 @@ import org.gradle.tooling.model.gradle.ProjectPublications;
 import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.Event;
-import com.microsoft.java.lsif.core.internal.protocol.PackageManager;
 import com.microsoft.java.lsif.core.internal.protocol.Project;
 import com.microsoft.java.lsif.core.internal.visitors.DiagnosticVisitor;
 import com.microsoft.java.lsif.core.internal.visitors.DocumentVisitor;
@@ -213,7 +212,7 @@ public class Indexer {
 				}
 			}
 			Repository.getInstance().enlistPackageInformation(lsif, javaProject.getPath().toString(),
-					groupId + "/" + artifactId, PackageManager.MAVEN.toString(), version, type, url);
+					groupId + "/" + artifactId, "maven", version, type, url);
 			return true;
 		} else if (importer instanceof GradleProjectImporter) {
 			GradleBuild build = GradleCore.getWorkspace().getBuild(proj).get();
@@ -237,7 +236,7 @@ public class Indexer {
 				return false;
 			}
 			Repository.getInstance().enlistPackageInformation(lsif, javaProject.getPath().toString(),
-					groupId + "/" + artifactId, PackageManager.MAVEN.toString(), version, null, null);
+					groupId + "/" + artifactId, "maven", version, null, null);
 			return true;
 		}
 		return false;

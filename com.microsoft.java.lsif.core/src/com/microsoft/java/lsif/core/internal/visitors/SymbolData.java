@@ -47,7 +47,6 @@ import com.microsoft.java.lsif.core.internal.protocol.Moniker;
 import com.microsoft.java.lsif.core.internal.protocol.Moniker.MonikerKind;
 import com.microsoft.java.lsif.core.internal.protocol.Moniker.MonikerUnique;
 import com.microsoft.java.lsif.core.internal.protocol.PackageInformation;
-import com.microsoft.java.lsif.core.internal.protocol.PackageManager;
 import com.microsoft.java.lsif.core.internal.protocol.Project;
 import com.microsoft.java.lsif.core.internal.protocol.Range;
 import com.microsoft.java.lsif.core.internal.protocol.ReferenceResult;
@@ -231,7 +230,7 @@ public class SymbolData {
 		IJavaProject javaProject = element.getJavaProject();
 		IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
 		MonikerKind monikerKind = resolveMonikerKind(cf, modifier);
-		PackageManager manager = resolveManager(cf, monikerKind, javaProject, hasPackageInformation);
+		String manager = resolveManager(cf, monikerKind, javaProject, hasPackageInformation);
 		String identifier = this.getJDTMonikerIdentifier(element);
 		if (StringUtils.isEmpty(identifier)) {
 			return;
@@ -240,14 +239,14 @@ public class SymbolData {
 		switch (monikerKind) {
 			case IMPORT:
 				ImportPackageMetaData metaData = generateImportMonikerData(lsif, cf, manager, javaProject);
-				if (metaData == null) {
+				if (metaData == null || StringUtils.isEmpty(metaData.packageName) || StringUtils.isEmpty(metaData.version)) {
 					return;
 				}
-				generateImportMoniker(lsif, identifier, metaData.manager, metaData.packageName, metaData.version, metaData.type,
-						metaData.url);
+				generateImportMoniker(lsif, identifier, manager, metaData.packageName, metaData.version,
+						metaData.type, metaData.url);
 				break;
 			case EXPORT:
-				generateExportMoniker(lsif, identifier, manager.toString(), javaProject.getPath().toString());
+				generateExportMoniker(lsif, identifier, manager, javaProject.getPath().toString());
 				break;
 			case LOCAL:
 				generateLocalMoniker(lsif, identifier);
@@ -270,7 +269,7 @@ public class SymbolData {
 		}
 	}
 
-	private PackageManager resolveManager(IClassFile cf, MonikerKind monikerKind, IJavaProject javaProject,
+	private String resolveManager(IClassFile cf, MonikerKind monikerKind, IJavaProject javaProject,
 			boolean hasPackageInformation) {
 		if (cf != null) {
 			try {
@@ -280,17 +279,29 @@ public class SymbolData {
 				IPath containerPath = container.getPath();
 				String pathName = containerPath.toString();
 				if (pathName.startsWith(JavaRuntime.JRE_CONTAINER)) {
-					return PackageManager.JDK;
+					if (!(root instanceof JarPackageFragmentRoot)) {
+						return "";
+					}
+					Manifest manifest = ((JarPackageFragmentRoot) root).getManifest();
+					if (manifest == null) {
+						return "";
+					}
+					Attributes attributes = manifest.getMainAttributes();
+					String vendor = attributes.getValue("Implementation-Vendor");
+					if (StringUtils.isEmpty(vendor)) {
+						return "";
+					}
+					return "jdk(" + vendor + ")";
 				} else {
-					return PackageManager.MAVEN;
+					return "maven";
 				}
 			} catch (JavaModelException e) {
 				JavaLanguageServerPlugin.logException(e.getMessage(), e);
 			}
 		} else if (monikerKind == MonikerKind.EXPORT && hasPackageInformation) {
-			return PackageManager.MAVEN;
+			return "maven";
 		}
-		return PackageManager.NULL;
+		return "";
 	}
 
 	private String getJDTMonikerIdentifier(IJavaElement element) {
@@ -310,12 +321,12 @@ public class SymbolData {
 		return identifier;
 	}
 
-	private ImportPackageMetaData generateImportMonikerData(LsifService lsif, IClassFile cf, PackageManager manager,
+	private ImportPackageMetaData generateImportMonikerData(LsifService lsif, IClassFile cf, String manager,
 			IJavaProject javaProject) throws JavaModelException {
 		ImportPackageMetaData importPackageMetaData = new ImportPackageMetaData();
 		if (cf != null) {
 			IPath path = cf.getPath();
-			if (manager == PackageManager.JDK) {
+			if (manager.startsWith("jdk")) {
 				IPackageFragmentRoot root = javaProject.findPackageFragmentRoot(path);
 				if (!(root instanceof JarPackageFragmentRoot)) {
 					return null;
@@ -329,11 +340,6 @@ public class SymbolData {
 				if (StringUtils.isEmpty(importPackageMetaData.version)) {
 					return null;
 				}
-				String vendor = attributes.getValue("Implementation-Vendor");
-				if (StringUtils.isEmpty(vendor)) {
-					return null;
-				}
-				importPackageMetaData.manager = manager.toString() + "(" + vendor + ")";
 				PackageFragmentRoot packageFragmentRoot = (PackageFragmentRoot) cf
 						.getAncestor(IJavaElement.PACKAGE_FRAGMENT_ROOT);
 				if (packageFragmentRoot == null) {
@@ -341,7 +347,7 @@ public class SymbolData {
 				}
 				IModuleDescription moduleDescription = packageFragmentRoot.getAutomaticModuleDescription();
 				importPackageMetaData.packageName = moduleDescription.getElementName();
-			} else if (manager == PackageManager.MAVEN) {
+			} else if (StringUtils.equals(manager, "maven")) {
 				MavenProject mavenProject = Repository.getInstance().enlistMavenProject(lsif, path);
 				if (mavenProject == null) {
 					return null;
@@ -356,7 +362,6 @@ public class SymbolData {
 					return null;
 				}
 				importPackageMetaData.packageName = groupId + "/" + artifactId;
-				importPackageMetaData.manager = manager.toString();
 				importPackageMetaData.version = model.getVersion();
 				if (StringUtils.isEmpty(importPackageMetaData.version)) {
 					return null;
