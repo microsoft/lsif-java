@@ -115,7 +115,7 @@ public class Indexer {
 				JavaLanguageServerPlugin.logException(e.getMessage(), e);
 			}
 
-			Project projVertex = lsif.getVertexBuilder().project();
+			Project projVertex = lsif.getVertexBuilder().project(javaProject.getElementName());
 			LsifEmitter.getInstance().emit(projVertex);
 			LsifEmitter.getInstance().emit(
 					lsif.getVertexBuilder().event(Event.EventScope.Project, Event.EventKind.BEGIN, projVertex.getId()));
