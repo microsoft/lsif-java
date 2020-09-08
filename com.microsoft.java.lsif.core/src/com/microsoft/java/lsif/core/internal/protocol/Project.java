@@ -11,9 +11,12 @@ public class Project extends Vertex {
 
 	private String kind;
 
-	public Project(String id) {
+	private String name;
+
+	public Project(String id, String name) {
 		super(id, Vertex.PROJECT);
 		this.kind = IConstant.JAVA_ID;
+		this.name = name;
 	}
 
 	public String getKind() {

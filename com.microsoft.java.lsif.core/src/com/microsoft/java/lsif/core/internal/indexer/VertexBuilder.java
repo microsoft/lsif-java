@@ -47,8 +47,8 @@ public final class VertexBuilder {
 		return new Event(generator.next(), scope, kind, data);
 	}
 
-	public Project project() {
-		return new Project(generator.next());
+	public Project project(String name) {
+		return new Project(generator.next(), name);
 	}
 
 	public Document document(String uri) {
