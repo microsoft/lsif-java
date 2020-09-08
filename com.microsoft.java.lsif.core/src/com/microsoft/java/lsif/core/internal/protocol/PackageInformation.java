@@ -17,9 +17,18 @@ public class PackageInformation extends Vertex {
 
 	private Repo repository;
 
-	// Manager: maven
+	/**
+	 * A Constant representing a maven manager. Since most java repositories use pom
+	 * as their publish format, "maven" is used as the packageInformation's manager
+	 * regardless of build tools.
+	 */
 	public static final String MAVEN = "maven";
-	// Manager: jdk
+
+	/**
+	 * A Constant representing a jdk manager. The manager of a packageInformation
+	 * imported from JDK library consists of "jdk" and its Implementation-Vendor.
+	 * For example, <code>jdk(Oracle Corporation)</code>.
+	 */
 	public static final String JDK = "jdk";
 
 	public PackageInformation(String id, String name, String manager, String version, String type, String url) {
