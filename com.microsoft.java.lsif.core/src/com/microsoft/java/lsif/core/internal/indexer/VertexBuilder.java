@@ -18,6 +18,7 @@ import com.microsoft.java.lsif.core.internal.protocol.DiagnosticResult;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.DocumentSymbolResult;
 import com.microsoft.java.lsif.core.internal.protocol.Event;
+import com.microsoft.java.lsif.core.internal.protocol.Group;
 import com.microsoft.java.lsif.core.internal.protocol.HoverResult;
 import com.microsoft.java.lsif.core.internal.protocol.ImplementationResult;
 import com.microsoft.java.lsif.core.internal.protocol.MetaData;
@@ -30,6 +31,7 @@ import com.microsoft.java.lsif.core.internal.protocol.Range;
 import com.microsoft.java.lsif.core.internal.protocol.ReferenceResult;
 import com.microsoft.java.lsif.core.internal.protocol.ResultSet;
 import com.microsoft.java.lsif.core.internal.protocol.TypeDefinitionResult;
+import com.microsoft.java.lsif.core.internal.protocol.Group.ConflictResolution;
 
 public final class VertexBuilder {
 
@@ -45,6 +47,10 @@ public final class VertexBuilder {
 
 	public Event event(String scope, String kind, String data) {
 		return new Event(generator.next(), scope, kind, data);
+	}
+
+	public Group group(String uri, ConflictResolution resolution, String name, String rootUri) {
+		return new Group(generator.next(), uri, resolution, name, rootUri);
 	}
 
 	public Project project(String name) {

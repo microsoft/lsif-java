@@ -45,6 +45,8 @@ public class Vertex extends Element {
 
 	public static final String IMPLEMENTATIONRESULT = "implementationResult";
 
+	public static final String GROUP = "group";
+
 	public static final String MONIKER = "moniker";
 
 	public static final String PACKAGEINFORMATION = "packageInformation";

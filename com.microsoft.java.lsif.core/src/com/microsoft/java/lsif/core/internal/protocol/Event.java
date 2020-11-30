@@ -34,6 +34,7 @@ public class Event extends Vertex {
 	}
 
 	public static class EventScope {
+		public static final String Group = "group";
 		public static final String Project = "project";
 		public static final String DOCUMENT = "document";
 	}
