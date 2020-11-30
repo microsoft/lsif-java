@@ -48,8 +48,10 @@ import org.gradle.tooling.model.gradle.ProjectPublications;
 import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
 import com.microsoft.java.lsif.core.internal.protocol.Document;
 import com.microsoft.java.lsif.core.internal.protocol.Event;
+import com.microsoft.java.lsif.core.internal.protocol.Group;
 import com.microsoft.java.lsif.core.internal.protocol.PackageInformation;
 import com.microsoft.java.lsif.core.internal.protocol.Project;
+import com.microsoft.java.lsif.core.internal.protocol.Group.ConflictResolution;
 import com.microsoft.java.lsif.core.internal.visitors.DiagnosticVisitor;
 import com.microsoft.java.lsif.core.internal.visitors.DocumentVisitor;
 import com.microsoft.java.lsif.core.internal.visitors.LsifVisitor;
@@ -114,7 +116,10 @@ public class Indexer {
 				// ProjectConnection.getModel
 				JavaLanguageServerPlugin.logException(e.getMessage(), e);
 			}
-
+			Group groupVertex = lsif.getVertexBuilder().group(ResourceUtils.fixURI(path.toFile().toURI()), ConflictResolution.TAKEDB, javaProject.getElementName(), ResourceUtils.fixURI(path.toFile().toURI()));
+			LsifEmitter.getInstance().emit(groupVertex);
+			LsifEmitter.getInstance().emit(
+					lsif.getVertexBuilder().event(Event.EventScope.Group, Event.EventKind.BEGIN, groupVertex.getId()));
 			Project projVertex = lsif.getVertexBuilder().project(javaProject.getElementName());
 			LsifEmitter.getInstance().emit(projVertex);
 			LsifEmitter.getInstance().emit(
@@ -127,6 +132,8 @@ public class Indexer {
 			VisitorUtils.endAllDocument(lsif);
 			LsifEmitter.getInstance().emit(
 					lsif.getVertexBuilder().event(Event.EventScope.Project, Event.EventKind.END, projVertex.getId()));
+			LsifEmitter.getInstance().emit(
+					lsif.getVertexBuilder().event(Event.EventScope.Group, Event.EventKind.END, groupVertex.getId()));
 		}
 
 		threadPool.shutdown();
