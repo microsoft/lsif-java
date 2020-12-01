@@ -3,6 +3,13 @@
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 0.4.0
+### Added
+- Support moniker in LSIF v0.5.0. [PR#63](https://github.com/microsoft/lsif-java/pull/63)
+- Support logical group projects in LSIF v0.5.0. [PR#67](https://github.com/microsoft/lsif-java/pull/67)
+### Fixed
+- [Fix Bugs](https://github.com/Microsoft/lsif-java/issues?q=is%3Aissue+is%3Aclosed+milestone%3A0.4.0+label%3Abug)
+
 ## 0.3.2
 - [Fix Bugs](https://github.com/Microsoft/lsif-java/issues?q=is%3Aissue+is%3Aclosed+milestone%3A0.3.2+label%3Abug)
 
