@@ -45,6 +45,8 @@ public class Edge extends Element {
 
 	public final static String PACKAGEINFORMATION = "packageInformation";
 
+	public final static String BELONGSTO = "belongsTo";
+
 	private String outV;
 
 	private String inV;

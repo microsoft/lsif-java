@@ -77,4 +77,8 @@ public class EdgeBuilder {
 	public Edge diagnostic(Vertex from, Vertex to) {
 		return new Edge(generator.next(), Edge.T_DIAGNOSTIC, from.getId(), to.getId());
 	}
+
+	public Edge belongsTo(Vertex from, Vertex to) {
+		return new Edge(generator.next(), Edge.BELONGSTO, from.getId(), to.getId());
+	}
 }
