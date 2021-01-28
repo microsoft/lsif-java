@@ -99,10 +99,11 @@ public class Indexer {
 
 		final ExecutorService threadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
-		Group groupVertex = lsif.getVertexBuilder().group(ResourceUtils.fixURI(path.toFile().toURI()), ConflictResolution.TAKEDB, path.lastSegment(), ResourceUtils.fixURI(path.toFile().toURI()));
-			LsifEmitter.getInstance().emit(groupVertex);
+		Group groupVertex = lsif.getVertexBuilder().group(ResourceUtils.fixURI(path.toFile().toURI()),
+				ConflictResolution.TAKEDB, path.lastSegment(), ResourceUtils.fixURI(path.toFile().toURI()));
+		LsifEmitter.getInstance().emit(groupVertex);
 		LsifEmitter.getInstance().emit(
-			lsif.getVertexBuilder().event(Event.EventScope.Group, Event.EventKind.BEGIN, groupVertex.getId()));
+				lsif.getVertexBuilder().event(Event.EventScope.Group, Event.EventKind.BEGIN, groupVertex.getId()));
 
 		for (IProject proj : projects) {
 			if (proj == null) {
@@ -122,7 +123,6 @@ public class Indexer {
 				JavaLanguageServerPlugin.logException(e.getMessage(), e);
 			}
 
-
 			Project projVertex = lsif.getVertexBuilder().project(javaProject.getElementName());
 			LsifEmitter.getInstance().emit(projVertex);
 			LsifEmitter.getInstance().emit(
@@ -139,8 +139,8 @@ public class Indexer {
 
 		}
 
-		LsifEmitter.getInstance().emit(
-					lsif.getVertexBuilder().event(Event.EventScope.Group, Event.EventKind.END, groupVertex.getId()));
+		LsifEmitter.getInstance()
+				.emit(lsif.getVertexBuilder().event(Event.EventScope.Group, Event.EventKind.END, groupVertex.getId()));
 
 		threadPool.shutdown();
 	}
