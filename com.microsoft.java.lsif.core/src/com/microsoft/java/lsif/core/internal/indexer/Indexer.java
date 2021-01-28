@@ -136,7 +136,6 @@ public class Indexer {
 			VisitorUtils.endAllDocument(lsif);
 			LsifEmitter.getInstance().emit(
 					lsif.getVertexBuilder().event(Event.EventScope.Project, Event.EventKind.END, projVertex.getId()));
-
 		}
 
 		LsifEmitter.getInstance()
