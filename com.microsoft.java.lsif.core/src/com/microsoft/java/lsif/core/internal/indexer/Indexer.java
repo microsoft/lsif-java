@@ -99,6 +99,11 @@ public class Indexer {
 
 		final ExecutorService threadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
+		Group groupVertex = lsif.getVertexBuilder().group(ResourceUtils.fixURI(path.toFile().toURI()), ConflictResolution.TAKEDB, path.lastSegment(), ResourceUtils.fixURI(path.toFile().toURI()));
+			LsifEmitter.getInstance().emit(groupVertex);
+		LsifEmitter.getInstance().emit(
+			lsif.getVertexBuilder().event(Event.EventScope.Group, Event.EventKind.BEGIN, groupVertex.getId()));
+
 		for (IProject proj : projects) {
 			if (proj == null) {
 				return;
@@ -116,15 +121,14 @@ public class Indexer {
 				// ProjectConnection.getModel
 				JavaLanguageServerPlugin.logException(e.getMessage(), e);
 			}
-			Group groupVertex = lsif.getVertexBuilder().group(ResourceUtils.fixURI(path.toFile().toURI()), ConflictResolution.TAKEDB, javaProject.getElementName(), ResourceUtils.fixURI(path.toFile().toURI()));
-			LsifEmitter.getInstance().emit(groupVertex);
-			LsifEmitter.getInstance().emit(
-					lsif.getVertexBuilder().event(Event.EventScope.Group, Event.EventKind.BEGIN, groupVertex.getId()));
+
+
 			Project projVertex = lsif.getVertexBuilder().project(javaProject.getElementName());
 			LsifEmitter.getInstance().emit(projVertex);
 			LsifEmitter.getInstance().emit(
 					lsif.getVertexBuilder().event(Event.EventScope.Project, Event.EventKind.BEGIN, projVertex.getId()));
 
+			LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().belongsTo(projVertex, groupVertex));
 			List<ICompilationUnit> sourceList = getAllSourceFiles(javaProject);
 
 			dumpParallelly(sourceList, threadPool, projVertex, lsif, hasPackageInformation, monitor);
@@ -132,9 +136,11 @@ public class Indexer {
 			VisitorUtils.endAllDocument(lsif);
 			LsifEmitter.getInstance().emit(
 					lsif.getVertexBuilder().event(Event.EventScope.Project, Event.EventKind.END, projVertex.getId()));
-			LsifEmitter.getInstance().emit(
-					lsif.getVertexBuilder().event(Event.EventScope.Group, Event.EventKind.END, groupVertex.getId()));
+
 		}
+
+		LsifEmitter.getInstance().emit(
+					lsif.getVertexBuilder().event(Event.EventScope.Group, Event.EventKind.END, groupVertex.getId()));
 
 		threadPool.shutdown();
 	}
