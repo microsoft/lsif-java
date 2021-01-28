@@ -9,24 +9,24 @@ import java.util.List;
 
 public class ItemEdge extends Edge {
 
-	private String document;
+	private String shard;
 
 	private String property;
 
-	public ItemEdge(String id, String label, String outV, String inV, String documentId, String property) {
+	public ItemEdge(String id, String label, String outV, String inV, String shardId, String property) {
 		super(id, label, outV, inV);
-		this.document = documentId;
+		this.shard = shardId;
 		this.property = property;
 	}
 
-	public ItemEdge(String id, String label, String outV, List<String> inVs, String documentId, String property) {
+	public ItemEdge(String id, String label, String outV, List<String> inVs, String shardId, String property) {
 		super(id, label, outV, inVs);
-		this.document = documentId;
+		this.shard = shardId;
 		this.property = property;
 	}
 
-	public String getDocument() {
-		return document;
+	public String getShard() {
+		return shard;
 	}
 
 	public String getProperty() {
