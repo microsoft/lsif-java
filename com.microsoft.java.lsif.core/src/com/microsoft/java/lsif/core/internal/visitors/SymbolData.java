@@ -16,6 +16,7 @@ import org.apache.maven.project.MavenProject;
 import org.apache.maven.scm.provider.ScmUrlUtils;
 import org.apache.maven.shared.utils.StringUtils;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IField;
@@ -32,9 +33,11 @@ import org.eclipse.jdt.internal.core.JarPackageFragmentRoot;
 import org.eclipse.jdt.internal.core.PackageFragmentRoot;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.handlers.FindLinksHandler;
 import org.eclipse.lsp4j.Hover;
 import org.eclipse.lsp4j.Location;
 
+import com.microsoft.java.lsif.core.internal.JdtlsUtils;
 import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
 import com.microsoft.java.lsif.core.internal.indexer.LsifService;
 import com.microsoft.java.lsif.core.internal.indexer.Repository;
@@ -70,6 +73,18 @@ public class SymbolData {
 	public SymbolData(Project project, Document document) {
 		this.project = project;
 		this.document = document;
+	}
+
+	public Document getDocument() {
+		return this.document;
+	}
+
+	public ReferenceResult getReferenceResult() {
+		return this.referenceResult;
+	}
+
+	public Moniker getGroupMoniker() {
+		return this.groupMoniker;
 	}
 
 	synchronized public void ensureResultSet(LsifService lsif, Range sourceRange) {
@@ -190,8 +205,8 @@ public class SymbolData {
 		this.implementationResolved = true;
 	}
 
-	synchronized public void resolveReference(LsifService lsif, Document sourceDocument, Location definitionLocation,
-			Range sourceRange) {
+	synchronized public void resolveReference(LsifService lsif, Document sourceDocument, IJavaElement element,
+			Location definitionLocation, Range sourceRange) {
 		if (this.referenceResult == null) {
 			ReferenceResult referenceResult = VisitorUtils.ensureReferenceResult(lsif, this.resultSet);
 			this.referenceResult = referenceResult;
@@ -205,7 +220,35 @@ public class SymbolData {
 		if (!VisitorUtils.isDefinitionItself(sourceDocument, sourceRange, definitionDocument, definitionRange)) {
 			LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().item(this.referenceResult, sourceRange, document,
 					ItemEdge.ItemEdgeProperties.REFERENCES));
+		} else if (element instanceof IMethod) {
+			IMethod mostAbstractMethod = getMostAbstractDeclaration((IMethod) element);
+			if (mostAbstractMethod != null) {
+				Location abstractDefinitionLocation = JdtlsUtils.getElementLocation(mostAbstractMethod);
+				String id = VisitorUtils.createSymbolKey(abstractDefinitionLocation);
+				Document abstractdefinitionDocument = Repository.getInstance().enlistDocument(lsif,
+						abstractDefinitionLocation.getUri(), this.project);
+				SymbolData abstractSymbolData = Repository.getInstance().enlistSymbolData(id,
+						abstractdefinitionDocument, this.project);
+				Repository.getInstance().addReferenceResults(this, abstractSymbolData);
+			}
 		}
+	}
+
+	private IMethod getMostAbstractDeclaration(IMethod method) {
+		IMethod previous = null;
+		IMethod current = method;
+		try {
+			while (current != null) {
+				current = FindLinksHandler.findOverriddenMethod(current, new NullProgressMonitor());
+				if (current == null) {
+					return previous;
+				}
+				previous = current;
+			}
+		} catch (JavaModelException e) {
+			return null;
+		}
+		return null;
 	}
 
 	synchronized public void resolveHover(LsifService lsif, Document docVertex,

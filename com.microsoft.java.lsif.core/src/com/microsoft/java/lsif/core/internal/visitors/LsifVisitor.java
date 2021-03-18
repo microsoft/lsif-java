@@ -118,7 +118,7 @@ public class LsifVisitor extends ProtocolVisitor {
 			}
 
 			/* Resolve reference */
-			symbolData.resolveReference(lsif, docVertex, definitionLocation, sourceRange);
+			symbolData.resolveReference(lsif, docVertex, element, definitionLocation, sourceRange);
 
 			/* Resolve hover */
 			symbolData.resolveHover(lsif, docVertex, sourceLspRange);

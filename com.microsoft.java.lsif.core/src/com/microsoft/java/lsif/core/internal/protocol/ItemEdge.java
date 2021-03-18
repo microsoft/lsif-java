@@ -38,6 +38,7 @@ public class ItemEdge extends Edge {
 		public static final String DEFINITIONS = "definitions";
 		public static final String REFERENCES = "references";
 		public static final String REFERENCE_RESULTS = "referenceResults";
+		public static final String REFERENCE_LINKS = "referenceLinks";
 		public static final String IMPLEMENTATION_RESULTS = "implementationResults";
 	}
 }

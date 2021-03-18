@@ -7,6 +7,8 @@ package com.microsoft.java.lsif.core.internal.indexer;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -55,6 +57,10 @@ public class Repository {
 	// Key: pomFile path
 	// Value: PackageInformation
 	private Map<String, MavenProject> mavenProjectMap = new ConcurrentHashMap<>();
+
+	// Key: SymbolData
+	// Value: List<SymbolData>
+	private Map<SymbolData, List<SymbolData>> referenceResultsMap = new ConcurrentHashMap<>();
 
 	private Repository() {
 	}
@@ -197,6 +203,19 @@ public class Repository {
 
 	private void addMavenProject(String id, MavenProject mavenProject) {
 		this.mavenProjectMap.put(id, mavenProject);
+	}
+
+	public synchronized void addReferenceResults(SymbolData from, SymbolData to) {
+		if (this.referenceResultsMap.containsKey(from)) {
+			this.referenceResultsMap.get(from).add(to);
+		} else {
+			this.referenceResultsMap.put(from, Arrays.asList(to));
+		}
+
+	}
+
+	public Map<SymbolData, List<SymbolData>> getReferenceResultsMap() {
+		return this.referenceResultsMap;
 	}
 
 }
