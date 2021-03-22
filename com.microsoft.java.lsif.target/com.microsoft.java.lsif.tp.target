@@ -29,12 +29,9 @@
             <unit id="org.eclipse.equinox.sdk.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.jdt.source.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.sdk.feature.group" version="0.0.0"/>
-            <repository location="https://download.eclipse.org/eclipse/updates/4.19/R-4.19-202103031800/"/>
-        </location>
-        <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.xtend.sdk.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.xtext.sdk.feature.group" version="0.0.0"/>
-            <repository location="https://download.eclipse.org/releases/2020-12/202012161000/"/>
+            <repository location="https://download.eclipse.org/releases/2021-03/202103171000/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
            <repository location="https://download.eclipse.org/lsp4j/updates/releases/0.9.0/"/>
@@ -49,5 +46,5 @@
             <repository location="https://download.eclipse.org/jdtls/snapshots/repository/0.71.0.202103161929/"/>
         </location>
     </locations>
-    <targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
+    <targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11"/>
 </target>
