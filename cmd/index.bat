@@ -8,10 +8,11 @@ set randomPath=%TEMP%\%RANDOM%%RANDOM%
 :Main
 
 java ^
+--add-modules=ALL-SYSTEM ^
 -Dlog.level=ALL ^
 %input% ^
 -noverify ^
--jar %basePath%\plugins\org.eclipse.equinox.launcher_1.5.700.v20200207-2156.jar ^
+-jar %basePath%\plugins\org.eclipse.equinox.launcher_1.6.100.v20201223-0822.jar ^
 -configuration %basePath%\config_win ^
 -data %randomPath%
 

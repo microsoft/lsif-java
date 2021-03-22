@@ -22,8 +22,8 @@
 
 
    <plugins>
+      <plugin id="org.apache.felix.scr"/>
       <plugin id="com.microsoft.java.lsif.core"/>
-      <plugin id="javax.xml"/>
       <plugin id="org.eclipse.ant.core"/>
       <plugin id="org.eclipse.buildship.core"/>
       <plugin id="org.eclipse.compare.core"/>
@@ -65,8 +65,10 @@
    </plugins>
 
    <configurations>
+      <plugin id="org.apache.felix.scr" autoStart="true" startLevel="2" />
       <plugin id="com.microsoft.java.lsif.core" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.core.runtime" autoStart="true" startLevel="0" />
+      <plugin id="org.eclipse.equinox.common" autoStart="true" startLevel="2" />
       <plugin id="org.eclipse.jdt.core" autoStart="false" startLevel="0" />
       <plugin id="org.eclipse.jdt.launching" autoStart="false" startLevel="0" />
    </configurations>
