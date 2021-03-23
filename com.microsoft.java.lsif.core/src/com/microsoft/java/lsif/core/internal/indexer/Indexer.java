@@ -137,19 +137,7 @@ public class Indexer {
 
 			dumpParallelly(sourceList, threadPool, projVertex, lsif, hasPackageInformation, monitor);
 
-			for (Entry<SymbolData, List<SymbolData>> entry : Repository.getInstance().getReferenceResultsMap().entrySet()) {
-				SymbolData fromSymbolData = entry.getKey();
-				List<String> referenceResultsInVs = new ArrayList<String>();
-				List<String> referenceLinksInVs = new ArrayList<String>();
-				for (SymbolData symbolData : entry.getValue()) {
-					referenceResultsInVs.add(symbolData.getReferenceResult().getId());
-					referenceLinksInVs.add(symbolData.getGroupMoniker().getId());
-				}
-				LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().item(fromSymbolData.getReferenceResult(), referenceResultsInVs, fromSymbolData.getDocument(),
-					ItemEdge.ItemEdgeProperties.REFERENCE_RESULTS));
-				LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().item(fromSymbolData.getReferenceResult(), referenceLinksInVs, fromSymbolData.getDocument(),
-					ItemEdge.ItemEdgeProperties.REFERENCE_LINKS));
-			}
+			emitReferenceEdges(lsif);
 			VisitorUtils.endAllDocument(lsif);
 			LsifEmitter.getInstance().emit(
 					lsif.getVertexBuilder().event(Event.EventScope.Project, Event.EventKind.END, projVertex.getId()));
@@ -189,6 +177,22 @@ public class Indexer {
 			}
 		}
 		return res;
+	}
+
+	private void emitReferenceEdges(LsifService lsif) {
+		for (Entry<SymbolData, List<SymbolData>> entry : Repository.getInstance().getReferenceResultsMap().entrySet()) {
+			SymbolData fromSymbolData = entry.getKey();
+			List<String> referenceResultsInVs = new ArrayList<String>();
+			List<String> referenceLinksInVs = new ArrayList<String>();
+			for (SymbolData symbolData : entry.getValue()) {
+				referenceResultsInVs.add(symbolData.getReferenceResult().getId());
+				referenceLinksInVs.add(symbolData.getGroupMoniker().getId());
+			}
+			LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().item(fromSymbolData.getReferenceResult(), referenceResultsInVs, fromSymbolData.getDocument(),
+				ItemEdge.ItemEdgeProperties.REFERENCE_RESULTS));
+			LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().item(fromSymbolData.getReferenceResult(), referenceLinksInVs, fromSymbolData.getDocument(),
+				ItemEdge.ItemEdgeProperties.REFERENCE_LINKS));
+		}
 	}
 
 	/**
