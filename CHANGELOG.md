@@ -3,6 +3,14 @@
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 0.5.0
+### Added
+- Support `ReferenceResults` and `ReferenceLinks`. [PR#74](https://github.com/microsoft/lsif-java/pull/74)
+- Add `belongsTo` edge to connect project vertex and group vertex. [PR#72](https://github.com/microsoft/lsif-java/pull/72)
+### Changed
+- Change compliance to Java 11. [PR#76](https://github.com/microsoft/lsif-java/pull/76)
+- Rename `document` to `shard`. [PR#73](https://github.com/microsoft/lsif-java/pull/73)
+
 ## 0.4.0
 ### Added
 - Support moniker in LSIF v0.5.0. [PR#63](https://github.com/microsoft/lsif-java/pull/63)
