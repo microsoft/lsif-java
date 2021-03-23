@@ -1,6 +1,6 @@
 {
   "name": "@lsif/lsif-java-indexer",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "The Java Indexer for LSIF",
   "scripts": {
     "refreshVSToken": "vsts-npm-auth -config .npmrc",
