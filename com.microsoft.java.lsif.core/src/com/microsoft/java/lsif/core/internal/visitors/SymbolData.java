@@ -16,6 +16,7 @@ import org.apache.maven.project.MavenProject;
 import org.apache.maven.scm.provider.ScmUrlUtils;
 import org.apache.maven.shared.utils.StringUtils;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IField;
@@ -32,9 +33,11 @@ import org.eclipse.jdt.internal.core.JarPackageFragmentRoot;
 import org.eclipse.jdt.internal.core.PackageFragmentRoot;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.handlers.FindLinksHandler;
 import org.eclipse.lsp4j.Hover;
 import org.eclipse.lsp4j.Location;
 
+import com.microsoft.java.lsif.core.internal.JdtlsUtils;
 import com.microsoft.java.lsif.core.internal.emitter.LsifEmitter;
 import com.microsoft.java.lsif.core.internal.indexer.LsifService;
 import com.microsoft.java.lsif.core.internal.indexer.Repository;
@@ -70,6 +73,18 @@ public class SymbolData {
 	public SymbolData(Project project, Document document) {
 		this.project = project;
 		this.document = document;
+	}
+
+	public Document getDocument() {
+		return this.document;
+	}
+
+	public ReferenceResult getReferenceResult() {
+		return this.referenceResult;
+	}
+
+	public Moniker getGroupMoniker() {
+		return this.groupMoniker;
 	}
 
 	synchronized public void ensureResultSet(LsifService lsif, Range sourceRange) {
@@ -137,7 +152,7 @@ public class SymbolData {
 		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().attach(this.schemeMoniker, this.groupMoniker));
 	}
 
-	synchronized public void resolveDefinition(LsifService lsif, Location definitionLocation) {
+	synchronized public void resolveDefinition(LsifService lsif, IJavaElement element, Location definitionLocation) {
 		if (this.definitionResolved) {
 			return;
 		}
@@ -148,7 +163,35 @@ public class SymbolData {
 		DefinitionResult defResult = VisitorUtils.ensureDefinitionResult(lsif, this.resultSet);
 		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().item(defResult, definitionRange, document,
 				ItemEdge.ItemEdgeProperties.DEFINITIONS));
+		if (element instanceof IMethod) {
+			IMethod mostAbstractMethod = getMostAbstractDeclaration((IMethod) element);
+			if (mostAbstractMethod != null) {
+				Location abstractDefinitionLocation = JdtlsUtils.getElementLocation(mostAbstractMethod);
+				String id = VisitorUtils.createSymbolKey(abstractDefinitionLocation);
+				Document abstractDefinitionDocument = Repository.getInstance().enlistDocument(lsif,
+						abstractDefinitionLocation.getUri(), this.project);
+				SymbolData abstractSymbolData = Repository.getInstance().enlistSymbolData(id,
+						abstractDefinitionDocument, this.project);
+				Repository.getInstance().addReferenceResults(this, abstractSymbolData);
+			}
+		}
 		this.definitionResolved = true;
+	}
+
+	private IMethod getMostAbstractDeclaration(IMethod method) {
+		IMethod current = null;
+		try {
+			while (method != null) {
+				method = FindLinksHandler.findOverriddenMethod(method, new NullProgressMonitor());
+				if (method == null) {
+					return current;
+				}
+				current = method;
+			}
+		} catch (JavaModelException e) {
+			return null;
+		}
+		return null;
 	}
 
 	synchronized public void resolveTypeDefinition(LsifService lsif, Document docVertex,
@@ -190,8 +233,7 @@ public class SymbolData {
 		this.implementationResolved = true;
 	}
 
-	synchronized public void resolveReference(LsifService lsif, Document sourceDocument, Location definitionLocation,
-			Range sourceRange) {
+	synchronized public void resolveReference(LsifService lsif, Document sourceDocument, Location definitionLocation, Range sourceRange) {
 		if (this.referenceResult == null) {
 			ReferenceResult referenceResult = VisitorUtils.ensureReferenceResult(lsif, this.resultSet);
 			this.referenceResult = referenceResult;
