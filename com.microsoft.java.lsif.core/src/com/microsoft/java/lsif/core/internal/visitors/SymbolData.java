@@ -152,7 +152,7 @@ public class SymbolData {
 		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().attach(this.schemeMoniker, this.groupMoniker));
 	}
 
-	synchronized public void resolveDefinition(LsifService lsif, Location definitionLocation) {
+	synchronized public void resolveDefinition(LsifService lsif, IJavaElement element, Location definitionLocation) {
 		if (this.definitionResolved) {
 			return;
 		}
@@ -163,7 +163,35 @@ public class SymbolData {
 		DefinitionResult defResult = VisitorUtils.ensureDefinitionResult(lsif, this.resultSet);
 		LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().item(defResult, definitionRange, document,
 				ItemEdge.ItemEdgeProperties.DEFINITIONS));
+		if (element instanceof IMethod) {
+			IMethod mostAbstractMethod = getMostAbstractDeclaration((IMethod) element);
+			if (mostAbstractMethod != null) {
+				Location abstractDefinitionLocation = JdtlsUtils.getElementLocation(mostAbstractMethod);
+				String id = VisitorUtils.createSymbolKey(abstractDefinitionLocation);
+				Document abstractDefinitionDocument = Repository.getInstance().enlistDocument(lsif,
+						abstractDefinitionLocation.getUri(), this.project);
+				SymbolData abstractSymbolData = Repository.getInstance().enlistSymbolData(id,
+						abstractDefinitionDocument, this.project);
+				Repository.getInstance().addReferenceResults(this, abstractSymbolData);
+			}
+		}
 		this.definitionResolved = true;
+	}
+
+	private IMethod getMostAbstractDeclaration(IMethod method) {
+		IMethod current = null;
+		try {
+			while (method != null) {
+				method = FindLinksHandler.findOverriddenMethod(method, new NullProgressMonitor());
+				if (method == null) {
+					return current;
+				}
+				current = method;
+			}
+		} catch (JavaModelException e) {
+			return null;
+		}
+		return null;
 	}
 
 	synchronized public void resolveTypeDefinition(LsifService lsif, Document docVertex,
@@ -205,8 +233,7 @@ public class SymbolData {
 		this.implementationResolved = true;
 	}
 
-	synchronized public void resolveReference(LsifService lsif, Document sourceDocument, IJavaElement element,
-			Location definitionLocation, Range sourceRange) {
+	synchronized public void resolveReference(LsifService lsif, Document sourceDocument, Location definitionLocation, Range sourceRange) {
 		if (this.referenceResult == null) {
 			ReferenceResult referenceResult = VisitorUtils.ensureReferenceResult(lsif, this.resultSet);
 			this.referenceResult = referenceResult;
@@ -220,35 +247,7 @@ public class SymbolData {
 		if (!VisitorUtils.isDefinitionItself(sourceDocument, sourceRange, definitionDocument, definitionRange)) {
 			LsifEmitter.getInstance().emit(lsif.getEdgeBuilder().item(this.referenceResult, sourceRange, document,
 					ItemEdge.ItemEdgeProperties.REFERENCES));
-		} else if (element instanceof IMethod) {
-			IMethod mostAbstractMethod = getMostAbstractDeclaration((IMethod) element);
-			if (mostAbstractMethod != null) {
-				Location abstractDefinitionLocation = JdtlsUtils.getElementLocation(mostAbstractMethod);
-				String id = VisitorUtils.createSymbolKey(abstractDefinitionLocation);
-				Document abstractdefinitionDocument = Repository.getInstance().enlistDocument(lsif,
-						abstractDefinitionLocation.getUri(), this.project);
-				SymbolData abstractSymbolData = Repository.getInstance().enlistSymbolData(id,
-						abstractdefinitionDocument, this.project);
-				Repository.getInstance().addReferenceResults(this, abstractSymbolData);
-			}
 		}
-	}
-
-	private IMethod getMostAbstractDeclaration(IMethod method) {
-		IMethod previous = null;
-		IMethod current = method;
-		try {
-			while (current != null) {
-				current = FindLinksHandler.findOverriddenMethod(current, new NullProgressMonitor());
-				if (current == null) {
-					return previous;
-				}
-				previous = current;
-			}
-		} catch (JavaModelException e) {
-			return null;
-		}
-		return null;
 	}
 
 	synchronized public void resolveHover(LsifService lsif, Document docVertex,

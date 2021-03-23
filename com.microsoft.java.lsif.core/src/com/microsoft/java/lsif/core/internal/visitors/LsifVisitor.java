@@ -107,7 +107,7 @@ public class LsifVisitor extends ProtocolVisitor {
 			symbolData.resolveMoniker(lsif, element, modifier, hasPackageInformation);
 
 			/* Resolve definition */
-			symbolData.resolveDefinition(lsif, definitionLocation);
+			symbolData.resolveDefinition(lsif, element, definitionLocation);
 
 			/* Resolve typeDefinition */
 			symbolData.resolveTypeDefinition(lsif, docVertex, sourceLspRange);
@@ -118,7 +118,7 @@ public class LsifVisitor extends ProtocolVisitor {
 			}
 
 			/* Resolve reference */
-			symbolData.resolveReference(lsif, docVertex, element, definitionLocation, sourceRange);
+			symbolData.resolveReference(lsif, docVertex, definitionLocation, sourceRange);
 
 			/* Resolve hover */
 			symbolData.resolveHover(lsif, docVertex, sourceLspRange);
