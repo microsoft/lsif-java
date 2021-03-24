@@ -16,5 +16,5 @@ public final class IConstant {
 
 	public final static String DEFAULT_LSIF_FILE_NAME = "lsif.json";
 
-	public final static String LSIF_FORMAT_VERSION = "0.4.3";
+	public final static String LSIF_FORMAT_VERSION = "0.5.0";
 }
