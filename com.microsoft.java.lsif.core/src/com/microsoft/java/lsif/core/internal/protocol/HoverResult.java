@@ -16,7 +16,6 @@ public class HoverResult extends Vertex {
 		this.result = result;
 	}
 
-
 	public Hover getResult() {
 		return this.result;
 	}

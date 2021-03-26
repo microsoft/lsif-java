@@ -11,6 +11,7 @@ public class Project extends Vertex {
 
 	private String kind;
 
+	@SuppressWarnings("unused")
 	private String name;
 
 	public Project(String id, String name) {
