@@ -11,10 +11,13 @@ public class PackageInformation extends Vertex {
 
 	private String name;
 
+	@SuppressWarnings("unused")
 	private String manager;
 
+	@SuppressWarnings("unused")
 	private String version;
 
+	@SuppressWarnings("unused")
 	private Repo repository;
 
 	/**
@@ -43,8 +46,10 @@ public class PackageInformation extends Vertex {
 
 	private class Repo {
 
+		@SuppressWarnings("unused")
 		private String type;
 
+		@SuppressWarnings("unused")
 		private String url;
 
 		Repo(String type, String url) {

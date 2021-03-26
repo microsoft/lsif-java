@@ -22,12 +22,16 @@ public class Group extends Vertex {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private String uri;
 
+	@SuppressWarnings("unused")
 	private String resolution;
 
+	@SuppressWarnings("unused")
 	private String name;
 
+	@SuppressWarnings("unused")
 	private String rootUri;
 
 	public Group(String id, String uri, ConflictResolution resolution, String name, String rootUri) {

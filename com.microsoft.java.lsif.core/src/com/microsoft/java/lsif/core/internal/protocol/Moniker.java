@@ -37,12 +37,16 @@ public class Moniker extends Vertex {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private String kind;
 
+	@SuppressWarnings("unused")
 	private String scheme;
 
+	@SuppressWarnings("unused")
 	private String identifier;
 
+	@SuppressWarnings("unused")
 	private String unique;
 
 	public Moniker(String id, MonikerKind kind, String scheme, String identifier, MonikerUnique unique) {
