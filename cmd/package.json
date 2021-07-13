@@ -4,7 +4,7 @@
   "description": "The Java Indexer for LSIF",
   "scripts": {
     "refreshVSToken": "vsts-npm-auth -config .npmrc",
-    "build": "gulp build"
+    "build": "node scripts/build.js"
   },
   "repository": {
     "type": "git",
@@ -13,8 +13,8 @@
   "author": "yaozheng@microsoft.com, sheche@microsoft.com",
   "license": "ISC",
   "devDependencies": {
+    "fs-extra": "^10.0.0",
     "glob": "^7.1.3",
-    "gulp": "^4.0.2",
     "rimraf": "^2.6.3",
     "vsts-npm-auth": "^0.37.0"
   }
