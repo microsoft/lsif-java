@@ -15,7 +15,7 @@ A first draft specification can be found [here](https://github.com/Microsoft/lan
 
 - Install the required dependencies to build the Java Language Server Indexer:
 
-  `> npm install` 
+  `> npm install`
 
 - Build the Java Language Server Indexer:
 
@@ -35,4 +35,4 @@ If you are interested in fixing issues and contributing directly to the code bas
 See [Changelog](./CHANGELOG.md)
 
 ## License
-Licensed under the [MIT License](./LICENSE)
+Licensed under the [EPL 1.0 License](./LICENSE)
