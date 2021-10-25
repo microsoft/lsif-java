@@ -3,7 +3,6 @@
   "version": "0.5.1",
   "description": "The Java Indexer for LSIF",
   "scripts": {
-    "refreshVSToken": "vsts-npm-auth -config .npmrc",
     "build": "node scripts/build.js"
   },
   "repository": {
