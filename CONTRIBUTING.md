@@ -15,25 +15,25 @@ Before creating a new issue, please do a search to see if the issue or feature r
 If you find your issue already exists, make relevant comments and add your reaction:
 - 👍 - upvote
 - 👎 - downvote
- 
+
 ### Writing Good Bug Reports and Feature Requests
 In order to let us know better about the issue, please make sure the following items are included with each issue:
 - The repo link which you are indexing with
 - Reproducible steps
 - What you expected to see, versus what you actually saw
 - Images, animations, or a link to a video showing the issue occurring
- 
+
 ## Contributing Fixes
 If you are interested in writing code to fix issues, please check the following content to see how to set up the developing environment.
 
 ### Overview
-Generally speaking, the LSIF for Java uses several **visitors** to visit the AST([Abstract Syntax Tree](https://www.eclipse.org/articles/article.php?file=Article-JavaCodeManipulation_AST/index.html)) and dump the index according to the [LSIF Specification](https://github.com/Microsoft/language-server-protocol/blob/master/indexFormat/specification.md).
+Generally speaking, the LSIF for Java uses several **visitors** to visit the AST([Abstract Syntax Tree](https://www.eclipse.org/articles/article.php?file=Article-JavaCodeManipulation_AST/index.html)) and dump the index according to the [LSIF Specification](https://github.com/Microsoft/language-server-protocol/blob/main/indexFormat/specification.md).
 
 Major modules of the LSIF for Java are listed as follow:
-- [AST visitors](https://github.com/Microsoft/lsif-java/tree/master/com.microsoft.java.lsif.core/src/com/microsoft/java/lsif/core/internal/visitors)
-- [Language Server Index Format definitions](https://github.com/Microsoft/lsif-java/tree/master/com.microsoft.java.lsif.core/src/com/microsoft/java/lsif/core/internal/protocol)
-- [Components and utilities for indexing](https://github.com/Microsoft/lsif-java/tree/master/com.microsoft.java.lsif.core/src/com/microsoft/java/lsif/core/internal/indexer)
-- [Emitters to print out index information](https://github.com/Microsoft/lsif-java/tree/master/com.microsoft.java.lsif.core/src/com/microsoft/java/lsif/core/internal/emitter)
+- [AST visitors](https://github.com/Microsoft/lsif-java/tree/main/com.microsoft.java.lsif.core/src/com/microsoft/java/lsif/core/internal/visitors)
+- [Language Server Index Format definitions](https://github.com/Microsoft/lsif-java/tree/main/com.microsoft.java.lsif.core/src/com/microsoft/java/lsif/core/internal/protocol)
+- [Components and utilities for indexing](https://github.com/Microsoft/lsif-java/tree/main/com.microsoft.java.lsif.core/src/com/microsoft/java/lsif/core/internal/indexer)
+- [Emitters to print out index information](https://github.com/Microsoft/lsif-java/tree/main/com.microsoft.java.lsif.core/src/com/microsoft/java/lsif/core/internal/emitter)
 
 ### Setup
 1. Fork and clone the repository: `git clone https://github.com/Microsoft/lsif-java.git`
