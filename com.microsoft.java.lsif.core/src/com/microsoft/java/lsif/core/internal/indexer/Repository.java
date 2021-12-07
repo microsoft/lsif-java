@@ -54,7 +54,7 @@ public class Repository {
 
 	// Key: documentURI
 	// Value: Document object
-	private Map<String, Document> beginededDocumentMap = new ConcurrentHashMap<>();
+	private Map<String, Document> begunDocumentMap = new ConcurrentHashMap<>();
 
 	// Key: groupId + artifactId
 	// Value: PackageInformation
@@ -86,7 +86,7 @@ public class Repository {
 			targetDocument = service.getVertexBuilder().document(uri);
 			addDocument(targetDocument);
 			LsifEmitter.getInstance().emit(targetDocument);
-			addToBeginededDocuments(targetDocument);
+			addToBegunDocuments(targetDocument);
 			LsifEmitter.getInstance().emit(service.getVertexBuilder().event(Event.EventScope.DOCUMENT,
 					Event.EventKind.BEGIN, targetDocument.getId()));
 			LsifEmitter.getInstance().emit(service.getEdgeBuilder().contains(projVertex, targetDocument));
@@ -153,16 +153,16 @@ public class Repository {
 		return enlistMavenProject(lsif, pomFile);
 	}
 
-	public void addToBeginededDocuments(Document doc) {
-		this.beginededDocumentMap.put(doc.getUri(), doc);
+	public void addToBegunDocuments(Document doc) {
+		this.begunDocumentMap.put(doc.getUri(), doc);
 	}
 
-	public void removeFromBeginededDocuments(String uri) {
-		this.beginededDocumentMap.remove(uri);
+	public void removeFromBegunDocuments(String uri) {
+		this.begunDocumentMap.remove(uri);
 	}
 
-	public ArrayList<Document> getAllBeginededDocuments() {
-		return new ArrayList<>(this.documentMap.values());
+	public ArrayList<Document> getAllBegunDocuments() {
+		return new ArrayList<>(this.begunDocumentMap.values());
 	}
 
 	private void addDocument(Document doc) {
