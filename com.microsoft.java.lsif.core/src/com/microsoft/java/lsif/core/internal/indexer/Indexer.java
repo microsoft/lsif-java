@@ -49,6 +49,9 @@ import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.managers.GradleProjectImporter;
 import org.eclipse.jdt.ls.core.internal.managers.MavenProjectImporter;
 import org.eclipse.lsp4j.ClientCapabilities;
+import org.eclipse.lsp4j.DocumentSymbolCapabilities;
+import org.eclipse.lsp4j.SymbolKindCapabilities;
+import org.eclipse.lsp4j.TextDocumentClientCapabilities;
 import org.gradle.tooling.model.GradleModuleVersion;
 import org.gradle.tooling.model.gradle.GradlePublication;
 import org.gradle.tooling.model.gradle.ProjectPublications;
@@ -158,7 +161,13 @@ public class Indexer {
 	private void initializeJdtls() {
 		Map<String, Object> extendedClientCapabilities = new HashMap<>();
 		extendedClientCapabilities.put("classFileContentsSupport", false);
-		JavaLanguageServerPlugin.getPreferencesManager().updateClientPrefences(new ClientCapabilities(),
+		DocumentSymbolCapabilities documentSymbol = new DocumentSymbolCapabilities(new SymbolKindCapabilities(),
+			/** dynamicRegistration */ false, /** hierarchicalDocumentSymbolSupport */ true);
+		TextDocumentClientCapabilities textDocument = new TextDocumentClientCapabilities();
+		textDocument.setDocumentSymbol(documentSymbol);
+		ClientCapabilities clientCapabilities = new ClientCapabilities();
+		clientCapabilities.setTextDocument(textDocument);
+		JavaLanguageServerPlugin.getPreferencesManager().updateClientPrefences(clientCapabilities,
 				extendedClientCapabilities);
 	}
 
