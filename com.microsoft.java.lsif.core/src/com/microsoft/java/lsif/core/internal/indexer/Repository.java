@@ -162,7 +162,7 @@ public class Repository {
 	}
 
 	public ArrayList<Document> getAllBeginededDocuments() {
-		return new ArrayList<>(this.documentMap.values());
+		return new ArrayList<>(this.beginededDocumentMap.values());
 	}
 
 	private void addDocument(Document doc) {
