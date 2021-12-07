@@ -166,13 +166,13 @@ public class VisitorUtils {
 	}
 
 	public static void endDocument(LsifService lsif, Document doc) {
-		Repository.getInstance().removeFromBeginededDocuments(doc.getUri());
+		Repository.getInstance().removeFromBegunDocuments(doc.getUri());
 		LsifEmitter.getInstance()
 				.emit(lsif.getVertexBuilder().event(Event.EventScope.DOCUMENT, Event.EventKind.END, doc.getId()));
 	}
 
 	public static void endAllDocument(LsifService lsif) {
-		for (Document doc : Repository.getInstance().getAllBeginededDocuments()) {
+		for (Document doc : Repository.getInstance().getAllBegunDocuments()) {
 			endDocument(lsif, doc);
 		}
 	}
