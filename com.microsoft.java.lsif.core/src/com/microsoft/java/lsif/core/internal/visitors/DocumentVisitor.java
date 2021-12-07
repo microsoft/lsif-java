@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.handlers.DocumentSymbolHandler;
 import org.eclipse.lsp4j.DocumentSymbol;
@@ -60,7 +61,7 @@ public class DocumentVisitor extends ProtocolVisitor {
 
 	private List<DocumentSymbol> handle(String uri) {
 		DocumentSymbolParams documentSymbolParams = new DocumentSymbolParams(new TextDocumentIdentifier(uri));
-		DocumentSymbolHandler proxy = new DocumentSymbolHandler(true);
+		DocumentSymbolHandler proxy = new DocumentSymbolHandler(JavaLanguageServerPlugin.getPreferencesManager());
 		List<Either<SymbolInformation, DocumentSymbol>> result = proxy.documentSymbol(documentSymbolParams,
 				new NullProgressMonitor());
 
