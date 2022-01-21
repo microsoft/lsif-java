@@ -5,6 +5,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 0.5.2
 ### Fixed
+- Fix the duplicated end events for a document vertex. [#89](https://github.com/microsoft/lsif-java/issues/89)
 - Update dependencies and remove log4j. [PR#95](https://github.com/microsoft/lsif-java/pull/95)
 
 ## 0.5.1
