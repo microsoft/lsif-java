@@ -3,6 +3,9 @@
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 0.5.2
+- Update dependencies and remove log4j. [PR#95](https://github.com/microsoft/lsif-java/pull/95)
+
 ## 0.5.1
 ### Changed
 - Change to EPL 1.0 license. [#84](https://github.com/microsoft/lsif-java/pull/84)
