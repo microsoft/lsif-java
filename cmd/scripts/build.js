@@ -21,12 +21,11 @@ const cp = require('child_process');
 const path = require('path');
 const fse = require('fs-extra');
 const glob = require('glob');
-const rimraf = require('rimraf');
 const rootPath = path.join(__dirname, '..', '..');
 
-rimraf.sync(path.join(__dirname, 'repository'));
-rimraf.sync(path.join(__dirname, 'workspace'));
-const tgzs = glob.sync('*.tgz');
+fse.removeSync(path.join(__dirname, '..', 'repository'));
+fse.removeSync(path.join(__dirname, '..', 'workspace'));
+const tgzs = glob.sync('*.tgz', { cwd: '../'});
 for (const tgz of tgzs) {
 	fse.removeSync(tgz);
 }
