@@ -12,7 +12,7 @@
   "author": "yaozheng@microsoft.com, sheche@microsoft.com",
   "license": "ISC",
   "devDependencies": {
-    "fs-extra": "^10.0.0",
+    "fs-extra": "^10.0.1",
     "glob": "^7.2.0"
   }
 }
