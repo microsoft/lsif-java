@@ -7,6 +7,10 @@ The purpose of the Language Server Index Format (LSIF) is to define a standard f
 
 A first draft specification can be found [here](https://github.com/Microsoft/language-server-protocol/blob/main/indexFormat/specification.md).
 
+## Requirement
+
+JDK 17 is required to build or run this tool.
+
 ## Quickstart
 
 - Go to the build path:
