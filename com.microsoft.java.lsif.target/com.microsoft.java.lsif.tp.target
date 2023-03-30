@@ -10,10 +10,13 @@
             <repository location="https://download.eclipse.org/buildship/updates/e423/snapshots/3.x/3.1.7.v20221108-1729-s/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="org.eclipse.m2e.feature.feature.group" version="0.0.0"/>
-            <unit id="org.eclipse.m2e.logback.feature.feature.group" version="0.0.0"/>
+            <unit id="org.eclipse.m2e.jdt" version="0.0.0"/>
+            <unit id="org.eclipse.m2e.apt.core" version="0.0.0"/>
+            <unit id="org.eclipse.m2e.core" version="0.0.0"/>
+            <unit id="org.eclipse.m2e.maven.runtime" version="0.0.0"/>
+            <unit id="org.eclipse.m2e.workspace.cli" version="0.0.0"/>
             <unit id="ch.qos.logback.classic" version="0.0.0"/>
-            <repository location="https://download.eclipse.org/technology/m2e/snapshots/latest/"/>
+            <repository location="https://download.eclipse.org/technology/m2e/releases/2.2.1/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.equinox.core.feature.feature.group" version="0.0.0"/>
@@ -24,19 +27,19 @@
             <unit id="org.eclipse.jdt.source.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.sdk.feature.group" version="0.0.0"/>
             <unit id="org.mockito.mockito-core" version="0.0.0"/>
-            <repository location="https://download.eclipse.org/eclipse/updates/4.27-I-builds/I20230215-0610"/>
+            <repository location="https://download.eclipse.org/eclipse/updates/4.27/R-4.27-202303020300/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.xtext.xbase.lib" version="0.0.0"/>
             <repository location="https://download.eclipse.org/releases/2022-12/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-           <repository location="https://download.eclipse.org/lsp4j/updates/releases/0.20.1/"/>
-           <unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.0.0"/>
+            <unit id="org.eclipse.lsp4j" version="0.0.0"/>
+            <repository location="https://download.eclipse.org/lsp4j/updates/releases/0.20.1/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.jdt.ls.core" version="0.0.0"/>
-            <repository location="https://download.eclipse.org/jdtls/snapshots/repository/1.21.0.202303020110/"/>
+            <repository location="https://download.eclipse.org/jdtls/snapshots/repository/1.22.0.202303242204/"/>
         </location>
     </locations>
     <targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-17"/>
